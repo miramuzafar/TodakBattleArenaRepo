@@ -1,0 +1,54 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{4CE28287-4423-8C77-79EC-FC8111104EAE}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "TodakBattleArena",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"UMG"
+			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "VaRest",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/e47be161e7a24e928560290abd5dcc4f"
+		},
+		{
+			"Name": "AdvancedSessions",
+			"Enabled": true
+		},
+		{
+			"Name": "EasyJsonParser",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/22108e274b5d4e5ab92c0a7b961caf13"
+		},
+		{
+			"Name": "LocationServicesAndroidImpl",
+			"Enabled": true
+		},
+		{
+			"Name": "LocationServicesIOSImpl",
+			"Enabled": true
+		}
+	],
+	"TargetPlatforms": [
+		"Android",
+		"TVOS",
+		"WindowsNoEditor",
+		"MacNoEditor",
+		"Lumin",
+		"LinuxAArch64NoEditor",
+		"LinuxNoEditor",
+		"IOS",
+		"HoloLens",
+		"XXX",
+		"AllDesktop"
+	]
+}
