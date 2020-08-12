@@ -340,10 +340,6 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 	if (GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold) && GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkillHold) >= SkillStopTime && EnableMovement == false)
 	{
 		GetMesh()->GetAnimInstance()->Montage_Pause(RPCMultiCastSkillHold);
-		if (BlockedHit == false)
-		{
-			BlockedHit = true;
-		}
 	}
 	/*if (NearestTarget != nullptr && TargetLocked == true)
 	{
@@ -599,12 +595,14 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 	}
 	else
 	{
+		//If the anim is not currently playing
 		this->StopAnimMontage(RPCMultiCastSkillHold);
-		//if still in blocked hit state
+		ResetMovementMode();
 		if (this->BlockedHit == true)
 		{
 			this->BlockedHit = false;
 		}
+		//if still in blocked hit state
 	}
 }
 //
@@ -734,6 +732,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 		//Set all the attribute to the current vars of player
 		HitTraceLength = HitTraceLengths;
 		this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+		//this->GetCharacterMovement()->StopMovementImmediately();
 		CDSkill = true;
 
 		//Get the Montage to be play
@@ -741,6 +740,11 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 		//Server
 		ServerSkillMoveset(SkillMoveset, DealDamage, AnimRate, AnimStartTime, SkillTriggered);
+
+		if (this->BlockedHit == true)
+		{
+			this->BlockedHit = false;
+		}
 
 		if (BodyParts.IsValidIndex(0) == true)
 		{
@@ -1264,6 +1268,10 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 		int Index = InputTouch.Find(NewIndex);
 		if (InputTouch[Index].IsPressed == true)
 		{
+			if (BlockedHit == false)
+			{
+				BlockedHit = true;
+			}
 			//Checks for touch within the input area
 			UGestureInputsFunctions::CircleSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
 
@@ -1292,6 +1300,7 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 						BlockHit = row->SkillBlockHit;
 
 						//play animation on press
+						this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 						ServerSkillStartMontage(row->StartAnimMontage);
 						//ServerSkillBlockHitMontage(row->SkillBlockHit);
 						break;
@@ -1372,6 +1381,7 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 	EnableMovement = false;
 	RightFoot = false;
 	LeftFoot = false;
+	BlockedHit = false;
 
 	FFingerIndex NewIndex;
 	NewIndex.FingerIndex = FingerIndex;
