@@ -476,7 +476,7 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 			SecondaryHealth = MaxHealth;
 		}
 		else
-			SecondaryHealth = currSecHealth;
+			SecondaryHealth = currSecHealth; 
 		UE_LOG(LogTemp, Warning, TEXT("Health : %f"), Health);
 
 		//Get the secondary progressbar for pain meter
