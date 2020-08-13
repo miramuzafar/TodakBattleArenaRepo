@@ -153,24 +153,24 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 	AController* NewController = SetNewControlRotation(NewRotator);
 	if (NewController != nullptr)
 	{
-		FVector OutLength;
+		/*FVector OutLength;
 		float Dist;
-		if (GetCharacterMovement()->Velocity.Size() > 0.0f)
+		(GetActorLocation() - NearestTarget->GetActorLocation()).ToDirectionAndLength(OutLength, Dist);
+		if (Dist < 100.0f)
 		{
-			(GetActorLocation() - NearestTarget->GetActorLocation()).ToDirectionAndLength(OutLength, Dist);
-			if (Dist < 100.0f)
+			if (OutLength.Normalize())
 			{
-				if (OutLength.Normalize())
+				FHitResult newHit;
+				FVector newLength = FVector(OutLength);
+				FVector Val = FVector(OutLength.X, OutLength.Y, OutLength.Z);
+				if (SetActorLocation(Val, true, nullptr, ETeleportType::None))
 				{
-					FHitResult newHit;
-					FVector newLength = FVector(OutLength);
-					FVector Val = FVector(OutLength.X, OutLength.Y, OutLength.Z);
-					if (SetActorLocation(Val, true, nullptr, ETeleportType::TeleportPhysics))
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Cannot pass through"));
-					}
+					UE_LOG(LogTemp, Warning, TEXT("Cannot pass through"));
 				}
 			}
+		}*/
+		if (GetCharacterMovement()->Velocity.Size() > 0.0f)
+		{
 			NewController->SetControlRotation(NewRotator);
 		}
 		else
