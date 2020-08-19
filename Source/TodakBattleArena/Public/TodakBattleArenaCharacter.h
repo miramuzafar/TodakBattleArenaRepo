@@ -122,11 +122,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLockOn")
 	bool isCollisionInScript = false;
 
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "BlockedHit")
+	bool AICanAttack = false;
+
 	FTimerHandle IterateArray;
 
 	/////////TargetLockTimer/////////////
 	FTimerHandle DistanceEnemTimer;
 	FTimerHandle ToggleTimer;
+
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "SwipeGesture")
+	FTimerHandle BlockHitTimer;
 
 	////////////////Swipe pattern enums////////////////////////////////
 	TArray<FName> RowNames;
@@ -238,6 +244,17 @@ protected:
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill);
+
+	//SkillPress replicate on server
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
+	void ServerStopBlockHitMontage(UAnimMontage* ServerSkill);
+
+	//SkillPress replicate on all client
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastStopBlockHitMontage(UAnimMontage* MulticastSkill);
+
+	/**Function to update the client's damage*/
+	void UpdateCurrentMontage(UAnimMontage* MulticastSkill, FTimerHandle* TimerUsed);
 
 	//SkillPress replicate on all client
 	UFUNCTION(BlueprintCallable, Category = "Collision")
