@@ -22,10 +22,13 @@
 #include "Components/TextBlock.h"
 #include "Blueprint/WidgetTree.h"
 #include "BaseCharacterWidget.h"
-#include "Net/UnrealNetwork.h"
+#include "Net/UnrealNetwork.h" //replication
 #include "TargetLockInterface.h"
 #include "Misc/DateTime.h"
 #include "DrawDebugHelpers.h"
+#include "Engine/DecalActor.h"
+#include "Components/DecalComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATodakBattleArenaCharacter
@@ -638,7 +641,7 @@ void ATodakBattleArenaCharacter::ServerSkillStartMontage_Implementation(UAnimMon
 
 bool ATodakBattleArenaCharacter::MulticastSkillStartMontage_Validate(UAnimMontage* MulticastSkill)
 {
-	return true;
+	return true;	
 }
 
 void ATodakBattleArenaCharacter::MulticastSkillStartMontage_Implementation(UAnimMontage* MulticastSkill)
@@ -774,6 +777,8 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 	return false;
 }
 
+
+
 void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets)
 {
 	FKBoxElem boxElem;
@@ -798,6 +803,8 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 			FString Context;
 
 			FBodyDamage* row = BodyDamageTable->FindRow<FBodyDamage>(ShapeName, Context);
+
+		
 
 			//if capsule elem is physics asset inside body damage datatable
 			if (row)
@@ -862,6 +869,26 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 	}
 	else
 		UE_LOG(LogTemp, Warning, TEXT("%s is not affected by Physic Assets"), *ShapeName.ToString());
+}
+
+
+
+void ATodakBattleArenaCharacter::SpawnWoundsOnDamage(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location)
+{
+	UGameplayStatics::SpawnDecalAttached(DecalMaterial, FVector(10.0f, 10.0f, 10.0f), AttachToComponent, AttachPointName, Location, FRotator(0.0f, 0.0f, 0.0f), EAttachLocation::KeepWorldPosition, 0.0f);
+	//FHitResult hit;
+	//class UMaterialInterface * DecalMaterial;
+	//FName AttachPointName;
+	//FVector hitLocation = hit->GetComponentTransform().GetLocation();
+
+
+	/*if (hit.GetComponent() != NULL)
+	{
+		UPrimitiveComponent * object = hit.GetComponent();
+
+		UGameplayStatics::SpawnDecalAttached(DecalMaterial, FVector(10.0f, 10.0f, 10.0f), NAME_None, AttachPointName, Location, FRotator(0.0f, 0.0f, 0.0f), EAttachLocation::KeepWorldPosition, 0.0f);
+	}*/
+
 }
 
 void ATodakBattleArenaCharacter::MoveOnHold()

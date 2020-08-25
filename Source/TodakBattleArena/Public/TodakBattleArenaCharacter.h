@@ -86,6 +86,8 @@ public:
 
 	///////////////////////////////////////////////////////////////
 
+	
+
 	/** Delegate function called for execute blueprints function */
 	UPROPERTY(BlueprintAssignable, Category = Gestures)
 	FGestureExecuted NewGestureDelegate;
@@ -166,6 +168,8 @@ public:
 	//remove touch inputs from array
 	void RemoveFromArray();
 
+
+
 protected:
 
 	/** Resets HMD orientation in VR. */
@@ -242,6 +246,9 @@ protected:
 	//SkillPress replicate on all client
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets);
+	
+	UFUNCTION(BlueprintCallable)
+	void SpawnWoundsOnDamage(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location); 
 
 	//When the touch is hold
 	void MoveOnHold();
@@ -652,7 +659,7 @@ protected:
 
 	//*********************************************************************//
 
-
+	
 	///////////////For swipe gesture//////////////////////////////
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Status")
@@ -723,6 +730,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool BurstActivate;
 
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	//FVector ;
 	//*********************************End Variables*******************************************//
 
 protected:
