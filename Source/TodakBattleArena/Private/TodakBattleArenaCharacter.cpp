@@ -124,6 +124,9 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Hit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockedHit);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, AICanAttack);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockHitTimer);
+
 	//**AnimMontage**//
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillMoveset);
@@ -256,87 +259,89 @@ void ATodakBattleArenaCharacter::BeginPlay()
 
 	//Get vitality status from current fitness level when game starts
 	//TotalVitalityFromFitness(0.7f, 0.2f, 0.1f);
-
-	if (LevelName == UGameplayStatics::GetCurrentLevelName(this, true))
+	if (!isAI)
 	{
-		SkillNames.AddUnique("Move");
-		SkillNames.AddUnique("Rotate");
-
-		//Used in error reporting
-		FString Context;
-
-		for (auto& name : ActionTable->GetRowNames())
+		if (LevelName == UGameplayStatics::GetCurrentLevelName(this, true))
 		{
-			FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
-			if (row)
+			SkillNames.AddUnique("Move");
+			SkillNames.AddUnique("Rotate");
+
+			//Used in error reporting
+			FString Context;
+
+			for (auto& name : ActionTable->GetRowNames())
 			{
-				SkillNames.AddUnique(name);
-			}
-		}
-	}
-	else
-	{
-		if (WidgetHUD)
-		{
-			//Assign values to the widget
-				//Stamina
-			const FName locTextControlStaminaName = FName(TEXT("Stamina"));
-			UTextBlock* locTextControlStamina = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStaminaName));
-
-			if (locTextControlStamina != nullptr)
-			{
-				locTextControlStamina->SetText(UGestureMathLibrary::PrintStatusValue(Stamina, MaxStamina, "Stamina: "));
-			}
-
-			//Strength
-			const FName locTextControlStrengthName = FName(TEXT("Strength"));
-			UTextBlock* locTextControlStrength = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStrengthName));
-
-			if (locTextControlStrength != nullptr)
-			{
-				locTextControlStrength->SetText(UGestureMathLibrary::PrintStatusValue(Strength, MaxStrength, "Strength: "));
-			}
-
-			//Agility
-			const FName locTextControlAgilityName = FName(TEXT("Agility"));
-			UTextBlock* locTextControlAgility = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlAgilityName));
-
-			if (locTextControlAgility != nullptr)
-			{
-				locTextControlAgility->SetText(UGestureMathLibrary::PrintStatusValue(Agility, MaxAgility, "Agility: "));
-			}
-
-			FTimerHandle handle;
-			{
-				//Energy stats
-				const FName locTextControlEnergyName = FName(TEXT("Energy"));
-				UTextBlock* locTextControlEnergy = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyName));
-
-				const FName locTextControlEnergyPercent = FName(TEXT("EnergyText"));
-				UTextBlock* locTextControlEnergyPercentBlock = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyPercent));
-
-				const FName locTextControlEnergyBar = FName(TEXT("EnergyBar"));
-				UProgressBar* energyBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyBar));
-
-				if (energyBar != nullptr)
+				FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
+				if (row)
 				{
-					EnergyPercentage = UGestureMathLibrary::SetProgressBarValue("Energy", energyBar, locTextControlEnergyPercentBlock, locTextControlEnergy, playerEnergy, MaxEnergy);
+					SkillNames.AddUnique(name);
 				}
 			}
+		}
+		else
+		{
+			if (WidgetHUD)
 			{
-				//Health stats
-				const FName locTextControlHealthName = FName(TEXT("Health"));
-				UTextBlock* locTextControlHealth = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthName));
+				//Assign values to the widget
+					//Stamina
+				const FName locTextControlStaminaName = FName(TEXT("Stamina"));
+				UTextBlock* locTextControlStamina = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStaminaName));
 
-				const FName locTextControlHPName = FName(TEXT("HP"));
-				UTextBlock* locTextControlHP = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHPName));
-
-				const FName locTextControlHealthBar = FName(TEXT("HPBar"));
-				UProgressBar* healthBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar));
-
-				if (healthBar != nullptr)
+				if (locTextControlStamina != nullptr)
 				{
-					playerHealth = UGestureMathLibrary::SetProgressBarValue("Pain Meter", healthBar, locTextControlHealth, locTextControlHP, Health, MaxHealth);
+					locTextControlStamina->SetText(UGestureMathLibrary::PrintStatusValue(Stamina, MaxStamina, "Stamina: "));
+				}
+
+				//Strength
+				const FName locTextControlStrengthName = FName(TEXT("Strength"));
+				UTextBlock* locTextControlStrength = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStrengthName));
+
+				if (locTextControlStrength != nullptr)
+				{
+					locTextControlStrength->SetText(UGestureMathLibrary::PrintStatusValue(Strength, MaxStrength, "Strength: "));
+				}
+
+				//Agility
+				const FName locTextControlAgilityName = FName(TEXT("Agility"));
+				UTextBlock* locTextControlAgility = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlAgilityName));
+
+				if (locTextControlAgility != nullptr)
+				{
+					locTextControlAgility->SetText(UGestureMathLibrary::PrintStatusValue(Agility, MaxAgility, "Agility: "));
+				}
+
+				FTimerHandle handle;
+				{
+					//Energy stats
+					const FName locTextControlEnergyName = FName(TEXT("Energy"));
+					UTextBlock* locTextControlEnergy = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyName));
+
+					const FName locTextControlEnergyPercent = FName(TEXT("EnergyText"));
+					UTextBlock* locTextControlEnergyPercentBlock = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyPercent));
+
+					const FName locTextControlEnergyBar = FName(TEXT("EnergyBar"));
+					UProgressBar* energyBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyBar));
+
+					if (energyBar != nullptr)
+					{
+						EnergyPercentage = UGestureMathLibrary::SetProgressBarValue("Energy", energyBar, locTextControlEnergyPercentBlock, locTextControlEnergy, playerEnergy, MaxEnergy);
+					}
+				}
+				{
+					//Health stats
+					const FName locTextControlHealthName = FName(TEXT("Health"));
+					UTextBlock* locTextControlHealth = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthName));
+
+					const FName locTextControlHPName = FName(TEXT("HP"));
+					UTextBlock* locTextControlHP = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHPName));
+
+					const FName locTextControlHealthBar = FName(TEXT("HPBar"));
+					UProgressBar* healthBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar));
+
+					if (healthBar != nullptr)
+					{
+						playerHealth = UGestureMathLibrary::SetProgressBarValue("Pain Meter", healthBar, locTextControlHealth, locTextControlHP, Health, MaxHealth);
+					}
 				}
 			}
 		}
@@ -356,7 +361,7 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 	}*/
 	//.267f
 	//if hold montage is active, prepare for blocking hit
-	if (GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold) && GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkillHold) >= SkillStopTime && EnableMovement == false)
+	if (isAI == false && GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold) && GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkillHold) >= SkillStopTime && EnableMovement == false)// && EnableMovement == false
 	{
 		GetMesh()->GetAnimInstance()->Montage_Pause(RPCMultiCastSkillHold);
 	}
@@ -607,10 +612,6 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 				}
 			}
 		}
-		if (this->BlockedHit == true)
-		{
-			this->BlockedHit = false;
-		}
 	}
 	else
 	{
@@ -672,11 +673,65 @@ bool ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Validate(UAnimMon
 
 void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UAnimMontage* MulticastSkill)
 {
-	//Play anim on touch press/hold
-	RPCMultiCastBlockHit = MulticastSkill;
-	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f);
+	//Play anim on block incoming hit
+	if (GetWorld()->GetTimerManager().IsTimerActive(BlockHitTimer) == false && GetWorld()->GetTimerManager().IsTimerPaused(BlockHitTimer) == false)
+	{
+		RPCMultiCastBlockHit = MulticastSkill;
+
+		//play skillblock anim montage
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.5f, EMontagePlayReturnType::MontageLength, 0.546f);
+
+		//run the timer
+		if (IsLocallyControlled())
+		{
+			//Create uobject for timer delegate
+			FTimerDelegate FunctionsNames;
+			FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentMontage, RPCMultiCastBlockHit, &BlockHitTimer);
+			GetWorld()->GetTimerManager().SetTimer(BlockHitTimer, FunctionsNames, 0.6f, false);
+		}
+	}
 }
 
+bool ATodakBattleArenaCharacter::ServerStopBlockHitMontage_Validate(UAnimMontage* ServerSkill)
+{
+	return true;
+}
+void ATodakBattleArenaCharacter::ServerStopBlockHitMontage_Implementation(UAnimMontage * ServerSkill)
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		MulticastStopBlockHitMontage(ServerSkill);
+	}
+}
+
+bool ATodakBattleArenaCharacter::MulticastStopBlockHitMontage_Validate(UAnimMontage* MulticastSkill)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::MulticastStopBlockHitMontage_Implementation(UAnimMontage* MulticastSkill)
+{
+	if (IsLocallyControlled())
+	{
+		//stops local timer
+		GetWorld()->GetTimerManager().ClearTimer(BlockHitTimer);
+	}
+	//reset back to montage during blocked hit
+	UE_LOG(LogTemp, Warning, TEXT("Stop block timer!"));
+	this->GetMesh()->GetAnimInstance()->Montage_Stop(3.0f, MulticastSkill);
+	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkillHold, 1.0f, EMontagePlayReturnType::MontageLength, SkillStopTime);
+}
+
+void ATodakBattleArenaCharacter::UpdateCurrentMontage(UAnimMontage* MulticastSkill, FTimerHandle* TimerUsed)
+{
+	//if the current anim pos is more than .6 seconds, stop the montage and play the hold skill again
+	if (GetWorld()->GetTimerManager().IsTimerActive(*TimerUsed) == true)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("pause block timer!"));
+		GetWorld()->GetTimerManager().PauseTimer(*TimerUsed);
+		ServerStopBlockHitMontage(MulticastSkill);
+	}
+}
 
 void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedActor, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -686,7 +741,7 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 		if (OtherActor != this)
 		{
 			ATodakBattleArenaCharacter* EnemyChar = Cast<ATodakBattleArenaCharacter>(OtherActor);
-			if (EnemyChar)
+			if (EnemyChar && isAI == false)
 			{
 				//Set new target for locking system
 				EnemyElement = EnemyChar;
@@ -706,6 +761,10 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 					}
 				}
 			}
+			else if (EnemyChar && isAI == true)
+			{
+				AICanAttack = true;
+			}
 		}
 	}
 }
@@ -718,7 +777,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 		if (this != OtherActor)
 		{
 			ATodakBattleArenaCharacter* EnemyChar = Cast<ATodakBattleArenaCharacter>(OtherActor);
-			if (EnemyChar)
+			if (EnemyChar && isAI == false)
 			{
 				//If current overlapped actor leaving the sphere collision, reset everything
 				CanBeTargeted = false;
@@ -735,6 +794,10 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 						GetWorld()->GetTimerManager().ClearTimer(ToggleTimer);
 					}
 				}
+			}
+			else if (EnemyChar && isAI == true)
+			{
+				AICanAttack = false;
 			}
 		}
 	}
@@ -1294,59 +1357,63 @@ void ATodakBattleArenaCharacter::ResetMyDoOnce()
 
 void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex, FVector2D Locations, float& StartPressTime, EBodyPart& SwipeParts)
 {
-	//Temp var
-	FFingerIndex NewIndex;
-
-	NewIndex.StartLocation = Locations;
-	NewIndex.IsPressed = true;
-	NewIndex.FingerIndex = FingerIndex;
-	NewIndex.SwipeActions = EInputType::Pressed;
-	NewIndex.bDo = false;
-
-	if (InputTouch.Contains(NewIndex) == false)
+	if (!isAI)
 	{
-		//if current touch index does not exist, add it to array
-		InputTouch.Add(NewIndex);
+		//Temp var
+		FFingerIndex NewIndex;
 
-		int Index = InputTouch.Find(NewIndex);
-		if (InputTouch[Index].IsPressed == true)
+		NewIndex.StartLocation = Locations;
+		NewIndex.IsPressed = true;
+		NewIndex.FingerIndex = FingerIndex;
+		NewIndex.SwipeActions = EInputType::Pressed;
+		NewIndex.bDo = false;
+
+		if (InputTouch.Contains(NewIndex) == false)
 		{
-			if (BlockedHit == false)
+			//if current touch index does not exist, add it to array
+			InputTouch.Add(NewIndex);
+
+			int Index = InputTouch.Find(NewIndex);
+			if (InputTouch[Index].IsPressed == true)
 			{
-				BlockedHit = true;
-			}
-			//Checks for touch within the input area
-			UGestureInputsFunctions::CircleSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
-
-			//TArray<EBodyPart>& InputPart = BodyParts;
-
-			//Used in error reporting
-			FString Context;
-
-			RowNames = ActionTable->GetRowNames();
-
-			//iterate through datatable
-			for (auto& name : RowNames)
-			{
-				FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
-				if (row)
+				if (BlockedHit == false)
 				{
-					//Check if the input is same as the input needed to execute the skill
-					if (row->BodyParts.Contains(InputTouch[Index].BodyParts))
-					{
-						SwipeParts = InputTouch[Index].BodyParts;
-						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", InputTouch[Index].FingerIndex))));
-						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", InputTouch[Index].SwipeActions))));
-						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch bdo is %s"), (InputTouch[Index].bDo) ? TEXT("True") : TEXT("False")));
-						SkillHold = row->StartAnimMontage;
-						SkillStopTime = row->StopHoldAnimTime;
-						BlockHit = row->SkillBlockHit;
+					BlockedHit = true;
+				}
 
-						//play animation on press
-						this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-						ServerSkillStartMontage(row->StartAnimMontage);
-						//ServerSkillBlockHitMontage(row->SkillBlockHit);
-						break;
+				//Checks for touch within the input area
+				UGestureInputsFunctions::CircleSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
+
+				//TArray<EBodyPart>& InputPart = BodyParts;
+
+				//Used in error reporting
+				FString Context;
+
+				RowNames = ActionTable->GetRowNames();
+
+				//iterate through datatable
+				for (auto& name : RowNames)
+				{
+					FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
+					if (row)
+					{
+						//Check if the input is same as the input needed to execute the skill
+						if (row->BodyParts.Contains(InputTouch[Index].BodyParts))
+						{
+							SwipeParts = InputTouch[Index].BodyParts;
+							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", InputTouch[Index].FingerIndex))));
+							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", InputTouch[Index].SwipeActions))));
+							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch bdo is %s"), (InputTouch[Index].bDo) ? TEXT("True") : TEXT("False")));
+							SkillHold = row->StartAnimMontage;
+							SkillStopTime = row->StopHoldAnimTime;
+							BlockHit = row->SkillBlockHit;
+
+							//play animation on press
+							this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+							ServerSkillStartMontage(row->StartAnimMontage);
+							//ServerSkillBlockHitMontage(row->SkillBlockHit);
+							break;
+						}
 					}
 				}
 			}
@@ -1417,39 +1484,42 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 
 void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime)
 {
-	bool IsFound = false;
-
-	SwipeDir = EInputType::Pressed;
-
-	EnableMovement = false;
-	RightFoot = false;
-	LeftFoot = false;
-	BlockedHit = false;
-
-	FFingerIndex NewIndex;
-	NewIndex.FingerIndex = FingerIndex;
-
-	if (InputTouch.IsValidIndex(0) == true)
+	if (!isAI)
 	{
-		if (InputTouch.Contains(NewIndex))
+		bool IsFound = false;
+
+		SwipeDir = EInputType::Pressed;
+
+		EnableMovement = false;
+		RightFoot = false;
+		LeftFoot = false;
+		BlockedHit = false;
+
+		FFingerIndex NewIndex;
+		NewIndex.FingerIndex = FingerIndex;
+
+		if (InputTouch.IsValidIndex(0) == true)
 		{
-			//if touch index is found, remove from array
-			int32 Index = InputTouch.Find(NewIndex);
-			if (GetMesh()->GetAnimInstance()->Montage_IsActive(SkillHold) == true)
+			if (InputTouch.Contains(NewIndex))
 			{
-				//Stop current active anim
-				ServerSkillMoveset(SkillHold, damage, 1.0f, 0.0f, false);
+				//if touch index is found, remove from array
+				int32 Index = InputTouch.Find(NewIndex);
+				if (GetMesh()->GetAnimInstance()->Montage_IsActive(SkillHold) == true)
+				{
+					//Stop current active anim
+					ServerSkillMoveset(SkillHold, damage, 1.0f, 0.0f, false);
+				}
+				InputTouch.RemoveAt(Index);
 			}
-			InputTouch.RemoveAt(Index);
 		}
-	}
-	if (BodyParts.IsValidIndex(0) == true)
-	{
-		BodyParts.Empty();
-	}
-	if (SwipeActions.IsValidIndex(0) == true)
-	{
-		SwipeActions.Empty();
+		if (BodyParts.IsValidIndex(0) == true)
+		{
+			BodyParts.Empty();
+		}
+		if (SwipeActions.IsValidIndex(0) == true)
+		{
+			SwipeActions.Empty();
+		}
 	}
 }
 
