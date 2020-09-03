@@ -26,6 +26,9 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 {
 	GENERATED_BODY()
 
+	
+	//class UTimelineComponent* RagdollTimeline;
+
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
@@ -84,9 +87,48 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameOver")
 	void GameOverFunc();
 
-	///////////////////////////////////////////////////////////////
+	/////////////////////////Ragdoll on hit reaction///////////////////////////
 
+	//fCurve for ragdoll timeline
+	UPROPERTY(EditInstanceOnly, Category = Tools, DisplayName = "Ragdoll Curve")
+	UCurveFloat* ragdollTL;
+
+	UPROPERTY(EditInstanceOnly, Category = Tools, DisplayName = "Ragdoll Timeline")
+	UTimelineComponent* RagdollTimeline;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* RPCServerGetUp;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* RPCMultiCastGetUp;
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
+	void SvrOnHitRagdoll();
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastOnHitRagdoll();
+
+	UFUNCTION(BlueprintCallable)
+	void OnRagdoll(UAnimMontage* GetUpSkill);
+
+
+	/*//Timeline
+	UPROPERTY()
+	UTimelineComponent* RagdollTimeline;
+
+	UPROPERTY()
+	UCurveFloat* fCurve;
+
+	UFUNCTION()
+	FOnTimelineFloat InterpFunction();
 	
+	UFUNCTION(BlueprintCallable)
+	void TimelineFloatReturn(float value);*/
+
+	/////////////////////////End of hit reaction///////////////////////////
 
 	/** Delegate function called for execute blueprints function */
 	UPROPERTY(BlueprintAssignable, Category = Gestures)
@@ -264,8 +306,21 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets);
 	
-	UFUNCTION(BlueprintCallable)
-	void SpawnWoundsOnDamage(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location); 
+	//HitLocation where wounds spawned
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
+	FVector HitLocation;
+	
+	//Material used to spawn wound
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	UMaterialInterface * DecalMat;
+
+	//Server spawn wounds
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
+	void SvrSpawnWounds(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location);
+
+	//Multicast spawn wounds
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastSpawnWounds(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location);
 
 	//When the touch is hold
 	void MoveOnHold();
@@ -310,6 +365,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime);
 
+
+
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);
 
@@ -330,8 +387,6 @@ protected:
 
 	//Update value when the timer is active
 	void UpdateStatusValueTimer(FTimerHandle newHandle, EOperation Operation, bool StopOnFull, float ChangeVal, float Value, int MaxVal, float MinVal, float& totalVal);
-
-
 
 	//***********************************Variables********************************************//
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeDirection")
@@ -500,7 +555,7 @@ protected:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool InRagdoll;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	float PhysicsAlpha;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
@@ -710,7 +765,7 @@ protected:
 	UAnimMontage* SkillMoveset;
 	/////////////////////////////////////////////////////////////
 
-	/////////////////For touch start/hold/////////////////////////
+	/////////////////For touch start hold/////////////////////////
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerSkillHold;
 

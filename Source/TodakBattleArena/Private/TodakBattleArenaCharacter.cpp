@@ -29,6 +29,7 @@
 #include "Engine/DecalActor.h"
 #include "Components/DecalComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Runtime/Engine/Classes/Components/TimelineComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATodakBattleArenaCharacter
@@ -78,6 +79,23 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
+
+	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/Game/Blueprints/CurveFloatBP.CurveFloatBP"));
+
+	if (Curvy.Object)
+	{
+		fCurve = Curvy.Object;
+	}
+
+	RagdollTimeline = ObjectInitializer.CreateDefaultSubobject<UTimelineComponent>(this, TEXT("RagdollTimeline"));
+	InterpFunction.BindFunction(this, FName{ TEXT("TimelineFloatReturn") });
+
+	RagdollTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
+
+	InterpFunction.BindUFunction(this, FName("TimelineFloatReturn"));
+	TimelineFinished.BindUFunction(this, FName("OnTimelineFinished"));
+
+	ZOffset = 50.0f;*/
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -145,6 +163,10 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Recovering);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, StopRagdoll);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsAttacking);
+
+	//SpawnWounds
+	DOREPLIFETIME(ATodakBattleArenaCharacter, HitLocation);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, DecalMat);
 }
 
 void ATodakBattleArenaCharacter::LockOn_Implementation()
@@ -213,6 +235,9 @@ AController* ATodakBattleArenaCharacter::SetNewControlRotation(FRotator& Rotator
 void ATodakBattleArenaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//RagdollTimeline->AddInterpFloat(fCurve, InterpFunction(), FName{ TEXT("Floaty") });
+	//RagdollTimeline->Play();
 
 	for (TActorIterator<ATodakBattleArenaCharacter> ActorItr(GetWorld()); ActorItr; ++ActorItr)
 	{
@@ -346,6 +371,26 @@ void ATodakBattleArenaCharacter::BeginPlay()
 			}
 		}
 	}
+
+	/*if (fCurve)
+	{
+		// Add the float curve to the timeline and conenct to InterpFunction() delegate
+		RagdollTimeline->AddInterpFloat(fCurve, InterpFunction, FName("Alpha"));
+
+		//Add timeline to TimelineFinished()
+		RagdollTimeline->SetTimelineFinishedFunc(TimelineFinished);
+
+		//Setting location vectors
+		StartLocation = GetActorLocation();
+		EndLocation = FVector(StartLocation.X, StartLocation.Y, StartLocation.Z + ZOffset);
+
+		// Setting our timeline's settings before we start it
+		RagdollTimeline->SetLooping(false);
+		RagdollTimeline->SetIgnoreTimeDilation(true);
+
+		RagdollTimeline->Play();
+
+	}*/
 }
 
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
@@ -756,6 +801,7 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 						{
 							//Start target lock timer
 							GetWorld()->GetTimerManager().SetTimer(ToggleTimer, this, &ATodakBattleArenaCharacter::TriggerToggleLockOn, 0.001f, true);
+							//GetWorld()->GetFirstPlayerController()->PlayerCameraManager->
 							TargetLocked = true;
 						}
 					}
@@ -926,7 +972,10 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 				{
 					DamageMovesets = row->DamageMoveset;
 				}
+
+				
 				return;
+
 			}
 		}
 	}
@@ -935,23 +984,31 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 }
 
 
-
-void ATodakBattleArenaCharacter::SpawnWoundsOnDamage(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location)
+bool ATodakBattleArenaCharacter::SvrSpawnWounds_Validate(UMaterialInterface * DecalMaterial, USceneComponent * AttachToComponent, FName AttachPointName, FVector Location)
 {
-	UGameplayStatics::SpawnDecalAttached(DecalMaterial, FVector(10.0f, 10.0f, 10.0f), AttachToComponent, AttachPointName, Location, FRotator(0.0f, 0.0f, 0.0f), EAttachLocation::KeepWorldPosition, 0.0f);
-	//FHitResult hit;
-	//class UMaterialInterface * DecalMaterial;
-	//FName AttachPointName;
-	//FVector hitLocation = hit->GetComponentTransform().GetLocation();
+	return true;
+}
 
-
-	/*if (hit.GetComponent() != NULL)
+void ATodakBattleArenaCharacter::SvrSpawnWounds_Implementation(UMaterialInterface * DecalMaterial, USceneComponent * AttachToComponent, FName AttachPointName, FVector Location)
+{
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		UPrimitiveComponent * object = hit.GetComponent();
+		//spawn wounds multicast
+		MulticastSpawnWounds(DecalMaterial, AttachToComponent, AttachPointName, Location);
+	}
 
-		UGameplayStatics::SpawnDecalAttached(DecalMaterial, FVector(10.0f, 10.0f, 10.0f), NAME_None, AttachPointName, Location, FRotator(0.0f, 0.0f, 0.0f), EAttachLocation::KeepWorldPosition, 0.0f);
-	}*/
+}
 
+bool ATodakBattleArenaCharacter::MulticastSpawnWounds_Validate(UMaterialInterface * DecalMaterial, USceneComponent * AttachToComponent, FName AttachPointName, FVector Location)
+{
+	return true;
+}
+void ATodakBattleArenaCharacter::MulticastSpawnWounds_Implementation(UMaterialInterface * DecalMaterial, USceneComponent * AttachToComponent, FName AttachPointName, FVector Location)
+{
+	//get decal mat apa
+	//buat variable current hit loc kt h
+
+	UGameplayStatics::SpawnDecalAttached(DecalMat, FVector(10.0f, 10.0f, 10.0f), this->GetMesh(), BoneName, HitLocation, FRotator(0.0f, 0.0f, 0.0f), EAttachLocation::KeepWorldPosition, 0.0f);
 }
 
 void ATodakBattleArenaCharacter::MoveOnHold()
@@ -1271,6 +1328,34 @@ void ATodakBattleArenaCharacter::UpdateStatusValueTimer(FTimerHandle newHandle, 
 	}
 }
 
+/*
+FOnTimelineFloat ATodakBattleArenaCharacter::InterpFunction()
+{
+	return FOnTimelineFloat();
+}
+
+FOnTimelineEvent ATodakBattleArenaCharacter::TimelineFinished()
+{
+	return FOnTimelineEvent();
+}
+
+void ATodakBattleArenaCharacter::TimelineFloatReturn(float value)
+{
+	SetActorLocation(FMath::Lerp(StartLocation, EndLocation, value));
+}
+
+void ATodakBattleArenaCharacter::OnTimelineFinished()
+{
+	if (RagdollTimeline->GetPlaybackPosition() == 0.0f)
+	{
+		RagdollTimeline->Play();
+	}
+	else if (RagdollTimeline->GetPlaybackPosition() == RagdollTimeline->GetTimelineLength())
+	{
+		RagdollTimeline->Reverse();
+	}
+}*/
+
 /***********************************************************************END_STATUS*******************************************************************************************************************/
 
 void ATodakBattleArenaCharacter::ReduceDamageTaken(float damageValue)
@@ -1583,3 +1668,68 @@ void ATodakBattleArenaCharacter::StartAttack4()
 {
 	UE_LOG(LogTemp, Warning, TEXT("We are using our fourth attack."));
 }
+
+void ATodakBattleArenaCharacter::OnRagdoll(UAnimMontage* GetUpSkill)
+{
+	if (!InRagdoll)
+	{
+		//set all bodies below simulate physics
+		PhysicsAlpha = 0.0f;
+		InRagdoll = true;
+	}
+	else
+	{
+		PhysicsAlpha = 1.0f;
+		Recovering = true;
+		//get anim instace
+		RPCMulticastGetUp = GetUpSkill;
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMulticastGetUp, 1.5f, EMontagePlayReturnType::MontageLength, 0.546f);
+	}
+	return;
+}
+
+bool ATodakBattleArenaCharacter::SvrOnHitRagdoll_Validate()
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::SvrOnHitRagdoll_Implementation()
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		//spawn wounds multicast
+		MulticastOnHitRagdoll();
+	}
+}
+
+bool ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Validate()
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
+{
+	if (InRagdoll)
+	{
+		//execute ragdoll function once
+		OnRagdoll();
+
+		RagdollTimeline->Stop();
+		do
+		{ 
+			BlendWeight = RagdollTimeline->GetPlaybackPosition();
+			//execute on ragdoll function once
+
+		} while (OnRagdoll);
+		//BlendWeight
+	}
+
+	else
+	{
+		RagdollTimeline->PlayFromStart();
+	}
+}
+
+
+
+
