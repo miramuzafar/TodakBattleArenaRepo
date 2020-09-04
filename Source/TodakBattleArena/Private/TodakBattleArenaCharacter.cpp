@@ -17,6 +17,7 @@
 #include "..\Public\GestureInputsFunctions.h"
 #include "GestureMathLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
 #include "TodakBattleArenaGameMode.h"
 #include "Components/TextBlock.h"
@@ -157,6 +158,15 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastBlockHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastSkill);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastSkillHold);
+
+	
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMulticastGetUp);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerGetUp);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, GetUpAnim);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RagdollTimeline);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, ragdollTL);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, DoneRagdoll);
+
 	//**EndAnimMontage**//
 
 	DOREPLIFETIME(ATodakBattleArenaCharacter, InRagdoll);
@@ -1669,11 +1679,19 @@ void ATodakBattleArenaCharacter::StartAttack4()
 	UE_LOG(LogTemp, Warning, TEXT("We are using our fourth attack."));
 }
 
+
+void ATodakBattleArenaCharacter::SetAllBodiesBelowSimulatePhysics(const FName & InBoneName, bool bNewSimulate, bool bIncludeSelf)
+{
+}
+
 void ATodakBattleArenaCharacter::OnRagdoll(UAnimMontage* GetUpSkill)
 {
+	DoneRagdoll = false;
+	const FName& InBoneName = "pelvis";
 	if (!InRagdoll)
 	{
 		//set all bodies below simulate physics
+		SetAllBodiesBelowSimulatePhysics(InBoneName, true, true);
 		PhysicsAlpha = 0.0f;
 		InRagdoll = true;
 	}
@@ -1683,9 +1701,10 @@ void ATodakBattleArenaCharacter::OnRagdoll(UAnimMontage* GetUpSkill)
 		Recovering = true;
 		//get anim instace
 		RPCMulticastGetUp = GetUpSkill;
-		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMulticastGetUp, 1.5f, EMontagePlayReturnType::MontageLength, 0.546f);
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMulticastGetUp, 2.0f, EMontagePlayReturnType::MontageLength, 0.0f);
 	}
-	return;
+	DoneRagdoll = true;
+	//return;
 }
 
 bool ATodakBattleArenaCharacter::SvrOnHitRagdoll_Validate()
@@ -1712,7 +1731,7 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 	if (InRagdoll)
 	{
 		//execute ragdoll function once
-		OnRagdoll();
+		OnRagdoll(GetUpAnim);
 
 		RagdollTimeline->Stop();
 		do
@@ -1720,7 +1739,7 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 			BlendWeight = RagdollTimeline->GetPlaybackPosition();
 			//execute on ragdoll function once
 
-		} while (OnRagdoll);
+		} while (!DoneRagdoll);
 		//BlendWeight
 	}
 

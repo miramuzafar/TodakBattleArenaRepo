@@ -90,26 +90,38 @@ public:
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
 
 	//fCurve for ragdoll timeline
-	UPROPERTY(EditInstanceOnly, Category = Tools, DisplayName = "Ragdoll Curve")
+	UPROPERTY(EditInstanceOnly, Replicated, Category = Tools, DisplayName = "Ragdoll Curve")
 	UCurveFloat* ragdollTL;
 
-	UPROPERTY(EditInstanceOnly, Category = Tools, DisplayName = "Ragdoll Timeline")
+	UPROPERTY(EditInstanceOnly, Replicated, Category = Tools, DisplayName = "Ragdoll Timeline")
 	UTimelineComponent* RagdollTimeline;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
-	float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
+	UPROPERTY(VisibleAnywhere, Replicated)
+	bool DoneRagdoll;
+
+	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	//float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerGetUp;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
-	UAnimMontage* RPCMultiCastGetUp;
+	UAnimMontage* GetUpAnim;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* RPCMulticastGetUp;
 
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
 	void SvrOnHitRagdoll();
 
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastOnHitRagdoll();
+
+	UFUNCTION()
+	void SetAllBodiesBelowSimulatePhysics(const FName& InBoneName, bool bNewSimulate, bool bIncludeSelf);
+
+	//UPROPERTY(VisibleAnywhere, Replicated)
+	//static FName MakeLiteralName(FName pelvis);
 
 	UFUNCTION(BlueprintCallable)
 	void OnRagdoll(UAnimMontage* GetUpSkill);
