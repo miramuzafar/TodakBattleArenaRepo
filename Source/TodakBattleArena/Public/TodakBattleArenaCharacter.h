@@ -87,6 +87,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameOver")
 	void GameOverFunc();
 
+	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
 
 	//fCurve for ragdoll timeline
@@ -406,6 +407,8 @@ protected:
 	//Update value when the timer is active
 	void UpdateStatusValueTimer(FTimerHandle newHandle, EOperation Operation, bool StopOnFull, float ChangeVal, float Value, int MaxVal, float MinVal, float& totalVal);
 
+
+
 	//***********************************Variables********************************************//
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeDirection")
 	EInputType SwipeDir;
@@ -561,10 +564,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
 	float damageAfterReduction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	FName BoneName = "pelvis";
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float BlendWeight;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Health")
@@ -573,7 +576,14 @@ protected:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool InRagdoll;
 
+<<<<<<< HEAD
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	bool IsCollide = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+=======
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+>>>>>>> 50f602db3c34c1f9359cf3adf8796c0536f483ec
 	float PhysicsAlpha;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
@@ -750,6 +760,7 @@ protected:
 	//*********************************************************************//
 
 	
+
 	///////////////For swipe gesture//////////////////////////////
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Status")
@@ -783,7 +794,7 @@ protected:
 	UAnimMontage* SkillMoveset;
 	/////////////////////////////////////////////////////////////
 
-	/////////////////For touch start hold/////////////////////////
+	/////////////////For touch start/hold/////////////////////////
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerSkillHold;
 
