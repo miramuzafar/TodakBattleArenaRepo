@@ -26,6 +26,9 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 {
 	GENERATED_BODY()
 
+	
+	//class UTimelineComponent* RagdollTimeline;
+
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
@@ -85,6 +88,60 @@ public:
 	void GameOverFunc();
 
 	///////////////////////////////////////////////////////////////
+	/////////////////////////Ragdoll on hit reaction///////////////////////////
+
+	//fCurve for ragdoll timeline
+	UPROPERTY(EditInstanceOnly, Replicated, Category = Tools, DisplayName = "Ragdoll Curve")
+	UCurveFloat* ragdollTL;
+
+	UPROPERTY(EditInstanceOnly, Replicated, Category = Tools, DisplayName = "Ragdoll Timeline")
+	UTimelineComponent* RagdollTimeline;
+
+	UPROPERTY(VisibleAnywhere, Replicated)
+	bool DoneRagdoll;
+
+	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	//float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* RPCServerGetUp;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* GetUpAnim;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* RPCMulticastGetUp;
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
+	void SvrOnHitRagdoll();
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastOnHitRagdoll();
+
+	UFUNCTION()
+	void SetAllBodiesBelowSimulatePhysics(const FName& InBoneName, bool bNewSimulate, bool bIncludeSelf);
+
+	//UPROPERTY(VisibleAnywhere, Replicated)
+	//static FName MakeLiteralName(FName pelvis);
+
+	UFUNCTION(BlueprintCallable)
+	void OnRagdoll(UAnimMontage* GetUpSkill);
+
+
+	/*//Timeline
+	UPROPERTY()
+	UTimelineComponent* RagdollTimeline;
+
+	UPROPERTY()
+	UCurveFloat* fCurve;
+
+	UFUNCTION()
+	FOnTimelineFloat InterpFunction();
+	
+	UFUNCTION(BlueprintCallable)
+	void TimelineFloatReturn(float value);*/
+
+	/////////////////////////End of hit reaction///////////////////////////
 
 	/** Delegate function called for execute blueprints function */
 	UPROPERTY(BlueprintAssignable, Category = Gestures)
@@ -171,6 +228,8 @@ public:
 
 	//remove touch inputs from array
 	void RemoveFromArray();
+
+
 
 protected:
 
@@ -259,6 +318,22 @@ protected:
 	//SkillPress replicate on all client
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets);
+	
+	//HitLocation where wounds spawned
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
+	FVector HitLocation;
+	
+	//Material used to spawn wound
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	UMaterialInterface * DecalMat;
+
+	//Server spawn wounds
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
+	void SvrSpawnWounds(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location);
+
+	//Multicast spawn wounds
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastSpawnWounds(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location);
 
 	//When the touch is hold
 	void MoveOnHold();
@@ -302,6 +377,8 @@ protected:
 	//OnRelease
 	UFUNCTION(BlueprintCallable)
 	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime);
+
+
 
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);
@@ -493,10 +570,14 @@ protected:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool InRagdoll;
 
+<<<<<<< HEAD
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool IsCollide = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+=======
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+>>>>>>> 50f602db3c34c1f9359cf3adf8796c0536f483ec
 	float PhysicsAlpha;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
@@ -672,6 +753,7 @@ protected:
 
 	//*********************************************************************//
 
+	
 
 	///////////////For swipe gesture//////////////////////////////
 
@@ -743,6 +825,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool BurstActivate;
 
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	//FVector ;
 	//*********************************End Variables*******************************************//
 
 protected:
