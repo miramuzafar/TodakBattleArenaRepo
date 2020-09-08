@@ -576,14 +576,10 @@ protected:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool InRagdoll;
 
-<<<<<<< HEAD
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool IsCollide = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
-=======
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
->>>>>>> 50f602db3c34c1f9359cf3adf8796c0536f483ec
 	float PhysicsAlpha;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")

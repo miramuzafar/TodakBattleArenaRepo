@@ -54,7 +54,7 @@ void UWidgetFunctionLibrary::ChangeButtonImage(UButton* PreviousClickedButton, U
 void UWidgetFunctionLibrary::FlipFlopButtonImageChange(UButton* ClickedButton, bool IsTrue)
 {
 	//if bool is true, change normal state of button to pressed state image, else invert the process
-	if (IsTrue == true)
+	if (IsTrue == false)
 	{
 		if (ClickedButton != nullptr)
 		{
@@ -66,9 +66,10 @@ void UWidgetFunctionLibrary::FlipFlopButtonImageChange(UButton* ClickedButton, b
 			ClickedButton->WidgetStyle.Hovered = ClickedButton->WidgetStyle.Pressed;
 			ClickedButton->WidgetStyle.Pressed = ClickedButton->WidgetStyle.Pressed;
 			ClickedButton->WidgetStyle.Disabled = NormalBrush;
+			return;
 		}
 	}
-	else if (IsTrue == false)
+	if (IsTrue == true)
 	{
 		if (ClickedButton != nullptr)
 		{
@@ -82,6 +83,14 @@ void UWidgetFunctionLibrary::FlipFlopButtonImageChange(UButton* ClickedButton, b
 				ClickedButton->WidgetStyle.Normal = ClickedButton->WidgetStyle.Disabled;
 				ClickedButton->WidgetStyle.Hovered = ClickedButton->WidgetStyle.Normal;
 				ClickedButton->WidgetStyle.Pressed = PressedBrush;
+				return;
+			}
+			else
+			{
+				ClickedButton->WidgetStyle.Normal = ClickedButton->WidgetStyle.Normal;
+				ClickedButton->WidgetStyle.Hovered = ClickedButton->WidgetStyle.Normal;
+				//ClickedButton->WidgetStyle.Pressed = PressedBrush;
+				return;
 			}
 		}
 	}
@@ -97,7 +106,7 @@ bool UWidgetFunctionLibrary::ChangeAudioState(const UObject* WorldContextObject,
 		return false;
 	}
 	//if current state is audio off, unmute them
-	else if (State == false)
+	if (State == false)
 	{
 		UGameplayStatics::SetSoundMixClassOverride(WorldContextObject, InSoundMixModifier, InSoundClass, 1.0f, 1.0f, 0.0f);
 		UGameplayStatics::PushSoundMixModifier(WorldContextObject, InSoundMixModifier);
