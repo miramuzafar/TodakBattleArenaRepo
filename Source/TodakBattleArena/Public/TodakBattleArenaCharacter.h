@@ -117,8 +117,14 @@ public:
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastOnHitRagdoll();
 
-	UFUNCTION()
+	/*UFUNCTION()
 	void SetAllBodiesBelowSimulatePhysics(const FName& InBoneName, bool bNewSimulate, bool bIncludeSelf);
+
+	UFUNCTION()
+	void SetAllBodiesPhysicsBlendWeight(float PhysicsBlendWeight, bool bSkipCustomPhysicsType);
+
+	UFUNCTION()
+	void SetAllBodiesSimulatePhysics(bool bNewSimulate);*/
 
 	//UPROPERTY(VisibleAnywhere, Replicated)
 	//static FName MakeLiteralName(FName pelvis);

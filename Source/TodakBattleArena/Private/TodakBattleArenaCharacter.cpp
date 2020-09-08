@@ -30,7 +30,7 @@
 #include "Engine/DecalActor.h"
 #include "Components/DecalComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Runtime/Engine/Classes/Components/TimelineComponent.h"
+#include "Components/TimelineComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATodakBattleArenaCharacter
@@ -80,6 +80,8 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
+
+	
 
 	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/Game/Blueprints/CurveFloatBP.CurveFloatBP"));
 
@@ -1680,20 +1682,34 @@ void ATodakBattleArenaCharacter::StartAttack4()
 }
 
 
-void ATodakBattleArenaCharacter::SetAllBodiesBelowSimulatePhysics(const FName & InBoneName, bool bNewSimulate, bool bIncludeSelf)
-{
-}
+//void ATodakBattleArenaCharacter::SetAllBodiesBelowSimulatePhysics(const FName & InBoneName, bool bNewSimulate, bool bIncludeSelf)
+//{
+//}
+//
+//void ATodakBattleArenaCharacter::SetAllBodiesPhysicsBlendWeight(float PhysicsBlendWeight, bool bSkipCustomPhysicsType)
+//{
+//}
+//
+//void ATodakBattleArenaCharacter::SetAllBodiesSimulatePhysics(bool bNewSimulate)
+//{
+//}
 
 void ATodakBattleArenaCharacter::OnRagdoll(UAnimMontage* GetUpSkill)
 {
 	DoneRagdoll = false;
-	const FName& InBoneName = "pelvis";
+	//FName InBoneName;
+	//GetWorld()->MakeLiteralname(FName pelvis);
+	//FName UKismetSystemLibrary::MakeLiteralName(FName Value);
+	//UKismetSystemLibrary::MakeLiteralName('pelvis');
+
 	if (!InRagdoll)
 	{
 		//set all bodies below simulate physics
-		SetAllBodiesBelowSimulatePhysics(InBoneName, true, true);
+		GetMesh()->SetAllBodiesBelowSimulatePhysics(UKismetSystemLibrary::MakeLiteralName("pelvis"), true, true);
+		
 		PhysicsAlpha = 0.0f;
 		InRagdoll = true;
+		
 	}
 	else
 	{
@@ -1747,6 +1763,10 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 	{
 		RagdollTimeline->PlayFromStart();
 	}
+
+	GetMesh()->SetAllBodiesPhysicsBlendWeight(0.0f, false);
+	GetMesh()->SetAllBodiesSimulatePhysics(false);
+	IsHit = false;
 }
 
 
