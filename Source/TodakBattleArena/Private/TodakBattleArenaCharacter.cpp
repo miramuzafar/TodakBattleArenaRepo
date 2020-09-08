@@ -80,9 +80,12 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
+<<<<<<< HEAD
 
 	
 
+=======
+>>>>>>> e6a5ec867da3244accfa7d3a0050663acbfb3d32
 	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/Game/Blueprints/CurveFloatBP.CurveFloatBP"));
 
 	if (Curvy.Object)
@@ -174,10 +177,15 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Recovering);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, StopRagdoll);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsAttacking);
+
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsCollide);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlendWeight);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BoneName);
 
+
+	DOREPLIFETIME(ATodakBattleArenaCharacter, IsCollide);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, BlendWeight);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, BoneName);
 
 	//SpawnWounds
 	DOREPLIFETIME(ATodakBattleArenaCharacter, HitLocation);
