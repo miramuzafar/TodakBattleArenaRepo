@@ -7,6 +7,8 @@
 #include "MFCGameInstance.generated.h"
 
 class UTouchInterface;
+class USoundMix;
+class USoundClass;
 /**
  * 
  */
@@ -83,6 +85,41 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "InputManagement")
 	void LoadJoystick(APlayerController* thisController, bool isTrueLevel);
+
+public:
+
+	//Index settings from 0 to 3, where 3 is the highest quality possible//
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Graphic Settings")
+		TMap<int32, FText> GraphicalCommands;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PostProcessing")
+		TMap<int32, FText> PPCommands;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anti-Aliasing")
+		TMap<int32, FText> AACommands;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ShadowsSetting")
+		TMap<int32, FText> ShadowCommands;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FramePerSeconds")
+		TMap<int32, FText> FPSCommands;*/
+
+	//Index settings from 0 to 3, where 3 is the highest quality possible//
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Graphic Settings|Scalability Level")
+		TArray<int32> ScalabilityLevels = { 0,1,2,3 };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Settings|Music")
+		class USoundMix* MainMusicSoundMix;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Settings|Music")
+		class USoundClass* MainMusicSoundClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Settings|SFX")
+		class USoundMix* MainSFXSoundMix;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio Settings|SFX")
+		class USoundClass* MainSFXSoundClass;
+
 
 protected:
 

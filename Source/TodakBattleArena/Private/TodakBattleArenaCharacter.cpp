@@ -65,17 +65,16 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 	damageAfterReduction = 0.0f;
 
+	ToBeIgnoredCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("ToBeIgnoredCollision"));
+	ToBeIgnoredCollision->SetupAttachment(GetMesh());
+
 	//TargetLockCollision
 	LockOnCollision = CreateDefaultSubobject<USphereComponent>(TEXT("LockOnCollision"));
 	LockOnCollision->SetupAttachment(RootComponent);
 	LockOnCollision->InitSphereRadius(400.0f);
 
-	ToBeIgnoredCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("ToBeIgnoredCollision"));
-	ToBeIgnoredCollision->SetupAttachment(GetMesh());
-
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
-
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
@@ -142,6 +141,9 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Recovering);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, StopRagdoll);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsAttacking);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, IsCollide);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, BlendWeight);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, BoneName);
 }
 
 void ATodakBattleArenaCharacter::LockOn_Implementation()
@@ -584,11 +586,16 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 
 		if (GetWorld()->GetTimerManager().IsTimerActive(Delay) == false)
 		{
+			//GetMesh()->SetSimulatePhysics(false);
 			GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
 
 			//if this client has access
 			if (IsLocallyControlled())
 			{
+				if (this->BlockedHit == true)
+				{
+					this->BlockedHit = false;
+				}
 				//if still in blocked hit state
 				//Reduce player energy after action
 				EnergySpent(10.0f, 100.0f);
@@ -615,10 +622,14 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		//If the anim is not currently playing
 		this->StopAnimMontage(RPCMultiCastSkillHold);
 		ResetMovementMode();
-		if (this->BlockedHit == true)
+		if (IsLocallyControlled())
 		{
-			this->BlockedHit = false;
+			if (this->BlockedHit == true)
+			{
+				this->BlockedHit = false;
+			}
 		}
+		
 		//if still in blocked hit state
 	}
 }
@@ -676,7 +687,11 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UA
 		RPCMultiCastBlockHit = MulticastSkill;
 
 		//play skillblock anim montage
-		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.5f, EMontagePlayReturnType::MontageLength, 0.546f);
+		//float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 2.0f, EMontagePlayReturnType::MontageLength, 0.7f);
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 2.0f, EMontagePlayReturnType::MontageLength, false);
+		
+		//float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 2.0f, EMontagePlayReturnType::MontageLength, 0.7f);
+		this->GetMesh()->GetAnimInstance()->Montage_Stop(3.0f, RPCMultiCastSkillHold);
 
 		//run the timer
 		if (IsLocallyControlled())
@@ -684,7 +699,7 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UA
 			//Create uobject for timer delegate
 			FTimerDelegate FunctionsNames;
 			FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentMontage, RPCMultiCastBlockHit, &BlockHitTimer);
-			GetWorld()->GetTimerManager().SetTimer(BlockHitTimer, FunctionsNames, 0.6f, false);
+			GetWorld()->GetTimerManager().SetTimer(BlockHitTimer, FunctionsNames, 0.757f, false);
 		}
 	}
 }
@@ -693,7 +708,7 @@ bool ATodakBattleArenaCharacter::ServerStopBlockHitMontage_Validate(UAnimMontage
 {
 	return true;
 }
-void ATodakBattleArenaCharacter::ServerStopBlockHitMontage_Implementation(UAnimMontage * ServerSkill)
+void ATodakBattleArenaCharacter::ServerStopBlockHitMontage_Implementation(UAnimMontage* ServerSkill)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
@@ -713,10 +728,11 @@ void ATodakBattleArenaCharacter::MulticastStopBlockHitMontage_Implementation(UAn
 		//stops local timer
 		GetWorld()->GetTimerManager().ClearTimer(BlockHitTimer);
 	}
-	//reset back to montage during blocked hit
-	UE_LOG(LogTemp, Warning, TEXT("Stop block timer!"));
+		//reset back to montage during blocked hit
+	//this
 	this->GetMesh()->GetAnimInstance()->Montage_Stop(3.0f, MulticastSkill);
-	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkillHold, 1.0f, EMontagePlayReturnType::MontageLength, SkillStopTime);
+	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkillHold, 2.0f, EMontagePlayReturnType::MontageLength, SkillStopTime, false);
+	UE_LOG(LogTemp, Warning, TEXT("Stop block timer!"));	
 }
 
 void ATodakBattleArenaCharacter::UpdateCurrentMontage(UAnimMontage* MulticastSkill, FTimerHandle* TimerUsed)
@@ -724,8 +740,6 @@ void ATodakBattleArenaCharacter::UpdateCurrentMontage(UAnimMontage* MulticastSki
 	//if the current anim pos is more than .6 seconds, stop the montage and play the hold skill again
 	if (GetWorld()->GetTimerManager().IsTimerActive(*TimerUsed) == true)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("pause block timer!"));
-		GetWorld()->GetTimerManager().PauseTimer(*TimerUsed);
 		ServerStopBlockHitMontage(MulticastSkill);
 	}
 }
@@ -1466,7 +1480,6 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 		EnableMovement = false;
 		RightFoot = false;
 		LeftFoot = false;
-		BlockedHit = false;
 
 		FFingerIndex NewIndex;
 		NewIndex.FingerIndex = FingerIndex;
@@ -1475,6 +1488,10 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 		{
 			if (InputTouch.Contains(NewIndex))
 			{
+				if (BlockedHit == true)
+				{
+					BlockedHit = false;
+				}
 				//if touch index is found, remove from array
 				int32 Index = InputTouch.Find(NewIndex);
 				if (GetMesh()->GetAnimInstance()->Montage_IsActive(SkillHold) == true)

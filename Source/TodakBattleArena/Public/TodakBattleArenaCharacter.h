@@ -481,10 +481,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
 	float damageAfterReduction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	FName BoneName = "pelvis";
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float BlendWeight;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Health")
@@ -492,6 +492,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool InRagdoll;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	bool IsCollide = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float PhysicsAlpha;
