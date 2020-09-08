@@ -76,3 +76,4 @@ Plugins/*/Intermediate/*
 DerivedDataCache/*
 *.uasset
 *.uproject
+*.uproject
