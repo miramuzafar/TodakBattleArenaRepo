@@ -80,8 +80,6 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
-<<<<<<< HEAD
-=======
 
 	
 
@@ -101,8 +99,6 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	TimelineFinished.BindUFunction(this, FName("OnTimelineFinished"));
 
 	ZOffset = 50.0f;*/
-
->>>>>>> 50f602db3c34c1f9359cf3adf8796c0536f483ec
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
@@ -178,16 +174,14 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Recovering);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, StopRagdoll);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsAttacking);
-<<<<<<< HEAD
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsCollide);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlendWeight);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BoneName);
-=======
+
 
 	//SpawnWounds
 	DOREPLIFETIME(ATodakBattleArenaCharacter, HitLocation);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, DecalMat);
->>>>>>> 50f602db3c34c1f9359cf3adf8796c0536f483ec
 }
 
 void ATodakBattleArenaCharacter::LockOn_Implementation()
