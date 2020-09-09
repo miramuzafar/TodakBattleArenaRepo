@@ -80,12 +80,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
-<<<<<<< HEAD
 
-	
-
-=======
->>>>>>> e6a5ec867da3244accfa7d3a0050663acbfb3d32
 	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/Game/Blueprints/CurveFloatBP.CurveFloatBP"));
 
 	if (Curvy.Object)
