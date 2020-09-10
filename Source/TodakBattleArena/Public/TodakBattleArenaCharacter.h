@@ -51,7 +51,7 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 	void StartAttack4();
 
 public:
-	ATodakBattleArenaCharacter();
+	ATodakBattleArenaCharacter(const FObjectInitializer &pInit);
 
 	virtual void BeginPlay() override;
 
@@ -91,14 +91,29 @@ public:
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
 
 	//fCurve for ragdoll timeline
-	UPROPERTY(EditInstanceOnly, Replicated, Category = Tools, DisplayName = "Ragdoll Curve")
-	UCurveFloat* ragdollTL;
+	/*UPROPERTY(EditInstanceOnly, Replicated, Category = Tools, DisplayName = "Ragdoll Curve")
+	UCurveFloat* fCurve;
+
+	
+	UFUNCTION()
+	FOnTimelineFloat InterpFunction();
 
 	UPROPERTY(EditInstanceOnly, Replicated, Category = Tools, DisplayName = "Ragdoll Timeline")
-	UTimelineComponent* RagdollTimeline;
+	UTimelineComponent* RagdollTimeline;*/
+
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat *TestFloatCurve;
+
+	UPROPERTY(EditAnywhere)
+	FTimeline TestTimeline;
 
 	UPROPERTY(VisibleAnywhere, Replicated)
 	bool DoneRagdoll;
+
+	//FTimeline RagdollTimeLine = FTimeline();
+	//UCurveFloat* RagdollCurve;
+	//void TimeLineFloat(float Value);
 
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	//float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
@@ -129,7 +144,7 @@ public:
 
 	//UPROPERTY(VisibleAnywhere, Replicated)
 	//static FName MakeLiteralName(FName pelvis);
-
+	
 	UFUNCTION(BlueprintCallable)
 	void OnRagdoll(UAnimMontage* GetUpSkill);
 
@@ -179,7 +194,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DoOnce")
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "DoOnce")
 	bool bDo = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLockOn")
