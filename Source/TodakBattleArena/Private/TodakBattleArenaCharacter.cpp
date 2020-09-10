@@ -81,6 +81,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter(const FObjectInitializer 
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
 
+<<<<<<< HEAD
 
 	//Set a simple curve in timeline
 	TestFloatCurve = pInit.CreateDefaultSubobject<UCurveFloat>(this, TEXT("Test FloatCurve"));
@@ -99,6 +100,8 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter(const FObjectInitializer 
 	TestTimeline.AddInterpFloat(TestFloatCurve, floatStaticFunc, TEXT("Float Function"));
 
 
+=======
+>>>>>>> cd2c537bcb2ece3869c9e0886b2565bfbe7c7729
 	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/Game/Blueprints/CurveFloatBP.CurveFloatBP"));
 
 	if (Curvy.Object)

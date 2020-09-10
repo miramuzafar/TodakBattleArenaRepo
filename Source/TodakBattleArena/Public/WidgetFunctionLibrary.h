@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "WidgetFunctionLibrary.generated.h"
 
+class APlayerController;
 class UCheckBox;
 class UButton;
 class UTodakBattleArenaSaveGame;
@@ -46,4 +47,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Graphics|Widget Utils")
 	static void SaveCurrentGraphicSettings(UGameInstance* currGI, UTodakBattleArenaSaveGame* CurrentSaveGame, int32 Index, int32 UserIndex, bool MusicOn, bool SFXOn);
+
+	//Get player account id
+	UFUNCTION(BlueprintCallable, Category = "Login|Widget Utils")
+	static void GetOnlineAccountID(APlayerController* PlayerController, FString& UniqueID, FString& GName);
 };

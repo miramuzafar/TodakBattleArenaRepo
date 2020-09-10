@@ -8,7 +8,7 @@ public class TodakBattleArena : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "UMG", "Slate", "SlateCore" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "UMG", "Slate", "SlateCore", "AdvancedSessions", "OnlineSubsystem" });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
         PrivateDependencyModuleNames.Add("OnlineSubsystem");

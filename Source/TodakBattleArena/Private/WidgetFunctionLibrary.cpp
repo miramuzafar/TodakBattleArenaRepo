@@ -10,6 +10,8 @@
 #include "Components/Button.h"
 #include "Sound/SoundMix.h"
 #include "Sound/SoundClass.h"
+#include "AdvancedIdentityLibrary.h"
+#include "AdvancedSessionsLibrary.h"
 #include "GameFramework/GameUserSettings.h"
 
 void UWidgetFunctionLibrary::ChangeCheckBoxBehavior(bool IsChecked, UCheckBox* OldCheckBox, UCheckBox* NewCheckedBox, UCheckBox*& NewCheckBox)
@@ -203,5 +205,20 @@ void UWidgetFunctionLibrary::SaveCurrentGraphicSettings(UGameInstance* currGI, U
 			}*/
 		}
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Saved")));
+	}
+}
+
+void UWidgetFunctionLibrary::GetOnlineAccountID(APlayerController* PlayerController, FString& UniqueID, FString& GName)
+{
+	FBPUniqueNetId UniqueNetID;
+	//Get unique net ID
+	//UAdvancedSessionsLibrary::GetUniqueNetIDFromPlayerState(PlayerController->PlayerState, UniqueNetID);
+
+	//UAdvancedSessionsLibrary::UniqueNetIdToString(UniqueNetID, UniqueID);
+	//Check if ID is exist
+	if (UniqueNetID.IsValid())
+	{
+		//UAdvancedSessionsLibrary::UniqueNetIdToString(UniqueNetID, UniqueID);
+		//UAdvancedIdentityLibrary::GetPlayerNickname(UniqueNetID, GName);
 	}
 }
