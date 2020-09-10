@@ -35,7 +35,7 @@
 //////////////////////////////////////////////////////////////////////////
 // ATodakBattleArenaCharacter
 
-ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
+ATodakBattleArenaCharacter::ATodakBattleArenaCharacter(const FObjectInitializer &pInit)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	// Set size for collision capsule
@@ -81,6 +81,27 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
 
+<<<<<<< HEAD
+
+	//Set a simple curve in timeline
+	TestFloatCurve = pInit.CreateDefaultSubobject<UCurveFloat>(this, TEXT("Test FloatCurve"));
+	TestFloatCurve->FloatCurve.AddKey(0.0f, 0.0f);
+	TestFloatCurve->FloatCurve.AddKey(0.05f, 0.85f);
+	TestFloatCurve->FloatCurve.AddKey(0.11f, 0.85f);
+	TestFloatCurve->FloatCurve.AddKey(0.38f, 0.54f);
+	TestFloatCurve->FloatCurve.AddKey(1.0f, 0.0f);
+
+	//Setup the timeline function
+	FOnTimelineFloat floatStaticFunc{};
+	floatStaticFunc.BindUFunction(this, "MulticastOnHitRagdoll");
+
+	//Create the timeline
+	TestTimeline = FTimeline();
+	TestTimeline.AddInterpFloat(TestFloatCurve, floatStaticFunc, TEXT("Float Function"));
+
+
+=======
+>>>>>>> cd2c537bcb2ece3869c9e0886b2565bfbe7c7729
 	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/Game/Blueprints/CurveFloatBP.CurveFloatBP"));
 
 	if (Curvy.Object)
@@ -99,6 +120,19 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	ZOffset = 50.0f;*/
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+
+
+	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/ThirdPersonBP/fCurve_ragdoll.uasset'"));
+
+	if (Curvy.Object)
+	{
+		fCurve = Curvy.Object;
+	}
+
+	RagdollTimeline = ObjectInitializer.CreateDefaultSubobject<UTimelineComponent>(this, TEXT("TimelineRagdoll"));
+
+	InterpFunction().BindFunction(this, FName{ TEXT("TimelineFloatReturn") });*/
 }
 
 void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -162,9 +196,9 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMulticastGetUp);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerGetUp);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, GetUpAnim);
-	DOREPLIFETIME(ATodakBattleArenaCharacter, RagdollTimeline);
-	DOREPLIFETIME(ATodakBattleArenaCharacter, ragdollTL);
+	//DOREPLIFETIME(ATodakBattleArenaCharacter, fCurve);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, DoneRagdoll);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, bDo);
 
 	//**EndAnimMontage**//
 
@@ -390,6 +424,9 @@ void ATodakBattleArenaCharacter::BeginPlay()
 		}
 	}
 
+	//RagdollTimeline->AddInterpFloat(fCurve, InterpFunction, FName{ TEXT("Floaty") });
+	//RagdollTimeline->Play();
+
 	/*if (fCurve)
 	{
 		// Add the float curve to the timeline and conenct to InterpFunction() delegate
@@ -414,6 +451,13 @@ void ATodakBattleArenaCharacter::BeginPlay()
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (TestTimeline.IsPlaying())
+	{
+		TestTimeline.TickTimeline(DeltaTime);
+		BlendWeight = DeltaTime;
+	}
+
 	/*if (EnableMovement == true)
 	{
 		if (GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold))
@@ -1437,7 +1481,7 @@ void ATodakBattleArenaCharacter::MyDoOnce()
 {
 	if (bDo)
 	{
-		//Do something
+		OnRagdoll(GetUpAnim);
 		return;
 	}
 	else
@@ -1753,7 +1797,6 @@ void ATodakBattleArenaCharacter::SvrOnHitRagdoll_Implementation()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		//spawn wounds multicast
 		MulticastOnHitRagdoll();
 	}
 }
@@ -1767,27 +1810,31 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 {
 	if (InRagdoll)
 	{
-		//execute ragdoll function once
-		OnRagdoll(GetUpAnim);
+		//TestTimeline.Stop();
+		//do
+		//{ 
+		//	OnRagdoll(GetUpAnim);
 
-		RagdollTimeline->Stop();
-		do
-		{ 
-			BlendWeight = RagdollTimeline->GetPlaybackPosition();
-			//execute on ragdoll function once
-
-		} while (!DoneRagdoll);
-		//BlendWeight
+		//} while (!DoneRagdoll);
+		////BlendWeight
+		MyDoOnce();
+		//OnRagdoll(GetUpAnim);
+		TestTimeline.Stop();
 	}
 
 	else
 	{
-		RagdollTimeline->PlayFromStart();
+		TestTimeline.Play();
+		//InRagdoll = false;
+		
 	}
 
+	//TestTimeline.TickTimeline(pValue);
+	//BlendWeight = pValue;
 	GetMesh()->SetAllBodiesPhysicsBlendWeight(0.0f, false);
 	GetMesh()->SetAllBodiesSimulatePhysics(false);
 	IsHit = false;
+	
 }
 
 
