@@ -109,7 +109,7 @@ public:
 	FTimeline TestTimeline;
 
 	UPROPERTY(VisibleAnywhere, Replicated)
-	bool DoneRagdoll;
+	bool DoneRagdoll = false;
 
 	//FTimeline RagdollTimeLine = FTimeline();
 	//UCurveFloat* RagdollCurve;
@@ -128,10 +128,10 @@ public:
 	UAnimMontage* RPCMulticastGetUp;
 
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
-	void SvrOnHitRagdoll();
+	void SvrOnHitRagdoll(UAnimMontage* GetUpSkill);
 
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastOnHitRagdoll();
+	void MulticastOnHitRagdoll(UAnimMontage* GetUpSkill);
 
 	/*UFUNCTION()
 	void SetAllBodiesBelowSimulatePhysics(const FName& InBoneName, bool bNewSimulate, bool bIncludeSelf);
@@ -147,7 +147,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void OnRagdoll(UAnimMontage* GetUpSkill);
-
 
 	/*//Timeline
 	UPROPERTY()
@@ -704,7 +703,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 	FVector LyingLocation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* GetUp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")

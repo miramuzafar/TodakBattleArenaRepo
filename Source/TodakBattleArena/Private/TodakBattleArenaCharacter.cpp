@@ -81,8 +81,6 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter(const FObjectInitializer 
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
 
-<<<<<<< HEAD
-
 	//Set a simple curve in timeline
 	TestFloatCurve = pInit.CreateDefaultSubobject<UCurveFloat>(this, TEXT("Test FloatCurve"));
 	TestFloatCurve->FloatCurve.AddKey(0.0f, 0.0f);
@@ -98,10 +96,8 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter(const FObjectInitializer 
 	//Create the timeline
 	TestTimeline = FTimeline();
 	TestTimeline.AddInterpFloat(TestFloatCurve, floatStaticFunc, TEXT("Float Function"));
-
-
-=======
->>>>>>> cd2c537bcb2ece3869c9e0886b2565bfbe7c7729
+	UE_LOG(LogTemp, Warning, TEXT("Timeline is Created"));
+	
 	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/Game/Blueprints/CurveFloatBP.CurveFloatBP"));
 
 	if (Curvy.Object)
@@ -196,6 +192,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMulticastGetUp);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerGetUp);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, GetUpAnim);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, GetUp);
 	//DOREPLIFETIME(ATodakBattleArenaCharacter, fCurve);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, DoneRagdoll);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, bDo);
@@ -456,8 +453,9 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 	{
 		TestTimeline.TickTimeline(DeltaTime);
 		BlendWeight = DeltaTime;
+		UE_LOG(LogTemp, Warning, TEXT("Timeline is Playing"));
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Black, TEXT("Interp Value: ") + FString::SanitizeFloat(BlendWeight));
 	}
-
 	/*if (EnableMovement == true)
 	{
 		if (GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold))
@@ -816,6 +814,7 @@ bool ATodakBattleArenaCharacter::ServerStopBlockHitMontage_Validate(UAnimMontage
 {
 	return true;
 }
+
 void ATodakBattleArenaCharacter::ServerStopBlockHitMontage_Implementation(UAnimMontage* ServerSkill)
 {
 	if (GetLocalRole() == ROLE_Authority)
@@ -1472,7 +1471,7 @@ void ATodakBattleArenaCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVe
 
 void ATodakBattleArenaCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
-		//StopJumping();
+	//StopJumping();
 	//InputTouchIndex.Remove(FingerIndex);
 	//StopTouchTimer(FingerIndex);
 }
@@ -1482,7 +1481,20 @@ void ATodakBattleArenaCharacter::MyDoOnce()
 	if (bDo)
 	{
 		OnRagdoll(GetUpAnim);
+		if (InRagdoll)
+		{
+			TestTimeline.Stop();
+			UE_LOG(LogTemp, Warning, TEXT("Timeline has stopped."));
+		}
+
+		else
+		{
+			TestTimeline.PlayFromStart();
+			UE_LOG(LogTemp, Warning, TEXT("Timeline play from start..."));
+		}
+		
 		return;
+
 	}
 	else
 		return;
@@ -1762,79 +1774,53 @@ void ATodakBattleArenaCharacter::StartAttack4()
 void ATodakBattleArenaCharacter::OnRagdoll(UAnimMontage* GetUpSkill)
 {
 	DoneRagdoll = false;
-	//FName InBoneName;
-	//GetWorld()->MakeLiteralname(FName pelvis);
-	//FName UKismetSystemLibrary::MakeLiteralName(FName Value);
-	//UKismetSystemLibrary::MakeLiteralName('pelvis');
+	GetUpAnim = GetUpSkill;
+	//GetUp = GetUpSkill;
+	//GetUpAnim = GetUpSkill;
 
 	if (!InRagdoll)
 	{
-		//set all bodies below simulate physics
+		//set all bodies below simulate physics, with output pelvis
 		GetMesh()->SetAllBodiesBelowSimulatePhysics(UKismetSystemLibrary::MakeLiteralName("pelvis"), true, true);
-		
 		PhysicsAlpha = 0.0f;
 		InRagdoll = true;
-		
 	}
 	else
 	{
 		PhysicsAlpha = 1.0f;
 		Recovering = true;
-		//get anim instace
-		RPCMulticastGetUp = GetUpSkill;
-		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMulticastGetUp, 2.0f, EMontagePlayReturnType::MontageLength, 0.0f);
+		this->GetMesh()->GetAnimInstance()->Montage_Play(GetUpAnim, 2.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
 	}
 	DoneRagdoll = true;
 	//return;
 }
 
-bool ATodakBattleArenaCharacter::SvrOnHitRagdoll_Validate()
+bool ATodakBattleArenaCharacter::SvrOnHitRagdoll_Validate(UAnimMontage* GetUpSkill)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::SvrOnHitRagdoll_Implementation()
+void ATodakBattleArenaCharacter::SvrOnHitRagdoll_Implementation(UAnimMontage* GetUpSkill)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		MulticastOnHitRagdoll();
+		MulticastOnHitRagdoll(GetUpAnim);
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Validate()
+bool ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Validate(UAnimMontage* GetUpSkill)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
-{
-	if (InRagdoll)
-	{
-		//TestTimeline.Stop();
-		//do
-		//{ 
-		//	OnRagdoll(GetUpAnim);
-
-		//} while (!DoneRagdoll);
-		////BlendWeight
-		MyDoOnce();
-		//OnRagdoll(GetUpAnim);
-		TestTimeline.Stop();
-	}
-
-	else
-	{
-		TestTimeline.Play();
-		//InRagdoll = false;
-		
-	}
-
-	//TestTimeline.TickTimeline(pValue);
-	//BlendWeight = pValue;
-	GetMesh()->SetAllBodiesPhysicsBlendWeight(0.0f, false);
+void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation(UAnimMontage* GetUpSkill)
+{	
+	//float DeltaTime2;
+	MyDoOnce();
+	
+	GetMesh()->SetAllBodiesPhysicsBlendWeight(BlendWeight, false);
 	GetMesh()->SetAllBodiesSimulatePhysics(false);
 	IsHit = false;
-	
 }
 
 
