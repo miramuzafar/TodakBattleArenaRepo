@@ -556,7 +556,7 @@ protected:
 	/**************************************END STATS******************************************/
 
 	//Assign data table from bp 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UDataTable* ActionTable;
 
 	//Assign data table from bp 
