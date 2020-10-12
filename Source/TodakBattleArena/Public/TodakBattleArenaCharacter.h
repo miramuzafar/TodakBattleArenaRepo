@@ -8,40 +8,12 @@
 #include "Components/TimelineComponent.h"
 #include "Components/BoxComponent.h"
 #include "TargetLockInterface.h"
-<<<<<<< Updated upstream
-#include <PxTransform.h>
-=======
 #include "Components/PrimitiveComponent.h"
->>>>>>> Stashed changes
 #include "TodakBattleArenaCharacter.generated.h"
 
 class UBaseCharacterWidget;
 struct FKAggregateGeom;
 class UPhysicsAsset;
-
-USTRUCT()
-struct FBoneState 
-{
-	GENERATED_BODY()
-
-private:
-
-	UPROPERTY()
-		TArray<int8> TransformData;
-
-public:
-
-	FBoneState()
-	{
-		TransformData.SetNumZeroed(sizeof(physx::PxTransform));
-	}
-
-	physx::PxTransform & GetPxTransform()
-	{
-		return reinterpret_cast<physx::PxTransform &>(TransformData[0]);
-	}
-
-};
 
 FORCEINLINE uint32 GetTypeHash(const FFingerIndex& Key)
 {
@@ -54,10 +26,6 @@ UCLASS(config=Game)
 class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, public ITargetLockInterface
 {
 	GENERATED_BODY()
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 	//class UTimelineComponent* RagdollTimeline;
 
 	/** Camera boom positioning the camera behind the character */
@@ -134,7 +102,6 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated)
 	bool DoneRagdoll = false;
 
-<<<<<<< Updated upstream
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	bool IsFacingUp = false;
 
@@ -151,8 +118,6 @@ public:
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	//float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
 
-=======
->>>>>>> Stashed changes
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerGetUp;
 
