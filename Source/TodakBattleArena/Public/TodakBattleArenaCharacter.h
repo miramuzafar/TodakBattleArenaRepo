@@ -8,11 +8,36 @@
 #include "Components/TimelineComponent.h"
 #include "Components/BoxComponent.h"
 #include "TargetLockInterface.h"
+#include <PxTransform.h>
 #include "TodakBattleArenaCharacter.generated.h"
 
 class UBaseCharacterWidget;
 struct FKAggregateGeom;
 class UPhysicsAsset;
+
+USTRUCT()
+struct FBoneState 
+{
+	GENERATED_BODY()
+
+private:
+
+	UPROPERTY()
+		TArray<int8> TransformData;
+
+public:
+
+	FBoneState()
+	{
+		TransformData.SetNumZeroed(sizeof(physx::PxTransform));
+	}
+
+	physx::PxTransform & GetPxTransform()
+	{
+		return reinterpret_cast<physx::PxTransform &>(TransformData[0]);
+	}
+
+};
 
 FORCEINLINE uint32 GetTypeHash(const FFingerIndex& Key)
 {
@@ -26,7 +51,6 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 {
 	GENERATED_BODY()
 
-	
 	//class UTimelineComponent* RagdollTimeline;
 
 	/** Camera boom positioning the camera behind the character */
@@ -55,7 +79,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void Tick(float DeltaTime) override;
+	virtual void Tick(float DeltaTime) override; 
 
 	//Replicated Network setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -111,6 +135,15 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated)
 	bool DoneRagdoll = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
+	bool IsFacingUp = false;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+	FVector CapsuleLocation;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+	FVector MeshLocation;
+
 	//FTimeline RagdollTimeLine = FTimeline();
 	//UCurveFloat* RagdollCurve;
 	//void TimeLineFloat(float Value);
@@ -123,6 +156,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* GetUpAnim;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* UpMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* DownMontage;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMulticastGetUp;
@@ -285,9 +324,6 @@ protected:
 	//Timer to remove touch inputs from array
 	void RemoveElementFromArrayTimer();
 
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Components)
-	UCapsuleComponent* CapsuleCollision;
-
 	//*******************************************TargetLock************************************************************************************************//
 	/** called when something enters the sphere component */
 	UFUNCTION()
@@ -398,7 +434,17 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime);
 
+	UFUNCTION(BlueprintCallable)
+	void CalculateMeshLocation();
 
+	UFUNCTION(BlueprintPure)
+	bool CalculatingFacingLocation();
+
+	UFUNCTION(BlueprintCallable)
+	void SetUpGetUpOrientation();
+
+	UFUNCTION(BlueprintCallable)
+	void SetUpGetUpMontage();
 
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);
@@ -696,9 +742,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	bool Down;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
-	FVector CapsuleLocation;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 	FVector LyingLocation;

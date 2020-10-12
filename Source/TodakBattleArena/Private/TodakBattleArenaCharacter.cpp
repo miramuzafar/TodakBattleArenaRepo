@@ -31,6 +31,10 @@
 #include "Components/DecalComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TimelineComponent.h"
+#include <extensions/PxD6Joint.h>
+#include <PxRigidBody.h>
+#include <PxRigidDynamic.h>
+#include <PxTransform.h>
 
 //////////////////////////////////////////////////////////////////////////
 // ATodakBattleArenaCharacter
@@ -188,7 +192,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastSkill);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastSkillHold);
 
-	
+	//GetUpFromFall
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMulticastGetUp);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerGetUp);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, GetUpAnim);
@@ -196,6 +200,9 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	//DOREPLIFETIME(ATodakBattleArenaCharacter, fCurve);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, DoneRagdoll);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, bDo);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, IsFacingUp);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, CapsuleLocation);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, MeshLocation);
 
 	//**EndAnimMontage**//
 
@@ -503,6 +510,81 @@ void ATodakBattleArenaCharacter::SetupPlayerInputComponent(class UInputComponent
 
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ATodakBattleArenaCharacter::OnResetVR);
+}
+
+void ATodakBattleArenaCharacter::CalculateMeshLocation()
+{
+	if (GetGameInstance()->GetWorldContext()->RunAsDedicated == false)
+	{
+		FVector loc;
+		FRotator Rot;
+		FHitResult HitRay;
+
+		FVector Start = GetMesh()->GetSocketLocation("pelvis");
+		FVector End = Start + FVector(FVector(0,0,1.0f)*100.0f);
+
+		FCollisionQueryParams TraceParams;
+		
+		//Shoot line from pelvis location to the ground where it's standing
+		if (GetWorld()->LineTraceSingleByChannel(HitRay, Start, End, ECollisionChannel::ECC_Visibility, TraceParams))
+		{
+			//get the new location of the mesh
+			CapsuleLocation = HitRay.Location + FVector(0.0f, 0.0f, 100.0f);
+		}
+		else
+			//set the location to original location of the mesh
+			CapsuleLocation = GetMesh()->GetSocketLocation("pelvis") + FVector(0.0f, 0.0f, 100.0f);
+
+		//Interpolate between mesh location and capsule location
+		MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
+
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Mesh location : %s"), *MeshLocation.ToString()));
+	}
+}
+
+bool ATodakBattleArenaCharacter::CalculatingFacingLocation()
+{
+	//Get the dot product between the mesh right vector location and right vector location
+	float DotProductResult = FVector::DotProduct(UKismetMathLibrary::GetRightVector(GetMesh()->GetSocketRotation("pelvis")), FVector(0.0f, 0.0f, 1.0f));
+
+	//Compare the dot product with the z value, which will be the facing up montage if its more than zero
+	if (DotProductResult >= 0.0f)
+	{
+		return true;
+	}
+	else
+		return false;
+
+	return false;
+}
+
+void ATodakBattleArenaCharacter::SetUpGetUpOrientation()
+{
+	FVector TotalVector;
+	FRotator NewRot;
+
+	if (IsFacingUp == true)
+	{
+		TotalVector = GetMesh()->GetSocketLocation("pelvis") - GetMesh()->GetSocketLocation("neck_01");
+		NewRot = UKismetMathLibrary::MakeRotFromZX(FVector(0.0f, 0.0f, 1.0f), TotalVector);
+	}
+	else
+	{
+		TotalVector = GetMesh()->GetSocketLocation("neck_01") - GetMesh()->GetSocketLocation("pelvis");
+		NewRot = UKismetMathLibrary::MakeRotFromZX(FVector(0.0f, 0.0f, 1.0f), TotalVector);
+	}
+
+	this->SetActorTransform(FTransform(NewRot, MeshLocation, FVector(1.0f, 1.0f, 1.0f)), false, false);
+}
+
+void ATodakBattleArenaCharacter::SetUpGetUpMontage()
+{
+	if (IsFacingUp == true)
+	{
+		RPCMulticastGetUp = UpMontage;
+	}
+	else
+		RPCMulticastGetUp = DownMontage;
 }
 
 void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
