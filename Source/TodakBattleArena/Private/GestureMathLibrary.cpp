@@ -27,7 +27,7 @@ float UGestureMathLibrary::AngleBetweenLines(const FVector2D& Line1Start, const 
 	if (isnan(Angle) || isnan(-Angle))
 		return 0.f;
 	
-	
+	//ganim
 	return (Line2Slope > Line1Slope) ? Angle : -Angle;
 	
 }

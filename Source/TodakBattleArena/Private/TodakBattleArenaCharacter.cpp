@@ -36,10 +36,11 @@
 #include <PxRigidDynamic.h>
 #include <PxTransform.h>
 
+
 //////////////////////////////////////////////////////////////////////////
 // ATodakBattleArenaCharacter
 
-ATodakBattleArenaCharacter::ATodakBattleArenaCharacter(const FObjectInitializer &pInit)
+ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	// Set size for collision capsule
@@ -85,54 +86,33 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter(const FObjectInitializer 
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
 
-	//Set a simple curve in timeline
-	TestFloatCurve = pInit.CreateDefaultSubobject<UCurveFloat>(this, TEXT("Test FloatCurve"));
-	TestFloatCurve->FloatCurve.AddKey(0.0f, 0.0f);
-	TestFloatCurve->FloatCurve.AddKey(0.05f, 0.85f);
-	TestFloatCurve->FloatCurve.AddKey(0.11f, 0.85f);
-	TestFloatCurve->FloatCurve.AddKey(0.38f, 0.54f);
-	TestFloatCurve->FloatCurve.AddKey(1.0f, 0.0f);
+	/*MyTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));*/
+	bwTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
 
-	//Setup the timeline function
-	FOnTimelineFloat floatStaticFunc{};
-	floatStaticFunc.BindUFunction(this, "MulticastOnHitRagdoll");
-
-	//Create the timeline
-	TestTimeline = FTimeline();
-	TestTimeline.AddInterpFloat(TestFloatCurve, floatStaticFunc, TEXT("Float Function"));
-	UE_LOG(LogTemp, Warning, TEXT("Timeline is Created"));
-	
-	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/Game/Blueprints/CurveFloatBP.CurveFloatBP"));
-
-	if (Curvy.Object)
-	{
-		fCurve = Curvy.Object;
-	}
-
-	RagdollTimeline = ObjectInitializer.CreateDefaultSubobject<UTimelineComponent>(this, TEXT("RagdollTimeline"));
-	InterpFunction.BindFunction(this, FName{ TEXT("TimelineFloatReturn") });
-
-	RagdollTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
-
+	/*FOnTimelineFloat InterpFunction{};
+	FOnTimelineEvent TimelineFinished{};*/
 	InterpFunction.BindUFunction(this, FName("TimelineFloatReturn"));
 	TimelineFinished.BindUFunction(this, FName("OnTimelineFinished"));
 
-	ZOffset = 50.0f;*/
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
-
-
-
-	/*static ConstructorHelpers::FObjectFinder<UCurveFloat> Curvy(TEXT("CurveFloat'/ThirdPersonBP/fCurve_ragdoll.uasset'"));
-
-	if (Curvy.Object)
+	//check if fCurve is valid
+	/*if (fCurve)
 	{
-		fCurve = Curvy.Object;
-	}
+		MyTimeline->AddInterpFloat(fCurve, InterpFunction, FName("Alpha"));
+		MyTimeline->SetTimelineFinishedFunc(TimelineFinished);
 
-	RagdollTimeline = ObjectInitializer.CreateDefaultSubobject<UTimelineComponent>(this, TEXT("TimelineRagdoll"));
+		StartLocation = GetActorLocation();
 
-	InterpFunction().BindFunction(this, FName{ TEXT("TimelineFloatReturn") });*/
+		EndLocation = FVector(StartLocation.X, StartLocation.Y, StartLocation.Z + ZOffset);
+
+		MyTimeline->SetLooping(false);
+		MyTimeline->SetIgnoreTimeDilation(true);
+
+		MyTimeline->Play();
+
+		UE_LOG(LogTemp, Warning, TEXT("Timeline is Created"));
+	}*/
+	
+	
 }
 
 void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -156,6 +136,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, playerEnergy);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MaxEnergy);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, EnergyPercentage);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, canMove);
 
 	//Timers
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MajorHealthRate);
@@ -235,6 +216,7 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 	//if the controller is valid, set its rotation to the rotator above
 	FRotator NewRotator;
 	AController* NewController = SetNewControlRotation(NewRotator);
+
 	if (NewController != nullptr)
 	{
 		/*FVector OutLength;
@@ -276,7 +258,7 @@ AController* ATodakBattleArenaCharacter::SetNewControlRotation(FRotator& Rotator
 			FRotator target = UKismetMathLibrary::FindLookAtRotation(Start, End);
 
 			//Interpolate the rotator value for smooth rotation
-			FRotator InterpVal = UKismetMathLibrary::RInterpTo(this->Controller->GetControlRotation(), target, 0.01f, 1.0f);
+			FRotator InterpVal = UKismetMathLibrary::RInterpTo(this->Controller->GetControlRotation(), target, 0.01f, 5.0f);
 
 			//Return final rotator val
 			RotatorParam = FRotator(InterpVal.Pitch, InterpVal.Yaw, this->Controller->GetControlRotation().Roll);
@@ -291,9 +273,6 @@ AController* ATodakBattleArenaCharacter::SetNewControlRotation(FRotator& Rotator
 void ATodakBattleArenaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//RagdollTimeline->AddInterpFloat(fCurve, InterpFunction(), FName{ TEXT("Floaty") });
-	//RagdollTimeline->Play();
 
 	for (TActorIterator<ATodakBattleArenaCharacter> ActorItr(GetWorld()); ActorItr; ++ActorItr)
 	{
@@ -427,42 +406,11 @@ void ATodakBattleArenaCharacter::BeginPlay()
 			}
 		}
 	}
-
-	//RagdollTimeline->AddInterpFloat(fCurve, InterpFunction, FName{ TEXT("Floaty") });
-	//RagdollTimeline->Play();
-
-	/*if (fCurve)
-	{
-		// Add the float curve to the timeline and conenct to InterpFunction() delegate
-		RagdollTimeline->AddInterpFloat(fCurve, InterpFunction, FName("Alpha"));
-
-		//Add timeline to TimelineFinished()
-		RagdollTimeline->SetTimelineFinishedFunc(TimelineFinished);
-
-		//Setting location vectors
-		StartLocation = GetActorLocation();
-		EndLocation = FVector(StartLocation.X, StartLocation.Y, StartLocation.Z + ZOffset);
-
-		// Setting our timeline's settings before we start it
-		RagdollTimeline->SetLooping(false);
-		RagdollTimeline->SetIgnoreTimeDilation(true);
-
-		RagdollTimeline->Play();
-
-	}*/
 }
 
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (TestTimeline.IsPlaying())
-	{
-		TestTimeline.TickTimeline(DeltaTime);
-		BlendWeight = DeltaTime;
-		UE_LOG(LogTemp, Warning, TEXT("Timeline is Playing"));
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Black, TEXT("Interp Value: ") + FString::SanitizeFloat(BlendWeight));
-	}
 	/*if (EnableMovement == true)
 	{
 		if (GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold))
@@ -471,7 +419,6 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 		}
 		MoveOnHold();
 	}*/
-	//.267f
 	//if hold montage is active, prepare for blocking hit
 	if (isAI == false && GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold) && GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkillHold) >= SkillStopTime && EnableMovement == false)// && EnableMovement == false
 	{
@@ -483,8 +430,7 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 	}*/
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
+//////////////////////////////////// Input //////////////////////////////////////// 
 
 void ATodakBattleArenaCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
@@ -776,6 +722,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		{
 			//GetMesh()->SetSimulatePhysics(false);
 			GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
+			
 
 			//if this client has access
 			if (IsLocallyControlled())
@@ -1015,6 +962,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 		//Set all the attribute to the current vars of player
 		HitTraceLength = HitTraceLengths;
 		this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+		canMove = false;
 		//this->GetCharacterMovement()->StopMovementImmediately();
 		CDSkill = true;
 
@@ -1191,6 +1139,7 @@ void ATodakBattleArenaCharacter::ResetMovementMode()
 {
 	//reset character movement mode back to walking
 	this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	canMove = true;
 	SkillTriggered = false;
 }
 
@@ -1483,33 +1432,6 @@ void ATodakBattleArenaCharacter::UpdateStatusValueTimer(FTimerHandle newHandle, 
 	}
 }
 
-/*
-FOnTimelineFloat ATodakBattleArenaCharacter::InterpFunction()
-{
-	return FOnTimelineFloat();
-}
-
-FOnTimelineEvent ATodakBattleArenaCharacter::TimelineFinished()
-{
-	return FOnTimelineEvent();
-}
-
-void ATodakBattleArenaCharacter::TimelineFloatReturn(float value)
-{
-	SetActorLocation(FMath::Lerp(StartLocation, EndLocation, value));
-}
-
-void ATodakBattleArenaCharacter::OnTimelineFinished()
-{
-	if (RagdollTimeline->GetPlaybackPosition() == 0.0f)
-	{
-		RagdollTimeline->Play();
-	}
-	else if (RagdollTimeline->GetPlaybackPosition() == RagdollTimeline->GetTimelineLength())
-	{
-		RagdollTimeline->Reverse();
-	}
-}*/
 
 /***********************************************************************END_STATUS*******************************************************************************************************************/
 
@@ -1562,21 +1484,6 @@ void ATodakBattleArenaCharacter::MyDoOnce()
 {
 	if (bDo)
 	{
-		OnRagdoll(GetUpAnim);
-		if (InRagdoll)
-		{
-			TestTimeline.Stop();
-			UE_LOG(LogTemp, Warning, TEXT("Timeline has stopped."));
-		}
-
-		else
-		{
-			TestTimeline.PlayFromStart();
-			UE_LOG(LogTemp, Warning, TEXT("Timeline play from start..."));
-		}
-		
-		return;
-
 	}
 	else
 		return;
@@ -1663,6 +1570,7 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 
 							//play animation on press
 							this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+							canMove = false;
 							ServerSkillStartMontage(row->StartAnimMontage);
 							//ServerSkillBlockHitMontage(row->SkillBlockHit);
 							break;
@@ -1795,13 +1703,17 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 {
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		if (canMove)
+		{
+			// find out which way is forward
+			const FRotator Rotation = Controller->GetControlRotation();
+			const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
+			// get forward vector
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+			AddMovementInput(Direction, Value);
+		}
+		
 	}
 }
 
@@ -1809,14 +1721,18 @@ void ATodakBattleArenaCharacter::MoveRight(float Value)
 {
 	if ( (Controller != NULL) && (Value != 0.0f) )
 	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-	
-		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
+		if (canMove)
+		{
+			// find out which way is right
+			const FRotator Rotation = Controller->GetControlRotation();
+			const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+			// get right vector 
+			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+			// add movement in that direction
+			AddMovementInput(Direction, Value);
+		}
+		
 	}
 }
 
@@ -1841,40 +1757,33 @@ void ATodakBattleArenaCharacter::StartAttack4()
 }
 
 
-//void ATodakBattleArenaCharacter::SetAllBodiesBelowSimulatePhysics(const FName & InBoneName, bool bNewSimulate, bool bIncludeSelf)
-//{
-//}
-//
-//void ATodakBattleArenaCharacter::SetAllBodiesPhysicsBlendWeight(float PhysicsBlendWeight, bool bSkipCustomPhysicsType)
-//{
-//}
-//
-//void ATodakBattleArenaCharacter::SetAllBodiesSimulatePhysics(bool bNewSimulate)
-//{
-//}
-
-void ATodakBattleArenaCharacter::OnRagdoll(UAnimMontage* GetUpSkill)
+void ATodakBattleArenaCharacter::TimelineFloatReturn(float value)
 {
-	DoneRagdoll = false;
-	GetUpAnim = GetUpSkill;
-	//GetUp = GetUpSkill;
-	//GetUpAnim = GetUpSkill;
+	/*SetActorLocation(FMath::Lerp(StartLocation, EndLocation, value));*/
+	BlendWeight = value;
+	//set blendweight value
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline Update"));
+}
 
-	if (!InRagdoll)
+void ATodakBattleArenaCharacter::OnTimelineFinished()
+{
+	/*if (MyTimeline->GetPlaybackPosition() <= 0.0f)
 	{
-		//set all bodies below simulate physics, with output pelvis
-		GetMesh()->SetAllBodiesBelowSimulatePhysics(UKismetSystemLibrary::MakeLiteralName("pelvis"), true, true);
-		PhysicsAlpha = 0.0f;
-		InRagdoll = true;
+		UE_LOG(LogTemp, Warning, TEXT("Timeline is playing."));
+		MyTimeline->Play();
 	}
-	else
+	else if (MyTimeline->GetPlaybackPosition() == MyTimeline->GetTimelineLength())
 	{
-		PhysicsAlpha = 1.0f;
-		Recovering = true;
-		this->GetMesh()->GetAnimInstance()->Montage_Play(GetUpAnim, 2.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
-	}
-	DoneRagdoll = true;
-	//return;
+		UE_LOG(LogTemp, Warning, TEXT("Timeline is reversing."));
+		MyTimeline->Reverse();
+	}*/
+
+	IsHit = false;
+
+	//set boolean is hit to false
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline Finished"));
 }
 
 bool ATodakBattleArenaCharacter::SvrOnHitRagdoll_Validate(UAnimMontage* GetUpSkill)
@@ -1898,11 +1807,29 @@ bool ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Validate(UAnimMontage* Ge
 void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation(UAnimMontage* GetUpSkill)
 {	
 	//float DeltaTime2;
-	MyDoOnce();
+	//bDo = true;
+	//MyDoOnce();
+
+	bwTimeline->SetTimelineLength(1.0f);
+	bwTimeline->AddInterpFloat(fCurve, InterpFunction);
+	bwTimeline->SetTimelineFinishedFunc(TimelineFinished);
+	bwTimeline->PlayFromStart();
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline is played from start"));
+	}
 	
-	GetMesh()->SetAllBodiesPhysicsBlendWeight(BlendWeight, false);
-	GetMesh()->SetAllBodiesSimulatePhysics(false);
-	IsHit = false;
+
+	FVector ImpulseForce;
+	ImpulseForce = UKismetMathLibrary::GetForwardVector(GetActorRotation()) * 1.0f;
+	GetMesh()->UPrimitiveComponent::AddImpulse(ImpulseForce, BoneName, false);
+
+	//GetActorRotation->GetForwardVector
+	//GetMesh()->SetAllBodiesPhysicsBlendWeight(BlendWeight, false);
+	//GetMesh()->SetAllBodiesSimulatePhysics(false);
+	//IsHit = false;
+	//ResetMyDoOnce();
 }
 
 

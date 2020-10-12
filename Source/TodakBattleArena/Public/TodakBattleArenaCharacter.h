@@ -8,7 +8,11 @@
 #include "Components/TimelineComponent.h"
 #include "Components/BoxComponent.h"
 #include "TargetLockInterface.h"
+<<<<<<< Updated upstream
 #include <PxTransform.h>
+=======
+#include "Components/PrimitiveComponent.h"
+>>>>>>> Stashed changes
 #include "TodakBattleArenaCharacter.generated.h"
 
 class UBaseCharacterWidget;
@@ -50,7 +54,10 @@ UCLASS(config=Game)
 class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, public ITargetLockInterface
 {
 	GENERATED_BODY()
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 	//class UTimelineComponent* RagdollTimeline;
 
 	/** Camera boom positioning the camera behind the character */
@@ -69,13 +76,16 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	class UCapsuleComponent* ToBeIgnoredCollision;
 
+	UPROPERTY(VisibleAnywhere, Category = "Timeline")
+	class UTimelineComponent* MyTimeline;
+
 	void StartAttack1();
 	void StartAttack2();
 	void StartAttack3();
 	void StartAttack4();
 
 public:
-	ATodakBattleArenaCharacter(const FObjectInitializer &pInit);
+	ATodakBattleArenaCharacter();
 
 	virtual void BeginPlay() override;
 
@@ -111,30 +121,20 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameOver")
 	void GameOverFunc();
 
+	
 	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
 
-	//fCurve for ragdoll timeline
-	/*UPROPERTY(EditInstanceOnly, Replicated, Category = Tools, DisplayName = "Ragdoll Curve")
-	UCurveFloat* fCurve;
+	UPROPERTY(EditAnywhere, Category = "Timeline")
+	class UCurveFloat* fCurve;
 
-	
-	UFUNCTION()
-	FOnTimelineFloat InterpFunction();
-
-	UPROPERTY(EditInstanceOnly, Replicated, Category = Tools, DisplayName = "Ragdoll Timeline")
-	UTimelineComponent* RagdollTimeline;*/
-
-
-	UPROPERTY(EditAnywhere)
-	UCurveFloat *TestFloatCurve;
-
-	UPROPERTY(EditAnywhere)
-	FTimeline TestTimeline;
+	UPROPERTY(VisibleAnywhere, Category = "Timeline")
+	class UTimelineComponent* bwTimeline;
 
 	UPROPERTY(VisibleAnywhere, Replicated)
 	bool DoneRagdoll = false;
 
+<<<<<<< Updated upstream
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
 	bool IsFacingUp = false;
 
@@ -151,6 +151,8 @@ public:
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	//float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
 
+=======
+>>>>>>> Stashed changes
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerGetUp;
 
@@ -166,39 +168,25 @@ public:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMulticastGetUp;
 
+	/*UFUNCTION()
+	virtual void AddImpulse(FVector Impulse, FName BoneName, bool bVelChange);*/
+
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
 	void SvrOnHitRagdoll(UAnimMontage* GetUpSkill);
 
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastOnHitRagdoll(UAnimMontage* GetUpSkill);
 
-	/*UFUNCTION()
-	void SetAllBodiesBelowSimulatePhysics(const FName& InBoneName, bool bNewSimulate, bool bIncludeSelf);
+	UFUNCTION()
+	void TimelineFloatReturn(float value);
 
 	UFUNCTION()
-	void SetAllBodiesPhysicsBlendWeight(float PhysicsBlendWeight, bool bSkipCustomPhysicsType);
+	void OnTimelineFinished();
 
-	UFUNCTION()
-	void SetAllBodiesSimulatePhysics(bool bNewSimulate);*/
+	FOnTimelineFloat InterpFunction{};
 
-	//UPROPERTY(VisibleAnywhere, Replicated)
-	//static FName MakeLiteralName(FName pelvis);
-	
-	UFUNCTION(BlueprintCallable)
-	void OnRagdoll(UAnimMontage* GetUpSkill);
+	FOnTimelineEvent TimelineFinished{};
 
-	/*//Timeline
-	UPROPERTY()
-	UTimelineComponent* RagdollTimeline;
-
-	UPROPERTY()
-	UCurveFloat* fCurve;
-
-	UFUNCTION()
-	FOnTimelineFloat InterpFunction();
-	
-	UFUNCTION(BlueprintCallable)
-	void TimelineFloatReturn(float value);*/
 
 	/////////////////////////End of hit reaction///////////////////////////
 
@@ -467,6 +455,7 @@ protected:
 	//Update value when the timer is active
 	void UpdateStatusValueTimer(FTimerHandle newHandle, EOperation Operation, bool StopOnFull, float ChangeVal, float Value, int MaxVal, float MinVal, float& totalVal);
 
+	
 
 
 	//***********************************Variables********************************************//
@@ -599,6 +588,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy")
 	float DelaySpeed = 1.5f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	bool canMove;
+
 	/**************************************END STATS******************************************/
 
 	//Assign data table from bp 
@@ -722,8 +714,8 @@ protected:
 
 	bool SkillExecuted = false;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	//FVector2D StartLocation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	FVector2D StartLocation;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	//FVector2D PriorLocation;
