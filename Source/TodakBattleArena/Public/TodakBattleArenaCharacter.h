@@ -137,10 +137,10 @@ public:
 	virtual void AddImpulse(FVector Impulse, FName BoneName, bool bVelChange);*/
 
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
-	void SvrOnHitRagdoll(UAnimMontage* GetUpSkill);
+	void SvrOnHitRagdoll();
 
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastOnHitRagdoll(UAnimMontage* GetUpSkill);
+	void MulticastOnHitRagdoll();
 
 	UFUNCTION()
 	void TimelineFloatReturn(float value);

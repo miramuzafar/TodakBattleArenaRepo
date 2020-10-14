@@ -1596,7 +1596,7 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 				{
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::White, FString::Printf(TEXT("Touch bdo is %s"), (TouchIndex.bDo) ? TEXT("True") : TEXT("False")));
 
-					//Update finger position every tick
+					//Update finger position every    
 					if (TouchIndex.bDo == false)
 					{
 						//if the current finger position is more than 0 units from starting point
@@ -1763,52 +1763,44 @@ void ATodakBattleArenaCharacter::TimelineFloatReturn(float value)
 	BlendWeight = value;
 	//set blendweight value
 	if (GEngine)
+	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline Update"));
+	}
 }
 
 void ATodakBattleArenaCharacter::OnTimelineFinished()
 {
-	/*if (MyTimeline->GetPlaybackPosition() <= 0.0f)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Timeline is playing."));
-		MyTimeline->Play();
-	}
-	else if (MyTimeline->GetPlaybackPosition() == MyTimeline->GetTimelineLength())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Timeline is reversing."));
-		MyTimeline->Reverse();
-	}*/
-
+	
 	IsHit = false;
 
 	//set boolean is hit to false
 	if (GEngine)
+	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline Finished"));
+	}
+		
 }
 
-bool ATodakBattleArenaCharacter::SvrOnHitRagdoll_Validate(UAnimMontage* GetUpSkill)
+bool ATodakBattleArenaCharacter::SvrOnHitRagdoll_Validate()
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::SvrOnHitRagdoll_Implementation(UAnimMontage* GetUpSkill)
+void ATodakBattleArenaCharacter::SvrOnHitRagdoll_Implementation()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		MulticastOnHitRagdoll(GetUpAnim);
+		MulticastOnHitRagdoll();
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Validate(UAnimMontage* GetUpSkill)
+bool ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Validate()
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation(UAnimMontage* GetUpSkill)
+void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 {	
-	//float DeltaTime2;
-	//bDo = true;
-	//MyDoOnce();
 
 	bwTimeline->SetTimelineLength(1.0f);
 	bwTimeline->AddInterpFloat(fCurve, InterpFunction);
@@ -1819,17 +1811,9 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation(UAnimMonta
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline is played from start"));
 	}
-	
-
 	FVector ImpulseForce;
 	ImpulseForce = UKismetMathLibrary::GetForwardVector(GetActorRotation()) * 1.0f;
 	GetMesh()->UPrimitiveComponent::AddImpulse(ImpulseForce, BoneName, false);
-
-	//GetActorRotation->GetForwardVector
-	//GetMesh()->SetAllBodiesPhysicsBlendWeight(BlendWeight, false);
-	//GetMesh()->SetAllBodiesSimulatePhysics(false);
-	//IsHit = false;
-	//ResetMyDoOnce();
 }
 
 
