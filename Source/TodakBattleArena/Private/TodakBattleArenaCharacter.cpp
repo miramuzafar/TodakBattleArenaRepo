@@ -1366,10 +1366,14 @@ void ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar(EBarType Type,
 					const FName locTextControlHealthBar_1 = FName(TEXT("HPBar_1"));
 					UProgressBar* healthBar_1 = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar_1));
 
-					if (healthBar_1)
+					if (healthBar_1 != NULL)
 					{
-						playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("", healthBar_1, nullptr, nullptr, SecondaryHealth, MaxHealth);
+						if (healthBar_1->IsValidLowLevel())
+						{
+							playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("", healthBar_1, nullptr, nullptr, SecondaryHealth, MaxHealth);
+						}
 					}
+					
 				}
 			}
 		}

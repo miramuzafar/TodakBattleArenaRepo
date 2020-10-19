@@ -356,24 +356,39 @@ float UGestureMathLibrary::SetProgressBarValue(FString StatusName, UProgressBar*
 {
 	float tempvalue = 0.0f;
 	UE_LOG(LogTemp, Warning, TEXT("Hand"));
-	if (ProgressBar->IsValidLowLevel())
-	{
-		float inHundredPercent;
-		
-		tempvalue = CalculatePercentageFromValue(value, MaxValue, 100.0f)/100.0f;
-		float ReturnVal = TotalPercentage(tempvalue, 0.0f, 0.0f, inHundredPercent);
 
-		//Set progressbar percentage
-		ProgressBar->SetPercent(ReturnVal);
-		if (StatusTextPercentage->IsValidLowLevel())
-		{
-			StatusTextPercentage->SetText(PrintStatusPercentage(inHundredPercent, StatusName + ": "));
-		}
-	}
-	if (TextValue->IsValidLowLevel())
+	if (ProgressBar != NULL)
 	{
-		TextValue->SetText(PrintStatusValue(value, MaxValue, StatusName + ": "));
+		if (ProgressBar->IsValidLowLevel())
+		{
+			float inHundredPercent;
+
+			tempvalue = CalculatePercentageFromValue(value, MaxValue, 100.0f) / 100.0f;
+			float ReturnVal = TotalPercentage(tempvalue, 0.0f, 0.0f, inHundredPercent);
+
+			//Set progressbar percentage
+			ProgressBar->SetPercent(ReturnVal);
+
+			if (StatusTextPercentage != NULL)
+			{
+				if (StatusTextPercentage->IsValidLowLevel())
+				{
+					StatusTextPercentage->SetText(PrintStatusPercentage(inHundredPercent, StatusName + ": "));
+				}
+			}
+			
+		}
+
+		if (TextValue != NULL)
+		{
+			if (TextValue->IsValidLowLevel())
+			{
+				TextValue->SetText(PrintStatusValue(value, MaxValue, StatusName + ": "));
+			}
+		}
+		
 	}
+	
 	return tempvalue;
 }
 
