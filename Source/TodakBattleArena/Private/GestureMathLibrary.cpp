@@ -303,7 +303,7 @@ float UGestureMathLibrary::CalculatePercentageFromValue(float Value, int Max, fl
 	return (Value / Max) * MaxPercentage;
 }
 
-FName UGestureMathLibrary::CheckForBoneName(ATodakBattleArenaCharacter* PlayerCharacter, FName BoneName)
+/*FName UGestureMathLibrary::CheckForBoneName(ATodakBattleArenaCharacter* PlayerCharacter, FName BoneName)
 {
 	TArray<FString> BoneNames = { "Hand", "Arm", "Neck", "Head", "Spine", "Clavicle", "Thigh", "Foot", "Calf", "Ball" };
 
@@ -350,12 +350,14 @@ FName UGestureMathLibrary::CheckForBoneName(ATodakBattleArenaCharacter* PlayerCh
 	}
 	
 	return FName(*NewString);
-}
+}*/
 
 float UGestureMathLibrary::SetProgressBarValue(FString StatusName, UProgressBar* ProgressBar, UTextBlock* StatusTextPercentage, UTextBlock* TextValue, float value, int MaxValue)
 {
-	float tempvalue = 0.0f;
-	UE_LOG(LogTemp, Warning, TEXT("Hand"));
+	//float tempvalue = 0.0f;
+	//UE_LOG(LogTemp, Warning, TEXT("Hand"));
+	//float tempvalue = 0.0f;
+	//UE_LOG(LogTemp, Warning, TEXT("Hand"));
 
 	if (ProgressBar != NULL)
 	{
@@ -363,12 +365,11 @@ float UGestureMathLibrary::SetProgressBarValue(FString StatusName, UProgressBar*
 		{
 			float inHundredPercent;
 
-			tempvalue = CalculatePercentageFromValue(value, MaxValue, 100.0f) / 100.0f;
-			float ReturnVal = TotalPercentage(tempvalue, 0.0f, 0.0f, inHundredPercent);
+			//tempvalue = CalculatePercentageFromValue(value, MaxValue, 100.0f) / 100.0f;
+			float ReturnVal = TotalPercentage((CalculatePercentageFromValue(value, MaxValue, 100.0f) / 100.0f), 0.0f, 0.0f, inHundredPercent);
 
 			//Set progressbar percentage
 			ProgressBar->SetPercent(ReturnVal);
-
 			if (StatusTextPercentage != NULL)
 			{
 				if (StatusTextPercentage->IsValidLowLevel())
@@ -376,9 +377,7 @@ float UGestureMathLibrary::SetProgressBarValue(FString StatusName, UProgressBar*
 					StatusTextPercentage->SetText(PrintStatusPercentage(inHundredPercent, StatusName + ": "));
 				}
 			}
-			
 		}
-
 		if (TextValue != NULL)
 		{
 			if (TextValue->IsValidLowLevel())
@@ -386,10 +385,8 @@ float UGestureMathLibrary::SetProgressBarValue(FString StatusName, UProgressBar*
 				TextValue->SetText(PrintStatusValue(value, MaxValue, StatusName + ": "));
 			}
 		}
-		
 	}
-	
-	return tempvalue;
+	return CalculatePercentageFromValue(value, MaxValue, 100.0f) / 100.0f;
 }
 
 //Recursive function to have results relative to world origin
