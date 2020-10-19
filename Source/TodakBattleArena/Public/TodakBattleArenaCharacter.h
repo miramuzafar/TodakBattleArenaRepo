@@ -321,6 +321,14 @@ protected:
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastStopBlockHitMontage(UAnimMontage* MulticastSkill);
 
+	//Get montage to play from server
+	UFUNCTION(Unreliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
+	void ServerPlayMontage(UAnimInstance* CurrMesh, UAnimMontage* MontageToPlay);
+
+	//Play and replicate montages on all client
+	UFUNCTION(Unreliable, NetMulticast, WithValidation)
+	void MulticastPlayMontage(UAnimInstance* CurrMesh, UAnimMontage* MontageToPlay);
+
 	/**Function to update the client's damage*/
 	void UpdateCurrentMontage(UAnimMontage* MulticastSkill, FTimerHandle* TimerUsed);
 
@@ -349,6 +357,17 @@ protected:
 
 	//Reset movement after skill is executed
 	void ResetMovementMode();
+
+	//Preparing for ragdoll
+	UFUNCTION(BlueprintCallable)
+	void CallFallRagdoll();
+
+	//Execute ragdoll
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
+	void ServerFallRagdoll(AActor* RagdolledActor);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastFallRagdoll(AActor* RagdolledActor);
 
 	//increase maximum fitness status
 	UFUNCTION(BlueprintCallable)
@@ -391,13 +410,13 @@ protected:
 	void CalculateMeshLocation();
 
 	UFUNCTION(BlueprintPure)
-	bool CalculatingFacingLocation();
+	bool CalculatingFacingLocation(class USkeletalMeshComponent* currMesh);
 
 	UFUNCTION(BlueprintCallable)
-	void SetUpGetUpOrientation();
+	void SetUpGetUpOrientation(USkeletalMeshComponent* currMesh);
 
 	UFUNCTION(BlueprintCallable)
-	void SetUpGetUpMontage();
+	void SetUpGetUpMontage(USkeletalMeshComponent* currMesh);
 
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);

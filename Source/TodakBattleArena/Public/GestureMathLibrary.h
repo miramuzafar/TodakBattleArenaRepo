@@ -109,8 +109,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Math|UI Utils")
 	static float CalculatePercentageFromValue(float Value, int Max, float MaxPercentage);
 
-	UFUNCTION(BlueprintPure, Category = "Bones")
-	static FName CheckForBoneName(ATodakBattleArenaCharacter* PlayerCharacter, FName BoneName);
+	//UFUNCTION(BlueprintPure, Category = "Bones")
+	//static FName CheckForBoneName(ATodakBattleArenaCharacter* PlayerCharacter, FName BoneName);
 
 	/*Assign values to progressbar*/
 	UFUNCTION(BlueprintPure, Category = "Math|UI Utils")

@@ -460,77 +460,77 @@ void ATodakBattleArenaCharacter::SetupPlayerInputComponent(class UInputComponent
 
 void ATodakBattleArenaCharacter::CalculateMeshLocation()
 {
-	if (GetGameInstance()->GetWorldContext()->RunAsDedicated == false)
+	FVector loc;
+	FRotator Rot;
+	FHitResult HitRay;
+
+	FVector Start = GetMesh()->GetSocketLocation("pelvis");
+	FVector End = Start + FVector(FVector(0, 0, 1.0f)*100.0f);
+
+	FCollisionQueryParams TraceParams;
+
+	//Shoot line from pelvis location to the ground where it's standing
+	if (GetWorld()->LineTraceSingleByChannel(HitRay, Start, End, ECollisionChannel::ECC_Visibility, TraceParams))
 	{
-		FVector loc;
-		FRotator Rot;
-		FHitResult HitRay;
-
-		FVector Start = GetMesh()->GetSocketLocation("pelvis");
-		FVector End = Start + FVector(FVector(0,0,1.0f)*100.0f);
-
-		FCollisionQueryParams TraceParams;
-		
-		//Shoot line from pelvis location to the ground where it's standing
-		if (GetWorld()->LineTraceSingleByChannel(HitRay, Start, End, ECollisionChannel::ECC_Visibility, TraceParams))
-		{
-			//get the new location of the mesh
-			CapsuleLocation = HitRay.Location + FVector(0.0f, 0.0f, 100.0f);
-		}
-		else
-			//set the location to original location of the mesh
-			CapsuleLocation = GetMesh()->GetSocketLocation("pelvis") + FVector(0.0f, 0.0f, 100.0f);
-
-		//Interpolate between mesh location and capsule location
-		MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
-
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Mesh location : %s"), *MeshLocation.ToString()));
-	}
-}
-
-bool ATodakBattleArenaCharacter::CalculatingFacingLocation()
-{
-	//Get the dot product between the mesh right vector location and right vector location
-	float DotProductResult = FVector::DotProduct(UKismetMathLibrary::GetRightVector(GetMesh()->GetSocketRotation("pelvis")), FVector(0.0f, 0.0f, 1.0f));
-
-	//Compare the dot product with the z value, which will be the facing up montage if its more than zero
-	if (DotProductResult >= 0.0f)
-	{
-		return true;
+		//get the new location of the mesh
+		CapsuleLocation = HitRay.Location + FVector(0.0f, 0.0f, 100.0f);
 	}
 	else
-		return false;
+		//set the location to original location of the mesh
+		CapsuleLocation = GetMesh()->GetSocketLocation("pelvis") + FVector(0.0f, 0.0f, 100.0f);
 
-	return false;
+	//Interpolate between mesh location and capsule location
+	MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
+
+	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Mesh location : %s"), *MeshLocation.ToString()));
 }
 
-void ATodakBattleArenaCharacter::SetUpGetUpOrientation()
+bool ATodakBattleArenaCharacter::CalculatingFacingLocation(USkeletalMeshComponent* currMesh)
+{
+	//Get the dot product between the mesh right vector location and right vector location
+	//float DotProductResult = UKismetMathLibrary::Dot_VectorVector(UKismetMathLibrary::GetRightVector(currMesh->GetSocketRotation("pelvis")), FVector(0.0f, 0.0f, 1.0f));
+
+	//UE_LOG(LogTemp, Warning, TEXT("DotProduct from c++ is :  : %f"), DotProduct);
+
+	//Get the dot product between the mesh right vector location and right vector location
+	float val = UKismetMathLibrary::Dot_VectorVector(UKismetMathLibrary::GetRightVector(currMesh->GetSocketRotation("pelvis")), FVector(0.0f, 0.0f, 1.0f));
+
+	UE_LOG(LogTemp, Warning, TEXT("DotProduct from c++ is :  : %f"), val);
+
+	//Compare the dot product with the z value, which will be the facing up montage if its more than zero
+	return val >= 0.0f;
+}
+
+void ATodakBattleArenaCharacter::SetUpGetUpOrientation(USkeletalMeshComponent* currMesh)
 {
 	FVector TotalVector;
 	FRotator NewRot;
 
 	if (IsFacingUp == true)
 	{
-		TotalVector = GetMesh()->GetSocketLocation("pelvis") - GetMesh()->GetSocketLocation("neck_01");
+		TotalVector = currMesh->GetSocketLocation("pelvis") - currMesh->GetSocketLocation("neck_01");
 		NewRot = UKismetMathLibrary::MakeRotFromZX(FVector(0.0f, 0.0f, 1.0f), TotalVector);
 	}
-	else
+	if (IsFacingUp == false)
 	{
-		TotalVector = GetMesh()->GetSocketLocation("neck_01") - GetMesh()->GetSocketLocation("pelvis");
+		TotalVector = currMesh->GetSocketLocation("neck_01") - GetMesh()->GetSocketLocation("pelvis");
 		NewRot = UKismetMathLibrary::MakeRotFromZX(FVector(0.0f, 0.0f, 1.0f), TotalVector);
 	}
 
 	this->SetActorTransform(FTransform(NewRot, MeshLocation, FVector(1.0f, 1.0f, 1.0f)), false, false);
 }
 
-void ATodakBattleArenaCharacter::SetUpGetUpMontage()
+void ATodakBattleArenaCharacter::SetUpGetUpMontage(USkeletalMeshComponent* currMesh)
 {
-	if (IsFacingUp == true)
+	if (currMesh != nullptr)
 	{
-		RPCMulticastGetUp = UpMontage;
+		if (IsFacingUp == true)
+		{
+			RPCMulticastGetUp = UpMontage;
+		}
+		else
+			RPCMulticastGetUp = DownMontage;
 	}
-	else
-		RPCMulticastGetUp = DownMontage;
 }
 
 void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
@@ -871,6 +871,42 @@ void ATodakBattleArenaCharacter::MulticastStopBlockHitMontage_Implementation(UAn
 	UE_LOG(LogTemp, Warning, TEXT("Stop block timer!"));	
 }
 
+bool ATodakBattleArenaCharacter::ServerPlayMontage_Validate(UAnimInstance* CurrMesh, UAnimMontage* MontageToPlay)
+{
+	//UAnimBlueprintGeneratedClass* CurrAnimBP
+	if (CurrMesh == NULL)
+	{
+		return false;
+	}
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerPlayMontage_Implementation(UAnimInstance* CurrMesh, UAnimMontage* MontageToPlay)
+{
+	if(GetLocalRole() == ROLE_Authority)
+	{
+		MulticastPlayMontage(CurrMesh, MontageToPlay);
+	}
+}
+
+bool ATodakBattleArenaCharacter::MulticastPlayMontage_Validate(UAnimInstance* CurrMesh, UAnimMontage* MontageToPlay)
+{
+	if (MontageToPlay == NULL)
+	{
+		return false;
+	}
+	return true;
+}
+
+void ATodakBattleArenaCharacter::MulticastPlayMontage_Implementation(UAnimInstance* CurrMesh, UAnimMontage* MontageToPlay)
+{
+	//UAnimBlueprintGeneratedClass* CurrAnimBP = Cast<UAnimBlueprintGeneratedClass>(CurrMesh->GetAnimInstance());
+	if (CurrMesh != NULL)
+	{
+		float val = CurrMesh->Montage_Play(MontageToPlay, 1.0f, EMontagePlayReturnType::Duration, 0.0f, true);
+	}
+}
+
 void ATodakBattleArenaCharacter::UpdateCurrentMontage(UAnimMontage* MulticastSkill, FTimerHandle* TimerUsed)
 {
 	//if the current anim pos is more than .6 seconds, stop the montage and play the hold skill again
@@ -1003,7 +1039,7 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 		//iterate through aggregate physics body
 		for (FKSphylElem caps : GetMesh()->GetBodyInstance(ShapeName)->BodySetup.Get()->AggGeom.SphylElems)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%s Capsule name is : %s"), *ShapeName.ToString(), *caps.GetName().ToString());
+			//UE_LOG(LogTemp, Warning, TEXT("%s Capsule name is : %s"), *ShapeName.ToString(), *caps.GetName().ToString());
 			capsuleElem = caps;
 			isFound = true;
 			break;
@@ -1033,7 +1069,7 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 				}
 				if (row->DamageMoveset != NULL)
 				{
-					DamageMovesets = row->DamageMoveset;
+					//DamageMovesets = row->DamageMoveset;
 				}
 				return;
 			}
@@ -1073,10 +1109,8 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 				}
 				if (row->DamageMoveset != NULL)
 				{
-					DamageMovesets = row->DamageMoveset;
+					//DamageMovesets = row->DamageMoveset;
 				}
-
-				
 				return;
 
 			}
@@ -1141,6 +1175,67 @@ void ATodakBattleArenaCharacter::ResetMovementMode()
 	this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	canMove = true;
 	SkillTriggered = false;
+}
+
+void ATodakBattleArenaCharacter::CallFallRagdoll()
+{
+	//reset character movement mode to none
+	this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+
+	//disable yaw contoller rotation
+	this->GetController()->GetPawn()->bUseControllerRotationYaw = false;
+
+	//disable input on ragdoll
+	this->DisableInput(UGameplayStatics::GetPlayerController(this, 0));
+
+	if (this->IsLocallyControlled())
+	{
+		ServerFallRagdoll(this);
+	}
+}
+
+bool ATodakBattleArenaCharacter::ServerFallRagdoll_Validate(AActor* RagdolledActor)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerFallRagdoll_Implementation(AActor* RagdolledActor)
+{
+	MulticastFallRagdoll(RagdolledActor);
+}
+
+bool ATodakBattleArenaCharacter::MulticastFallRagdoll_Validate(AActor* RagdolledActor)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::MulticastFallRagdoll_Implementation(AActor* RagdolledActor)
+{
+	//
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		if (IsRunningDedicatedServer() == true)
+		{
+			return;
+		}
+		else
+		{
+			goto Fall;
+		}
+
+	}
+	if (GetLocalRole() < ROLE_Authority)
+	{
+	Fall:
+		this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
+		this->PhysicsAlpha = 0.0f;
+		this->InRagdoll = true;
+
+		if (this->IsLocallyControlled())
+		{
+			this->SetReplicateMovement(false);
+		}
+	}
 }
 
 /***********************************************************************START_STATUS*******************************************************************************************************************/
@@ -1505,7 +1600,7 @@ void ATodakBattleArenaCharacter::RemoveElementFromArrayTimer()
 		BodyParts.RemoveAt(0);
 
 		//if array is empty and timer still active, clear the timer
-		if (GetWorld()->GetTimerManager().IsTimerActive(IterateArray) == true && (!SwipeActions.IsValidIndex(0) || !BodyParts.IsValidIndex(0)))
+		if (GetWorld()->GetTimerManager().IsTimerActive(IterateArray) == true && (SwipeActions.Num() < 1 || BodyParts.Num() < 1))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Timer has stopped!"));
 			GetWorld()->GetTimerManager().ClearTimer(IterateArray);
