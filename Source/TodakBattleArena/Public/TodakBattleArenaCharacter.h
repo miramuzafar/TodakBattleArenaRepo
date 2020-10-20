@@ -108,8 +108,11 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
 	FVector CapsuleLocation;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_SetMeshLocation, BlueprintReadWrite, Category = "Ragdoll")
 	FVector MeshLocation;
+
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_SetMeshRotation, BlueprintReadWrite, Category = "Ragdoll")
+	FRotator MeshRotation;
 
 	//FTimeline RagdollTimeLine = FTimeline();
 	//UCurveFloat* RagdollCurve;
@@ -407,7 +410,13 @@ protected:
 	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime);
 
 	UFUNCTION(BlueprintCallable)
-	void CalculateMeshLocation();
+	void CalculateMeshLocation(USceneComponent* Capsule);
+
+	UFUNCTION()
+	void OnRep_SetMeshLocation();
+
+	UFUNCTION()
+	void OnRep_SetMeshRotation();
 
 	UFUNCTION(BlueprintPure)
 	bool CalculatingFacingLocation(class USkeletalMeshComponent* currMesh);
