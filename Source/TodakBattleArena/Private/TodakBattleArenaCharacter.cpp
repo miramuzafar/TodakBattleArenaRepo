@@ -157,6 +157,9 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MaximumTargetDistance);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, EnemyElement);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, isOverlap);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, isLocked);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, PhysicsAlpha);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillTriggered);
 
 	//SwipeGesture
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Hit);
@@ -189,6 +192,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsFacingUp);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, CapsuleLocation);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MeshLocation);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, MeshRotation);
 
 	//**EndAnimMontage**//
 
@@ -416,6 +420,7 @@ void ATodakBattleArenaCharacter::BeginPlay()
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	/*if (EnableMovement == true)
 	{
 		if (GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold))
@@ -463,7 +468,7 @@ void ATodakBattleArenaCharacter::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ATodakBattleArenaCharacter::OnResetVR);
 }
 
-void ATodakBattleArenaCharacter::CalculateMeshLocation()
+void ATodakBattleArenaCharacter::CalculateMeshLocation(USceneComponent* Capsule)
 {
 	FVector loc;
 	FRotator Rot;
@@ -484,10 +489,29 @@ void ATodakBattleArenaCharacter::CalculateMeshLocation()
 		//set the location to original location of the mesh
 		CapsuleLocation = GetMesh()->GetSocketLocation("pelvis") + FVector(0.0f, 0.0f, 100.0f);
 
-	//Interpolate between mesh location and capsule location
-	MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
+	if (Capsule == this->GetCapsuleComponent())
+	{
+		//Interpolate between mesh location and capsule location
+		MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
+		Capsule->SetWorldLocation(MeshLocation, false, false);
+		this->OnRep_SetMeshLocation();
+	}
+	//this->OnRep_SetMeshRotation();
+}
 
+void ATodakBattleArenaCharacter::OnRep_SetMeshLocation()
+{
+	//MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
+	//this->GetCapsuleComponent()->SetWorldLocation(MeshLocation, false, false);
 	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Mesh location : %s"), *MeshLocation.ToString()));
+}
+
+void ATodakBattleArenaCharacter::OnRep_SetMeshRotation()
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		//this->GetCapsuleComponent()->SetWorldRotation(MeshRotation, false, false);
+	}
 }
 
 bool ATodakBattleArenaCharacter::CalculatingFacingLocation(USkeletalMeshComponent* currMesh)
