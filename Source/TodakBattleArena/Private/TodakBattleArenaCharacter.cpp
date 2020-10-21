@@ -488,17 +488,51 @@ void ATodakBattleArenaCharacter::CalculateMeshLocation(USceneComponent* Capsule)
 	{
 		//Interpolate between mesh location and capsule location
 		MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
-		Capsule->SetWorldLocation(MeshLocation, false, false);
-		this->OnRep_SetMeshLocation();
+		if (this->IsLocallyControlled())
+		{
+			ServerGetMeshLocation(MeshLocation);
+		}
 	}
 	//this->OnRep_SetMeshRotation();
+}
+
+bool ATodakBattleArenaCharacter::ServerGetMeshLocation_Validate(FVector TempMeshLoc)
+{
+	if (TempMeshLoc == FVector(0.0f))
+	{
+		return false;
+	}
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerGetMeshLocation_Implementation(FVector TempMeshLoc)
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		MulticastGetMeshLocation(TempMeshLoc);
+	}
+}
+
+bool ATodakBattleArenaCharacter::MulticastGetMeshLocation_Validate(FVector TempMeshLoc)
+{
+	if (TempMeshLoc == FVector(0.0f))
+	{
+		return false;
+	}
+	return true;
+}
+
+void ATodakBattleArenaCharacter::MulticastGetMeshLocation_Implementation(FVector TempMeshLoc)
+{
+	this->GetCapsuleComponent()->SetWorldLocation(TempMeshLoc, false, false);
+	this->OnRep_SetMeshLocation();
 }
 
 void ATodakBattleArenaCharacter::OnRep_SetMeshLocation()
 {
 	//MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
 	//this->GetCapsuleComponent()->SetWorldLocation(MeshLocation, false, false);
-	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Mesh location : %s"), *MeshLocation.ToString()));
+	//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Mesh location : %s"), *MeshLocation.ToString()));
 }
 
 void ATodakBattleArenaCharacter::OnRep_SetMeshRotation()
@@ -542,6 +576,7 @@ void ATodakBattleArenaCharacter::SetUpGetUpOrientation(USkeletalMeshComponent* c
 	}
 
 	this->SetActorTransform(FTransform(NewRot, MeshLocation, FVector(1.0f, 1.0f, 1.0f)), false, false);
+	//this->SetReplicatedMovement(FRepMovement::Location);
 }
 
 void ATodakBattleArenaCharacter::SetUpGetUpMontage(USkeletalMeshComponent* currMesh)
