@@ -292,6 +292,9 @@ protected:
 	//Execute the skill
 	bool ExecuteAction(bool SkillTrigger, float HitTraceLengths, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill);
 
+	/*UFUNCTION()
+	void CheckTraces(AActor* HitActor, FName BoneName, FVector Location, bool IsBlockingHit);*/
+
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
 	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float PlayRate, float StartTime, bool SkillFound);
@@ -754,6 +757,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
 	float HitTraceLength;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Anim")
+	bool RightKickColActivate;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Anim")
+	bool LeftKickColActivate;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool KickColActivate;
