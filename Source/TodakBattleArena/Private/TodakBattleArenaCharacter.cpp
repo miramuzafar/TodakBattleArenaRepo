@@ -35,6 +35,9 @@
 #include <PxRigidBody.h>
 #include <PxRigidDynamic.h>
 #include <PxTransform.h>
+#include "GestureMathLibrary.h"
+#include "Components/ArrowComponent.h"
+
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -60,6 +63,8 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
+
+	
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -1025,6 +1030,22 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 	return false;
 }
 
+//void ATodakBattleArenaCharacter::CheckTraces(AActor * HitActor, FName BoneName, FVector Location, bool IsBlockingHit)
+//{
+//	FVector Loc;
+//	FRotator Rot;
+//	FHitResult Hit;
+//	if (LeftKickColActivate)
+//	{
+//		//UKismetSystemLibrary::LineTraceSingle(UObject* WorldContextObject, this->GetArrowComponent, const FVector End, ETraceTypeQuery TraceChannel, false, , , FHitResult& OutHit, true, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+//	}
+//
+//	else
+//	{
+//
+//	}
+//}
+
 
 
 void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets)
@@ -1861,10 +1882,10 @@ void ATodakBattleArenaCharacter::TimelineFloatReturn(float value)
 	/*SetActorLocation(FMath::Lerp(StartLocation, EndLocation, value));*/
 	BlendWeight = value;
 	//set blendweight value
-	if (GEngine)
+	/*if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline Update"));
-	}
+	}*/
 }
 
 void ATodakBattleArenaCharacter::OnTimelineFinished()
@@ -1873,10 +1894,10 @@ void ATodakBattleArenaCharacter::OnTimelineFinished()
 	IsHit = false;
 
 	//set boolean is hit to false
-	if (GEngine)
+	/*if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline Finished"));
-	}
+	}*/
 		
 }
 
@@ -1906,13 +1927,21 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 	bwTimeline->SetTimelineFinishedFunc(TimelineFinished);
 	bwTimeline->PlayFromStart();
 
-	if (GEngine)
+	/*if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline is played from start"));
-	}
+	}*/
 	FVector ImpulseForce;
 	ImpulseForce = UKismetMathLibrary::GetForwardVector(GetActorRotation()) * 1.0f;
 	GetMesh()->UPrimitiveComponent::AddImpulse(ImpulseForce, BoneName, false);
+
+	if ((UGestureMathLibrary::CalculatePercentageFromValue(Health, MaxHealth, 100.0f)) >= 50.0f)
+	{
+		if (this->IsLocallyControlled())
+		{
+			ServerFallRagdoll(this);
+		}
+	}
 }
 
 
