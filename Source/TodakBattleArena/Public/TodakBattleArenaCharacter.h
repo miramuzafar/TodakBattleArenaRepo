@@ -81,7 +81,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void Tick(float DeltaTime) override; 
+	virtual void Tick(float DeltaTime) override;
 
 	//Replicated Network setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -438,6 +438,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void CalculateMeshLocation(USceneComponent* Capsule);
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
+	void ServerGetMeshLocation(FVector TempMeshLoc);
+
+	UFUNCTION(Reliable, Client, WithValidation, Category = "Ragdoll")
+	void MulticastGetMeshLocation(FVector TempMeshLoc);
 
 	UFUNCTION()
 	void OnRep_SetMeshLocation();
