@@ -41,8 +41,32 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 	class USphereComponent* LockOnCollision;
 
 	/**TargetLockCollision**/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	class UCapsuleComponent* ToBeIgnoredCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class UCapsuleComponent* LeftKickCol;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class UCapsuleComponent* RightKickCol;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class UArrowComponent* LKickArrow;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class UArrowComponent* RKickArrow;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class UCapsuleComponent* LeftPunchCol;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class UCapsuleComponent* RightPunchCol;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class UArrowComponent* LPunchArrow;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class UArrowComponent* RPunchArrow;
 
 	UPROPERTY(VisibleAnywhere, Category = "Timeline")
 	class UTimelineComponent* MyTimeline;
@@ -292,8 +316,8 @@ protected:
 	//Execute the skill
 	bool ExecuteAction(bool SkillTrigger, float HitTraceLengths, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill);
 
-	/*UFUNCTION()
-	void CheckTraces(AActor* HitActor, FName BoneName, FVector Location, bool IsBlockingHit);*/
+	UFUNCTION()
+	void CheckTraces();
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)

@@ -40,6 +40,7 @@
 
 
 
+
 //////////////////////////////////////////////////////////////////////////
 // ATodakBattleArenaCharacter
 
@@ -63,9 +64,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
-
 	
-
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -78,6 +77,54 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	LeftKickCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftKickCol"));
+	LeftKickCol->SetupAttachment(GetMesh(), "calf_l");
+	LeftKickCol->SetRelativeLocation(FVector(-20.000000f, -0.000016f, -0.000000f));
+	LeftKickCol->SetRelativeRotation(FRotator(90.000000f, 360.000000f, 179.999954f));
+	LeftKickCol->SetCapsuleHalfHeight(33);
+	LeftKickCol->SetCapsuleRadius(10);
+	LeftKickCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	RightKickCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("RightKickCol"));
+	RightKickCol->SetupAttachment(GetMesh(), "calf_r");
+	RightKickCol->SetRelativeLocation(FVector( 19.999996f, -0.000005f, -0.000001f));
+	RightKickCol->SetRelativeRotation(FRotator( 90.000000f, 180.000000f, 0.000000f));
+	RightKickCol->SetCapsuleHalfHeight(33);
+	RightKickCol->SetCapsuleRadius(10);
+	RightKickCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	LKickArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("LKickArrow"));
+	LKickArrow->SetupAttachment(LeftKickCol);
+	LKickArrow->SetRelativeRotation(FRotator( 0.000000f, -90.000000f, 0.000000f));
+
+	RKickArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("RKickArrow"));
+	RKickArrow->SetupAttachment(RightKickCol);
+	RKickArrow->SetRelativeRotation(FRotator( 0.000000f, 90.000000f, 0.000000f));
+
+	LeftPunchCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftPunchCol"));
+	LeftPunchCol->SetupAttachment(GetMesh(), "hand_l");
+	LeftPunchCol->SetRelativeLocation(FVector(0.000000f, 0.000000f, 0.000000f));
+	LeftPunchCol->SetRelativeRotation(FRotator(0.000000f, 90.000000f, 0.000000f));
+	LeftPunchCol->SetCapsuleHalfHeight(16);
+	LeftPunchCol->SetCapsuleRadius(7);
+	LeftPunchCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	RightPunchCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("RightPunchCol"));
+	RightPunchCol->SetupAttachment(GetMesh(), "hand_r");
+	RightPunchCol->SetRelativeLocation(FVector(0.000000f, 0.000000f, 0.000000f));
+	RightPunchCol->SetRelativeRotation(FRotator(0.000000f, 90.000000f, 0.000000f));
+	RightPunchCol->SetCapsuleHalfHeight(16);
+	RightPunchCol->SetCapsuleRadius(7);
+	RightPunchCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	LPunchArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("LPunchArrow"));
+	LPunchArrow->SetupAttachment(GetMesh(), "lowerarm_l");
+
+	RPunchArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("RPunchArrow"));
+	RPunchArrow->SetupAttachment(GetMesh(), "lowerarm_r");
+	RPunchArrow->SetRelativeRotation(FRotator(0.000157f, -179.999084f, 0.000011f));
+	
+	
 	damageAfterReduction = 0.0f;
 
 	ToBeIgnoredCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("ToBeIgnoredCollision"));
@@ -129,7 +176,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MinorDamage);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Stamina);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Strength);
-	DOREPLIFETIME(ATodakBattleArenaCharacter, Agility);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, Agility); 
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Health);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SecondaryHealth);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MaxStrength);
@@ -420,7 +467,7 @@ void ATodakBattleArenaCharacter::BeginPlay()
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	CheckTraces();
 	/*if (EnableMovement == true)
 	{
 		if (GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold))
@@ -1054,21 +1101,62 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 	return false;
 }
 
-//void ATodakBattleArenaCharacter::CheckTraces(AActor * HitActor, FName BoneName, FVector Location, bool IsBlockingHit)
-//{
-//	FVector Loc;
-//	FRotator Rot;
-//	FHitResult Hit;
-//	if (LeftKickColActivate)
-//	{
-//		//UKismetSystemLibrary::LineTraceSingle(UObject* WorldContextObject, this->GetArrowComponent, const FVector End, ETraceTypeQuery TraceChannel, false, , , FHitResult& OutHit, true, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
-//	}
-//
-//	else
-//	{
-//
-//	}
-//}
+void ATodakBattleArenaCharacter::CheckTraces()
+{
+	FVector Loc_LKickArrow = LKickArrow->GetComponentLocation();
+	FVector Loc_RKickArrow = RKickArrow->GetComponentLocation();
+	FVector Loc_LPunchArrow = LPunchArrow->GetComponentLocation();
+	FVector Loc_RPunchArrow = RPunchArrow->GetComponentLocation();
+	//UArrowComponent* HitArrow = this->FindComponentByClass<UArrowComponent>();
+	//FVector Loc = HitArrow->GetComponentLocation();
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Green, FString::Printf(TEXT("HitArrow is at %s"), *Loc.ToString()));
+	//FRotator Rot;
+	FHitResult Hit_LKickArrow;
+	FHitResult Hit_RKickArrow;
+	FHitResult Hit_LPunchArrow;
+	FHitResult Hit_RPunchArrow;
+	//FHitResult OutHit;
+
+	//GetController()->GetPlayerViewPoint(Loc, Rot);
+
+	/*FVector Start = Loc;
+	FVector ForwardVector = HitArrow->GetForwardVector();
+	FVector End = Start + (ForwardVector * HitTraceLength);*/
+
+	FVector Start_LKickArrow = Loc_LKickArrow;
+	FVector Forward_LKickArrow = LKickArrow->GetForwardVector();
+	FVector End_LKickArrow = Start_LKickArrow + (Forward_LKickArrow * HitTraceLength);
+
+	FVector Start_RKickArrow = Loc_RKickArrow;
+	FVector Forward_RKickArrow = RKickArrow->GetForwardVector();
+	FVector End_RKickArrow = Start_RKickArrow + (Forward_RKickArrow * HitTraceLength);
+
+	FVector Start_LPunchArrow = Loc_LPunchArrow;
+	FVector Forward_LPunchArrow = LPunchArrow->GetForwardVector();
+	FVector End_LPunchArrow = Start_LPunchArrow + (Forward_LPunchArrow * HitTraceLength);
+
+	FVector Start_RPunchArrow = Loc_RPunchArrow;
+	FVector Forward_RPunchArrow = RPunchArrow->GetForwardVector();
+	FVector End_RPunchArrow = Start_RPunchArrow + (Forward_RPunchArrow * HitTraceLength);
+
+
+	/*FCollisionQueryParams CollisionParams;
+
+	DrawDebugLine(GetWorld(),Start, End, FColor::Green, false, 1, 0, 1); 
+	bool isLineHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, CollisionParams);*/
+	
+	if (isLineHit)
+	{
+		if (OutHit.bBlockingHit)
+		{
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *OutHit.GetActor()->GetName()));
+			}
+		}
+		//UKismetSystemLibrary::LineTraceSingle(UObject* WorldContextObject, this->GetArrowComponent, const FVector End, ETraceTypeQuery TraceChannel, false, , , FHitResult& OutHit, true, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+	}
+}
 
 
 
@@ -1080,7 +1168,7 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 
 	//if capsule physics asset is valid
 	if (GetMesh()->GetBodyInstance(ShapeName)->BodySetup.Get()->AggGeom.SphylElems.IsValidIndex(0))
-	{
+	{ 
 		//iterate through aggregate physics body
 		for (FKSphylElem caps : GetMesh()->GetBodyInstance(ShapeName)->BodySetup.Get()->AggGeom.SphylElems)
 		{
