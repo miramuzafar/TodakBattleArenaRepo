@@ -1174,11 +1174,66 @@ void ATodakBattleArenaCharacter::CheckTraces()
 	FVector Forward_RPunchArrow = RPunchArrow->GetForwardVector();
 	FVector End_RPunchArrow = Start_RPunchArrow + (Forward_RPunchArrow * HitTraceLength);
 
+	FCollisionQueryParams CollisionParams;
+	bool IsHit_LKickArrow = GetWorld()->LineTraceSingleByChannel(Hit_LKickArrow, Start_LKickArrow, End_LKickArrow, ECC_Visibility, CollisionParams);
+	bool IsHit_RKickArrow = GetWorld()->LineTraceSingleByChannel(Hit_RKickArrow, Start_RKickArrow, End_RKickArrow, ECC_Visibility, CollisionParams);
+	bool IsHit_LPunchArrow = GetWorld()->LineTraceSingleByChannel(Hit_LPunchArrow, Start_LPunchArrow, End_LPunchArrow, ECC_Visibility, CollisionParams);
+	bool IsHit_RPunchArrow = GetWorld()->LineTraceSingleByChannel(Hit_RPunchArrow, Start_RPunchArrow, End_RPunchArrow, ECC_Visibility, CollisionParams);
+	
+	
+	if (LeftKickColActivate)
+	{
+		if (IsHit_LKickArrow)
+		{
+			if (Hit_LKickArrow.bBlockingHit)
+			{
+				DrawDebugLine(GetWorld(), Start_LKickArrow, End_LKickArrow, FColor::Green, false, 1, 0, 1);
+				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.GetActor()->GetName()));
+			}
+		}
+		
+	}
+
+	else if (RightKickColActivate)
+	{
+		if (IsHit_RKickArrow)
+		{
+			if (Hit_RKickArrow.bBlockingHit)
+			{
+				DrawDebugLine(GetWorld(), Start_RKickArrow, End_RKickArrow, FColor::Blue, false, 1, 0, 1);
+				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RKickArrow.GetActor()->GetName()));
+			}
+		}
+	}
+
+	else if (LeftHandColActivate)
+	{
+		if (IsHit_LPunchArrow)
+		{
+			if (Hit_LPunchArrow.bBlockingHit)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LPunchArrow.GetActor()->GetName()));
+			}
+		}
+	}
+
+	else if (RightHandColActivate)
+	{
+		if (IsHit_RPunchArrow)
+		{
+			if (Hit_RPunchArrow.bBlockingHit)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RPunchArrow.GetActor()->GetName()));
+
+			}
+		}
+	}
+
 
 	/*FCollisionQueryParams CollisionParams;
 
 	DrawDebugLine(GetWorld(),Start, End, FColor::Green, false, 1, 0, 1); 
-	bool isLineHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, CollisionParams);*/
+	bool isLineHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, CollisionParams);
 	
 	if (isLineHit)
 	{
@@ -1190,7 +1245,7 @@ void ATodakBattleArenaCharacter::CheckTraces()
 			}
 		}
 		//UKismetSystemLibrary::LineTraceSingle(UObject* WorldContextObject, this->GetArrowComponent, const FVector End, ETraceTypeQuery TraceChannel, false, , , FHitResult& OutHit, true, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
-	}
+	}*/
 }
 
 
