@@ -37,6 +37,7 @@
 #include <PxTransform.h>
 #include "GestureMathLibrary.h"
 #include "Components/ArrowComponent.h"
+#include "Math/Rotator.h"
 
 
 
@@ -467,7 +468,7 @@ void ATodakBattleArenaCharacter::BeginPlay()
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	CheckTraces();
+
 	/*if (EnableMovement == true)
 	{
 		if (GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold))
@@ -485,6 +486,8 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 	{
 		TriggerToggleLockOn();
 	}*/
+	
+	//CheckTraces(HitActor, BoneNames, Location, bBlockingHits);
 }
 
 //////////////////////////////////// Input //////////////////////////////////////// 
@@ -1136,12 +1139,12 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 	return false;
 }
 
-void ATodakBattleArenaCharacter::CheckTraces()
+void ATodakBattleArenaCharacter::CheckTraces(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits)
 {
-	FVector Loc_LKickArrow = LKickArrow->GetComponentLocation();
-	FVector Loc_RKickArrow = RKickArrow->GetComponentLocation();
-	FVector Loc_LPunchArrow = LPunchArrow->GetComponentLocation();
-	FVector Loc_RPunchArrow = RPunchArrow->GetComponentLocation();
+	//FRotator operator* float Rot_LKickArrow = LKickArrow->GetComponentRotation();
+	/*FRotator Rot_RKickArrow = RKickArrow->GetComponentRotation();
+	FRotator Rot_LPunchArrow = LPunchArrow->GetComponentRotation();
+	FRotator Rot_RPunchArrow = RPunchArrow->GetComponentRotation();*/
 	//UArrowComponent* HitArrow = this->FindComponentByClass<UArrowComponent>();
 	//FVector Loc = HitArrow->GetComponentLocation();
 	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Green, FString::Printf(TEXT("HitArrow is at %s"), *Loc.ToString()));
@@ -1158,19 +1161,19 @@ void ATodakBattleArenaCharacter::CheckTraces()
 	FVector ForwardVector = HitArrow->GetForwardVector();
 	FVector End = Start + (ForwardVector * HitTraceLength);*/
 
-	FVector Start_LKickArrow = Loc_LKickArrow;
+	FVector Start_LKickArrow = LKickArrow->GetComponentLocation();
 	FVector Forward_LKickArrow = LKickArrow->GetForwardVector();
 	FVector End_LKickArrow = Start_LKickArrow + (Forward_LKickArrow * HitTraceLength);
 
-	FVector Start_RKickArrow = Loc_RKickArrow;
+	FVector Start_RKickArrow = RKickArrow->GetComponentLocation();
 	FVector Forward_RKickArrow = RKickArrow->GetForwardVector();
 	FVector End_RKickArrow = Start_RKickArrow + (Forward_RKickArrow * HitTraceLength);
 
-	FVector Start_LPunchArrow = Loc_LPunchArrow;
+	FVector Start_LPunchArrow = LPunchArrow->GetComponentLocation();
 	FVector Forward_LPunchArrow = LPunchArrow->GetForwardVector();
 	FVector End_LPunchArrow = Start_LPunchArrow + (Forward_LPunchArrow * HitTraceLength);
 
-	FVector Start_RPunchArrow = Loc_RPunchArrow;
+	FVector Start_RPunchArrow = RPunchArrow->GetComponentLocation();
 	FVector Forward_RPunchArrow = RPunchArrow->GetForwardVector();
 	FVector End_RPunchArrow = Start_RPunchArrow + (Forward_RPunchArrow * HitTraceLength);
 
@@ -1185,11 +1188,43 @@ void ATodakBattleArenaCharacter::CheckTraces()
 	{
 		if (IsHit_LKickArrow)
 		{
-			if (Hit_LKickArrow.bBlockingHit)
+			if (Hit_LKickArrow.GetActor() != this)
 			{
+				//Hit_LKickArrow.GetActor = HitActor;
+				//Hit_LKickArrow.GetActor()->GetName() = HitActor;
+				BoneNames = Hit_LKickArrow.BoneName;
+				//Hit_LKickArrow.BoneName = &BoneNames;
+				Location = Hit_LKickArrow.ImpactPoint;
+				bBlockingHits = Hit_LKickArrow.bBlockingHit;
+				HitActor = Hit_LKickArrow.GetActor();
+				
+				//HitActor = Hit_LKickArrow.HitActor;
+				//*HitActor = Hit_LKickArrow.Actor;
+				//HitActor->GetName() = Hit_LKickArrow.Actor;
+				//Hit_LKickArrow.Actor = HitActor;
+
+
 				DrawDebugLine(GetWorld(), Start_LKickArrow, End_LKickArrow, FColor::Green, false, 1, 0, 1);
-				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.GetActor()->GetName()));
+				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Magenta, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.BoneName.ToString()));
+				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.ImpactPoint.ToString()));
+				//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.bBlockingHit.ToString()));
+				//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.Actor.ToString()));
+				/*if (Hit_LKickArrow.Actor != this)
+				{
+					Hit_LKickArrow.Actor = HitActor;
+				}
+				if (Hit_LKickArrow.bBlockingHit)
+				{
+					DrawDebugLine(GetWorld(), Start_LKickArrow, End_LKickArrow, FColor::Green, false, 1, 0, 1);
+					GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.GetActor()->GetName()));
+				}*/
 			}
+			
+		}
+
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Left kick did not hit anything.")));
 		}
 		
 	}
@@ -1198,11 +1233,19 @@ void ATodakBattleArenaCharacter::CheckTraces()
 	{
 		if (IsHit_RKickArrow)
 		{
-			if (Hit_RKickArrow.bBlockingHit)
+			Hit_RKickArrow.BoneName = BoneNames;
+			Hit_RKickArrow.ImpactPoint = Location;
+			Hit_RKickArrow.bBlockingHit = bBlockingHits;
+
+			if (Hit_RKickArrow.Actor != this)
+			{
+				Hit_RKickArrow.Actor = HitActor;
+			}
+			/*if (Hit_RKickArrow.bBlockingHit)
 			{
 				DrawDebugLine(GetWorld(), Start_RKickArrow, End_RKickArrow, FColor::Blue, false, 1, 0, 1);
 				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RKickArrow.GetActor()->GetName()));
-			}
+			}*/
 		}
 	}
 
@@ -1210,10 +1253,18 @@ void ATodakBattleArenaCharacter::CheckTraces()
 	{
 		if (IsHit_LPunchArrow)
 		{
-			if (Hit_LPunchArrow.bBlockingHit)
+			Hit_LPunchArrow.BoneName = BoneNames;
+			Hit_LPunchArrow.ImpactPoint = Location;
+			Hit_LPunchArrow.bBlockingHit = bBlockingHits;
+
+			if (Hit_LPunchArrow.Actor != this)
+			{
+				Hit_LPunchArrow.Actor = HitActor;
+			}
+			/*if (Hit_LPunchArrow.bBlockingHit)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LPunchArrow.GetActor()->GetName()));
-			}
+			}*/
 		}
 	}
 
@@ -1221,11 +1272,20 @@ void ATodakBattleArenaCharacter::CheckTraces()
 	{
 		if (IsHit_RPunchArrow)
 		{
-			if (Hit_RPunchArrow.bBlockingHit)
+			Hit_RPunchArrow.BoneName = BoneNames;
+			Hit_RPunchArrow.ImpactPoint = Location;
+			Hit_RPunchArrow.bBlockingHit = bBlockingHits;
+
+			if (Hit_RPunchArrow.Actor != this)
+			{
+				Hit_RPunchArrow.Actor = HitActor;
+			}
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RPunchArrow.GetActor()->GetName()));
+			/*if (Hit_RPunchArrow.bBlockingHit)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RPunchArrow.GetActor()->GetName()));
 
-			}
+			}*/
 		}
 	}
 

@@ -113,6 +113,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameOver")
 	void GameOverFunc();
 
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void CheckTraces(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
 	
 	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
@@ -265,6 +267,18 @@ public:
 	TArray<FName> LegBone;
 	/**************EndBoneParts***************************/
 
+	/*UPROPERTY(VisibleAnywhere, Category = "Trace")
+	AActor* HitActor;
+
+	UPROPERTY(VisibleAnywhere, Category = "Trace")
+	FVector Location;
+
+	UPROPERTY(VisibleAnywhere, Category = "Trace")
+	FName BoneNames;
+
+	UPROPERTY(VisibleAnywhere, Category = "Trace")
+	bool bBlockingHits;*/
+
 	//remove touch inputs from array
 	void RemoveFromArray();
 
@@ -316,8 +330,7 @@ protected:
 	//Execute the skill
 	bool ExecuteAction(bool SkillTrigger, float HitTraceLengths, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill);
 
-	UFUNCTION()
-	void CheckTraces();
+	
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
@@ -787,9 +800,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool LeftKickColActivate;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Anim")
-	bool KickColActivate;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool LeftHandColActivate;
