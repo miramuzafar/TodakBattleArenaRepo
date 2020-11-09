@@ -130,6 +130,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 	ToBeIgnoredCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("ToBeIgnoredCollision"));
 	ToBeIgnoredCollision->SetupAttachment(GetMesh());
+	ToBeIgnoredCollision->SetRelativeLocation(FVector(0.000000f, 0.000000f, 100.0f));
 
 	//TargetLockCollision
 	LockOnCollision = CreateDefaultSubobject<USphereComponent>(TEXT("LockOnCollision"));
@@ -1139,9 +1140,11 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 	return false;
 }
 
-void ATodakBattleArenaCharacter::CheckTraces(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits)
+void ATodakBattleArenaCharacter::CheckLineTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits)
 {
-	//FRotator operator* float Rot_LKickArrow = LKickArrow->GetComponentRotation();
+	//FRotator Rot_LKickArrow = LKickArrow->GetComponentRotation();
+	//FVector Fforward_LKickArrow = UKismetMathLibrary::GetForwardVector(Rot_LKickArrow);
+	
 	/*FRotator Rot_RKickArrow = RKickArrow->GetComponentRotation();
 	FRotator Rot_LPunchArrow = LPunchArrow->GetComponentRotation();
 	FRotator Rot_RPunchArrow = RPunchArrow->GetComponentRotation();*/
@@ -1161,7 +1164,9 @@ void ATodakBattleArenaCharacter::CheckTraces(AActor*& HitActor, FName& BoneNames
 	FVector ForwardVector = HitArrow->GetForwardVector();
 	FVector End = Start + (ForwardVector * HitTraceLength);*/
 
+
 	FVector Start_LKickArrow = LKickArrow->GetComponentLocation();
+	//FVector Forward_LKickArrow = UKismetMathLibrary::GetForwardVector(Rot_LKickArrow);
 	FVector Forward_LKickArrow = LKickArrow->GetForwardVector();
 	FVector End_LKickArrow = Start_LKickArrow + (Forward_LKickArrow * HitTraceLength);
 
@@ -1177,11 +1182,24 @@ void ATodakBattleArenaCharacter::CheckTraces(AActor*& HitActor, FName& BoneNames
 	FVector Forward_RPunchArrow = RPunchArrow->GetForwardVector();
 	FVector End_RPunchArrow = Start_RPunchArrow + (Forward_RPunchArrow * HitTraceLength);
 
-	FCollisionQueryParams CollisionParams;
-	bool IsHit_LKickArrow = GetWorld()->LineTraceSingleByChannel(Hit_LKickArrow, Start_LKickArrow, End_LKickArrow, ECC_Visibility, CollisionParams);
-	bool IsHit_RKickArrow = GetWorld()->LineTraceSingleByChannel(Hit_RKickArrow, Start_RKickArrow, End_RKickArrow, ECC_Visibility, CollisionParams);
-	bool IsHit_LPunchArrow = GetWorld()->LineTraceSingleByChannel(Hit_LPunchArrow, Start_LPunchArrow, End_LPunchArrow, ECC_Visibility, CollisionParams);
-	bool IsHit_RPunchArrow = GetWorld()->LineTraceSingleByChannel(Hit_RPunchArrow, Start_RPunchArrow, End_RPunchArrow, ECC_Visibility, CollisionParams);
+	//FCollisionShape CP_LKickArrow;
+	FCollisionQueryParams CP_LKickArrow;
+	FCollisionQueryParams CP_RKickArrow;
+	FCollisionQueryParams CP_LPunchArrow;
+	FCollisionQueryParams CP_RPunchArrow;
+
+	CP_LKickArrow.AddIgnoredActor(this);
+	CP_RKickArrow.AddIgnoredActor(this);
+	CP_LPunchArrow.AddIgnoredActor(this);
+	CP_RPunchArrow.AddIgnoredActor(this);
+
+
+
+	//bool IsHit_LKickArrow = GetWorld()->SweepSingleByChannel(Hit_LKickArrow, Start_LKickArrow, End_LKickArrow, FQuat::Identity, ECC_Visibility, CP_LKickArrow);
+	bool IsHit_LKickArrow = GetWorld()->LineTraceSingleByChannel(Hit_LKickArrow, Start_LKickArrow, End_LKickArrow, ECC_Visibility, CP_LKickArrow);
+	bool IsHit_RKickArrow = GetWorld()->LineTraceSingleByChannel(Hit_RKickArrow, Start_RKickArrow, End_RKickArrow, ECC_Visibility, CP_RKickArrow);
+	bool IsHit_LPunchArrow = GetWorld()->LineTraceSingleByChannel(Hit_LPunchArrow, Start_LPunchArrow, End_LPunchArrow, ECC_Visibility, CP_LPunchArrow);
+	bool IsHit_RPunchArrow = GetWorld()->LineTraceSingleByChannel(Hit_RPunchArrow, Start_RPunchArrow, End_RPunchArrow, ECC_Visibility, CP_RPunchArrow);
 	
 	
 	if (LeftKickColActivate)
@@ -1190,41 +1208,25 @@ void ATodakBattleArenaCharacter::CheckTraces(AActor*& HitActor, FName& BoneNames
 		{
 			if (Hit_LKickArrow.GetActor() != this)
 			{
-				//Hit_LKickArrow.GetActor = HitActor;
-				//Hit_LKickArrow.GetActor()->GetName() = HitActor;
 				BoneNames = Hit_LKickArrow.BoneName;
-				//Hit_LKickArrow.BoneName = &BoneNames;
 				Location = Hit_LKickArrow.ImpactPoint;
 				bBlockingHits = Hit_LKickArrow.bBlockingHit;
 				HitActor = Hit_LKickArrow.GetActor();
-				
-				//HitActor = Hit_LKickArrow.HitActor;
-				//*HitActor = Hit_LKickArrow.Actor;
-				//HitActor->GetName() = Hit_LKickArrow.Actor;
 				//Hit_LKickArrow.Actor = HitActor;
 
-
 				DrawDebugLine(GetWorld(), Start_LKickArrow, End_LKickArrow, FColor::Green, false, 1, 0, 1);
-				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Magenta, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.BoneName.ToString()));
-				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.ImpactPoint.ToString()));
+				//DrawDebugSphere(GetWorld(), Start_LKickArrow, CP_LKickArrow.GetSphereRadius(), 100, FColor::Green, false);
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *Hit_LKickArrow.BoneName.ToString()));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Hit_LKickArrow.ImpactPoint.ToString()));
 				//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.bBlockingHit.ToString()));
-				//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.Actor.ToString()));
-				/*if (Hit_LKickArrow.Actor != this)
-				{
-					Hit_LKickArrow.Actor = HitActor;
-				}
-				if (Hit_LKickArrow.bBlockingHit)
-				{
-					DrawDebugLine(GetWorld(), Start_LKickArrow, End_LKickArrow, FColor::Green, false, 1, 0, 1);
-					GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.GetActor()->GetName()));
-				}*/
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.GetActor()->GetName()));
 			}
 			
 		}
 
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Left kick did not hit anything.")));
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("Left kick did not hit anything.")));
 		}
 		
 	}
@@ -1288,25 +1290,20 @@ void ATodakBattleArenaCharacter::CheckTraces(AActor*& HitActor, FName& BoneNames
 			}*/
 		}
 	}
-
-
-	/*FCollisionQueryParams CollisionParams;
-
-	DrawDebugLine(GetWorld(),Start, End, FColor::Green, false, 1, 0, 1); 
-	bool isLineHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, CollisionParams);
-	
-	if (isLineHit)
-	{
-		if (OutHit.bBlockingHit)
-		{
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *OutHit.GetActor()->GetName()));
-			}
-		}
-		//UKismetSystemLibrary::LineTraceSingle(UObject* WorldContextObject, this->GetArrowComponent, const FVector End, ETraceTypeQuery TraceChannel, false, , , FHitResult& OutHit, true, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
-	}*/
 }
+
+//void ATodakBattleArenaCharacter::CheckSphereTrace(AActor*& HitActor, FName& BoneName, FVector& Location, bool& bBlockingHit)
+//{
+//	TArray <FHitResult> Hit_LKickSphere;
+//	FVector Start_LKickSphere;
+//	FVector End_LKickSphere;
+//	FCollisionSphere SphereParams = FCollisionShape::MakeSphere(300.0f);
+//
+//
+//	bool IsHit_LKickSphere = GetWorld()->
+//
+//
+//}
 
 
 

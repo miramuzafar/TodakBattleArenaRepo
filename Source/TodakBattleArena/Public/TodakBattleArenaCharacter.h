@@ -114,7 +114,10 @@ public:
 	void GameOverFunc();
 
 	UFUNCTION(BlueprintCallable, Category = "Collision")
-	void CheckTraces(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
+	void CheckLineTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
+
+	/*UFUNCTION(BlueprintCallable, Category = "Collision")
+	void CheckSphereTrace(AActor*& HitActor, FName& BoneName, FVector& Location, bool& bBlockingHit);*/
 	
 	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
