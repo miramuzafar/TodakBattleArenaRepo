@@ -116,8 +116,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void CheckLineTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
 
-	/*UFUNCTION(BlueprintCallable, Category = "Collision")
-	void CheckSphereTrace(AActor*& HitActor, FName& BoneName, FVector& Location, bool& bBlockingHit);*/
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void CheckSphereTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit);
 	
 	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
@@ -209,6 +209,15 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
 	bool BlockedHit = false;
 
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category ="SwipeGesture")
+	bool RepTurnRight = false;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	bool RepTurnLeft = false;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	bool RepIsMoving = false;
+
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseTurnRate;
@@ -225,6 +234,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "BlockedHit")
 	bool AICanAttack = false;
+
 
 	FTimerHandle IterateArray;
 
@@ -535,6 +545,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	FTimerHandle StartEnergyTimer;
+
+
 
 	//Current Stamina value
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")

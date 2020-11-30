@@ -28,6 +28,7 @@
 #include "Misc/DateTime.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/DecalActor.h"
+#include "GameFramework/Actor.h"
 #include "Components/DecalComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TimelineComponent.h"
@@ -38,6 +39,7 @@
 #include "GestureMathLibrary.h"
 #include "Components/ArrowComponent.h"
 #include "Math/Rotator.h"
+#include "TBAAnimInstance.h"
 
 
 
@@ -216,6 +218,9 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockedHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, AICanAttack);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockHitTimer);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RepTurnRight);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RepTurnLeft);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RepIsMoving);
 
 	//**AnimMontage**//
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockHit);
@@ -262,6 +267,8 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	//SpawnWounds
 	DOREPLIFETIME(ATodakBattleArenaCharacter, HitLocation);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, DecalMat);
+
+	
 }
 
 void ATodakBattleArenaCharacter::LockOn_Implementation()
@@ -1292,18 +1299,104 @@ void ATodakBattleArenaCharacter::CheckLineTrace(AActor*& HitActor, FName& BoneNa
 	}
 }
 
-//void ATodakBattleArenaCharacter::CheckSphereTrace(AActor*& HitActor, FName& BoneName, FVector& Location, bool& bBlockingHit)
-//{
-//	TArray <FHitResult> Hit_LKickSphere;
-//	FVector Start_LKickSphere;
-//	FVector End_LKickSphere;
-//	FCollisionSphere SphereParams = FCollisionShape::MakeSphere(300.0f);
-//
-//
-//	bool IsHit_LKickSphere = GetWorld()->
-//
-//
-//}
+void ATodakBattleArenaCharacter::CheckSphereTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit)
+{
+	// Arrow component location
+	//FVector Loc_LKickArrow = LKickArrow->GetComponentLocation();
+
+	//array for hit results
+	TArray <FHitResult> Hit_LKickSphere;
+
+	//FHitResult Hit_LKickSphere;
+
+	// start location to spawn sphere from arrow
+	FVector Start_LKickSphere = LKickArrow->GetComponentLocation();
+
+	FVector Forward_LKickSphere = LKickArrow->GetForwardVector();
+
+	// end location to spawn sphere
+	FVector End_LKickSphere = Start_LKickSphere + (Forward_LKickSphere + HitTraceLength);
+
+	// create the collision sphere with float value of its radius
+	FCollisionShape Sphere_LKick = FCollisionShape::MakeSphere(10.0f);
+
+	//DrawDebugSphere(GetWorld(), Start_LKickSphere, Sphere_LKick.GetSphereRadius(), 5, FColor::Purple, true);
+	
+	FCollisionQueryParams CP_LKick;
+
+	CP_LKick.AddIgnoredActor(this);
+
+
+
+
+	FHitResult Hit_LKickArrow;
+	FVector Start_LKickArrow = LKickArrow->GetComponentLocation();
+	FVector Forward_LKickArrow = LKickArrow->GetForwardVector();
+	FVector End_LKickArrow = Start_LKickArrow + (Forward_LKickArrow + HitTraceLength);
+	//FQuat Rot_LKickArrow;
+
+
+
+
+
+	//Sphere_LKick.AddIgnoredActor(this);
+
+	//bool IsHit_LKickSphere = GetWorld()->SweepMultiByChannel(Hit_LKickSphere, Start_LKickSphere, End_LKickSphere, FQuat::Identity, ECC_WorldStatic, Sphere_LKick);
+	//bool IsHit_LKickSphere = GetWorld()->SweepSingleByChannel(Hit_LKickSphere, Start_LKickSphere, End_LKickSphere, FQuat::Identity, Sphere_LKick, CP_LKick);
+	bool IsHit_LKickArrow = GetWorld()->SweepSingleByChannel(Hit_LKickArrow, Start_LKickArrow, End_LKickArrow, FQuat::Identity, ECC_Visibility, Sphere_LKick, CP_LKick);
+
+	//if (IsHit_LKickSphere)
+	//{
+	//	// for everthing that sphere hits
+	//	for (auto& Hits : Hit_LKickSphere)
+	//	{
+	//		DrawDebugSphere(GetWorld(), Start_LKickSphere, Sphere_LKick.GetSphereRadius(), 5, FColor::Purple, false, 1, 0, 1);
+
+	//		if (Hits.Actor != this)
+	//		{
+	//			if (GEngine)
+	//			{
+	//				//GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *Hits.Actor->GetName()));
+	//				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("All Hit Information: %s"), *Hits.ToString()));
+	//			}
+
+	//			Hits.Actor = HitActor;
+	//			Hits.BoneName = BoneNames;
+	//			Hits.bBlockingHit = bBlockingHit;
+	//			Hits.ImpactPoint = Location;
+
+	//			/*EnemyChar.GetActor() = HitActor;
+	//			EnemyChar = HitActor;
+	//			Hits.Actor = HitActor;
+	//			EnemyChar.BoneName = BoneNames;
+	//			EnemyChar.bBlockingHit = bBlockingHit;
+	//			EnemyChar.ImpactPoint = Location;*/
+	//		}
+	//		
+	//	}
+	//}
+
+	if (IsHit_LKickArrow)
+	{
+		if (Hit_LKickArrow.Actor != this)
+		{
+			//DrawDebugSphere(GetWorld(), Start_LKickArrow, )
+			DrawDebugSphere(GetWorld(), Start_LKickSphere, Sphere_LKick.GetSphereRadius(), 50, FColor::Purple, false, 1, 0, 1);
+			HitActor = Hit_LKickArrow.GetActor();
+			BoneNames = Hit_LKickArrow.BoneName;
+			bBlockingHit = Hit_LKickArrow.bBlockingHit;
+			Location = Hit_LKickArrow.ImpactPoint;
+
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("All Hit Information: %s"), *Hit_LKickArrow.ToString()));
+
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *BoneNames.ToString()));
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("BlockingHit: %s"), *bBlockingHit.ToString()));
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.GetActor()->GetName()));
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *HitActor->GetName()));
+		}
+	}
+}
 
 
 
@@ -1732,7 +1825,7 @@ void ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar(EBarType Type,
 			//if the current secondary timer is active
 			if (GetWorld()->GetTimerManager().IsTimerActive(StartSecondaryHealthTimer) == true)
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Timer %s"), (GetWorld()->GetTimerManager().IsTimerActive(StartSecondaryHealthTimer)) ? TEXT("is Active") : TEXT("is not Active")));
+				//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Timer %s"), (GetWorld()->GetTimerManager().IsTimerActive(StartSecondaryHealthTimer)) ? TEXT("is Active") : TEXT("is not Active")));
 				if (StatType == EMainPlayerStats::PainMeter)
 				{
 					//Decrease the current pain meter value
@@ -2070,6 +2163,73 @@ void ATodakBattleArenaCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+
+	//if (AActor::GetInputAxisKeyValue(InputAxisKey)
+	//UE_LOG(LogTemp, Warning, TEXT("%f"), Rate);
+	//float Value = InputComponent->AActor::GetAxisKeyValue(InputAxisKey);
+	//float Value = AActor::GetInputAxisKeyValue(Rate);
+	//float Value = InputComponent->GetInputAxisKeyValue(Rate);
+
+
+	//if ((Controller != NULL) && (Rate != 0.0f))
+	//{
+	//	if (Rate != 0.0f)
+	//	{
+	//		if (Rate > 0.0f)
+	//		{
+	//			// turn right
+	//			TurnRight = true;
+	//			TurnLeft = false;
+	//			UE_LOG(LogTemp, Warning, TEXT("TurnRight: %s"), TurnRight ? TEXT("true") : TEXT("false"));
+	//			UE_LOG(LogTemp, Warning, TEXT("Is Moving: %s"), IsMoving ? TEXT("true") : TEXT("false"));
+
+	//		}
+
+	//		else
+	//		{
+	//			// turn left
+	//			TurnLeft = true;
+	//			TurnRight = false;
+	//			UE_LOG(LogTemp, Warning, TEXT("TurnLeft: %s"), TurnLeft ? TEXT("true") : TEXT("false"));
+
+	//		}
+	//	}
+	//	
+	//	else
+	//	{
+	//		// idle
+	//		TurnRight = false;
+	//		TurnLeft = false;
+	//	}
+
+	//}
+	
+
+
+
+	/*if (Rate > 0.0)
+	{
+		TurnLeft = false;
+		TurnRight = true;
+	}
+
+	else
+	{
+		if (Rate < 0.0)
+		{
+			TurnRight = false;
+			TurnLeft = true;
+		}
+		
+		else if (Rate == 0.0)
+		{
+			TurnRight = false;
+			TurnLeft = false;
+		}
+		
+	}*/
+
+	
 }
 
 void ATodakBattleArenaCharacter::LookUpAtRate(float Rate)

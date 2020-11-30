@@ -125,4 +125,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Transform")
 	static FTransform GetBoneTransform(USkeletalMeshComponent* SkelMesh, FName BoneName);
 	/***************************************/
+
+
+	UFUNCTION(BlueprintCallable, Category = "DateAndTime")
+	static float GetCurrentTimeInMinute();
+
+	UFUNCTION(BlueprintCallable, Category = "DateAndTime")
+	static FTimespan GetCurrentTime();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|UI Utils")
+	static void CalculateProgressBarRate(float PercentageFromMax, int MaxValue, float TimeInSeconds, int CappedValueIncrement, int MaxStatusValue, float& RateFromCappedVal, int& TotalIncrementValue, float& TotalPercentageValue);
+
+	UFUNCTION(BlueprintCallable, Category = "DateAndTime")
+	static FDateTime GetCurrentDateAndTime();
 };

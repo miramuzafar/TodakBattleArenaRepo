@@ -440,3 +440,34 @@ FTransform UGestureMathLibrary::GetBoneTransform(USkeletalMeshComponent* SkelMes
 
 	return BoneTransform;
 }
+
+float UGestureMathLibrary::GetCurrentTimeInMinute()
+{
+	return GetCurrentTime().GetTotalMinutes();
+}
+
+FTimespan UGestureMathLibrary::GetCurrentTime()
+{
+	return GetCurrentDateAndTime().GetTimeOfDay();
+}
+
+void UGestureMathLibrary::CalculateProgressBarRate(float PercentageFromMax, int MaxValue, float TimeInSeconds, int CappedValueIncrement, int MaxStatusValue, float & RateFromCappedVal, int & TotalIncrementValue, float & TotalPercentageValue)
+{
+	float PercentVal = CalculateValueFromPercentage(PercentageFromMax, MaxValue, 100.0f);
+
+	//Increment Rate over time
+	RateFromCappedVal = (CalculatePercentageFromValue(PercentVal, CappedValueIncrement, 100.0f) / 100.0f) / TimeInSeconds;
+
+	//total values
+	float TotalVal = PercentVal + MaxStatusValue;
+
+	TotalIncrementValue = TotalVal;
+
+	//total percentage
+	TotalPercentageValue = CalculatePercentageFromValue(TotalVal, CappedValueIncrement, 100.0f) / 100.0f;
+}
+
+FDateTime UGestureMathLibrary::GetCurrentDateAndTime()
+{
+	return FDateTime::Now();
+}

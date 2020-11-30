@@ -16,6 +16,15 @@ class TODAKBATTLEARENA_API UTBAAnimInstance : public UAnimInstance
 
 public:
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool TurnRight = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool TurnLeft = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool IsMoving = false;
+
 	
 protected:
 	//variables
@@ -25,6 +34,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Speed = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Direction = 0.0f;
+
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Switcher = 0;
