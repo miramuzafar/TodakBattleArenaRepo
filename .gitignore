@@ -84,3 +84,9 @@ TodakBattleArena.uproject
 *.uproject
 *.uproject
 *.uproject
+*.ini
+Plugins/VaRestPlugin/LICENSE
+*.md
+*.png
+*.jpg
+Plugins/VaRestPlugin/Source/.clang-format

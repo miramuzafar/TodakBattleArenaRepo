@@ -135,13 +135,16 @@ public:
 	bool IsFacingUp = false;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
-	FVector CapsuleLocation;
+		FVector CapsuleLocation;
 
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_SetMeshLocation, BlueprintReadWrite, Category = "Ragdoll")
-	FVector MeshLocation;
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+		FVector MeshLocation;
 
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_SetMeshRotation, BlueprintReadWrite, Category = "Ragdoll")
-	FRotator MeshRotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+		FVector TestMeshLoc;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+		FRotator MeshRotation;
 
 	//FTimeline RagdollTimeLine = FTimeline();
 	//UCurveFloat* RagdollCurve;
@@ -463,28 +466,28 @@ protected:
 	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime);
 
 	UFUNCTION(BlueprintCallable)
-	void CalculateMeshLocation(USceneComponent* Capsule);
+		void CalculateMeshLocation(USceneComponent* Capsule, FVector& FinalLoc);
 
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
-	void ServerGetMeshLocation(FVector TempMeshLoc);
+		void ServerGetMeshLocation(FVector TempMeshLoc);
 
 	UFUNCTION(Reliable, Client, WithValidation, Category = "Ragdoll")
-	void MulticastGetMeshLocation(FVector TempMeshLoc);
+		void MulticastGetMeshLocation(FVector TempMeshLoc);
 
 	UFUNCTION()
-	void OnRep_SetMeshLocation();
+		void OnRep_SetMeshLocation();
 
 	UFUNCTION()
-	void OnRep_SetMeshRotation();
+		void OnRep_SetMeshRotation();
 
 	UFUNCTION(BlueprintPure)
-	bool CalculatingFacingLocation(class USkeletalMeshComponent* currMesh);
+		bool CalculatingFacingLocation(class USkeletalMeshComponent* currMesh);
 
 	UFUNCTION(BlueprintCallable)
-	void SetUpGetUpOrientation(USkeletalMeshComponent* currMesh);
+		void SetUpGetUpOrientation(USkeletalMeshComponent* currMesh);
 
 	UFUNCTION(BlueprintCallable)
-	void SetUpGetUpMontage(USkeletalMeshComponent* currMesh);
+		void SetUpGetUpMontage(USkeletalMeshComponent* currMesh);
 
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);

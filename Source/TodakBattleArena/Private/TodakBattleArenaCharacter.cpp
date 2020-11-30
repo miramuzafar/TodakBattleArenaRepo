@@ -526,7 +526,7 @@ void ATodakBattleArenaCharacter::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ATodakBattleArenaCharacter::OnResetVR);
 }
 
-void ATodakBattleArenaCharacter::CalculateMeshLocation(USceneComponent* Capsule)
+void ATodakBattleArenaCharacter::CalculateMeshLocation(USceneComponent* Capsule, FVector& FinalLoc)
 {
 	FVector loc;
 	FRotator Rot;
@@ -547,52 +547,58 @@ void ATodakBattleArenaCharacter::CalculateMeshLocation(USceneComponent* Capsule)
 		//set the location to original location of the mesh
 		CapsuleLocation = GetMesh()->GetSocketLocation("pelvis") + FVector(0.0f, 0.0f, 100.0f);
 
-	if (Capsule == this->GetCapsuleComponent())
+
+	MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
+	this->GetCapsuleComponent()->SetWorldLocation(MeshLocation, false, nullptr, ETeleportType::None);
+	//this->GetCapsuleComponent()->SetWorldRotation(MeshRotation, true, false);
+	FinalLoc = MeshLocation;
+	//this->OnRep_SetMeshLocation();
+	//MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
+	//Capsule->SetWorldLocation(MeshLocation, false, false);
+	//Interpolate between mesh location and capsule location
+	/*if (Capsule == this->GetCapsuleComponent())
 	{
-		//Interpolate between mesh location and capsule location
 		MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
-		if (this->IsLocallyControlled())
-		{
-			ServerGetMeshLocation(MeshLocation);
-		}
-	}
+		ServerGetMeshLocation(MeshLocation);
+	}*/
+
+	/*if (this->IsLocallyControlled())
+	{
+		ServerGetMeshLocation(MeshLocation);
+	}*/
+
 	//this->OnRep_SetMeshRotation();
 }
 
 bool ATodakBattleArenaCharacter::ServerGetMeshLocation_Validate(FVector TempMeshLoc)
 {
-	if (TempMeshLoc == FVector(0.0f))
-	{
-		return false;
-	}
 	return true;
 }
 
 void ATodakBattleArenaCharacter::ServerGetMeshLocation_Implementation(FVector TempMeshLoc)
 {
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		MulticastGetMeshLocation(TempMeshLoc);
-	}
+	MulticastGetMeshLocation(TempMeshLoc);
 }
 
 bool ATodakBattleArenaCharacter::MulticastGetMeshLocation_Validate(FVector TempMeshLoc)
 {
-	if (TempMeshLoc == FVector(0.0f))
-	{
-		return false;
-	}
 	return true;
 }
 
 void ATodakBattleArenaCharacter::MulticastGetMeshLocation_Implementation(FVector TempMeshLoc)
 {
-	this->GetCapsuleComponent()->SetWorldLocation(TempMeshLoc, false, false);
+	FHitResult newResult;
+
+	this->GetCapsuleComponent()->SetWorldLocation(MeshLocation, false, &newResult, ETeleportType::None);
 	this->OnRep_SetMeshLocation();
 }
 
 void ATodakBattleArenaCharacter::OnRep_SetMeshLocation()
 {
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		//this->GetCapsuleComponent()->SetWorldLocation(MeshLocation, false, false);
+	}
 	//MeshLocation = FMath::VInterpTo(MeshLocation, CapsuleLocation, GetWorld()->GetDeltaSeconds(), 30.0f);
 	//this->GetCapsuleComponent()->SetWorldLocation(MeshLocation, false, false);
 	//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Mesh location : %s"), *MeshLocation.ToString()));
@@ -638,8 +644,10 @@ void ATodakBattleArenaCharacter::SetUpGetUpOrientation(USkeletalMeshComponent* c
 		NewRot = UKismetMathLibrary::MakeRotFromZX(FVector(0.0f, 0.0f, 1.0f), TotalVector);
 	}
 
-	this->SetActorTransform(FTransform(NewRot, MeshLocation, FVector(1.0f, 1.0f, 1.0f)), false, false);
-	//this->SetReplicatedMovement(FRepMovement::Location);
+	if (this->SetActorTransform(FTransform(NewRot, MeshLocation, FVector(1.0f, 1.0f, 1.0f)), false, nullptr, ETeleportType::None))
+	{
+		//Transform succesful
+	}
 }
 
 void ATodakBattleArenaCharacter::SetUpGetUpMontage(USkeletalMeshComponent* currMesh)
