@@ -126,11 +126,11 @@ protected:
 	virtual void Init();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Status")
-	int MaxAgility;
+	float MaxAgility;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Status")
-	int MaxStamina;
+	float MaxStamina;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Status")
-	int MaxStrength;
+	float MaxStrength;
 };
