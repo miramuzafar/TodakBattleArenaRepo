@@ -484,5 +484,5 @@ float UGestureMathLibrary::GetCurrentPercentInSeconds(float CurrVal, float Incre
 float UGestureMathLibrary::GetRatePerSeconds(float CurrVal, float ConstantValue, float BoostVal)
 {
 	//rate of increment per seconds
-	return (((1 / CurrVal)*ConstantValue)) + (((1 / CurrVal)*ConstantValue)*(BoostVal));
+	return (((1 / CurrVal)*ConstantValue)) + (((1 / CurrVal)*ConstantValue)*(BoostVal/100.0f));
 }
