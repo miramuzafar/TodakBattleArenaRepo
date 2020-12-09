@@ -167,8 +167,6 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 		UE_LOG(LogTemp, Warning, TEXT("Timeline is Created"));
 	}*/
-	
-	
 }
 
 void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
