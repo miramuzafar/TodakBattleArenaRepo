@@ -144,4 +144,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Rate")
 	static float GetRatePerSeconds(float CurrVal, float ConstantValue, float BoostVal);
+
+	UFUNCTION(BlueprintPure, Category = "Rate")
+	static float CalculateTotalMaxVal(float Percentage, float MaxVal, float& ValFromPercentage);
 };

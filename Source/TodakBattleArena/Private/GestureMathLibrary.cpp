@@ -486,3 +486,10 @@ float UGestureMathLibrary::GetRatePerSeconds(float CurrVal, float ConstantValue,
 	//rate of increment per seconds
 	return (((1 / CurrVal)*ConstantValue)) + (((1 / CurrVal)*ConstantValue)*(BoostVal/100.0f));
 }
+
+float UGestureMathLibrary::CalculateTotalMaxVal(float Percentage, float MaxVal, float& ValFromPercentage)
+{
+	//Get current value from percentage
+	ValFromPercentage = CalculateValueFromPercentage(Percentage, MaxVal, 100.0f);
+	return (MaxVal+ValFromPercentage);
+}
