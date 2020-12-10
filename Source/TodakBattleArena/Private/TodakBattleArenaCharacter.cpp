@@ -795,42 +795,44 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 	}
 }
 
-void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue)
+void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue, float CurrStrength, float CurrStamina, float CurrAgility)
 {
 	//damage = DamageValue;
 	// Increase (or decrease) current damage
 	if (GetLocalRole() == ROLE_Authority)
 	{
+		//float DamageFromStrength = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, MaxStrength, 100.0f);
+
 		//Calculate total damage applied from current action with current instigator's maximum strength
-		float DamageFromStrength = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, MaxStrength, 100.0f);
-		damage = DamageValue + DamageFromStrength;
+		damage = DamageValue + ((CurrStrength + CurrStamina + CurrAgility) / 15000)*(CurrStrength*(CurrStrength / 1000.0f));
 		UE_LOG(LogTemp, Warning, TEXT("Damage : %f"), damage);
 	}
 }
 
-bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, float DamageApplied, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, float DamageApplied, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		RPCServerSkill = ServerSkill;
 		SkillExecuted = SkillFound;
+
 		//damage = DamageApplied;
-		MulticastSkillMoveset(RPCServerSkill, DamageApplied, PlayRate, StartTime, SkillFound);
+		MulticastSkillMoveset(RPCServerSkill, DamageApplied, CurrStrength, CurrStamina, CurrAgility, PlayRate, StartTime, SkillFound);
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, float DamageApplied, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound)
 {
 	return true;
 }
 
 //Play swipe action anim
-void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, float DamageApplied, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound)
 {
 	//if action is found, play new action anim, else stop the current action, else stop the current anim immediately
 	if (SkillFound == true)
@@ -841,7 +843,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		//Play new anim on client
 		RPCMultiCastSkill = MulticastSkill;
 		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
-		UpdateDamage(DamageApplied);
+		UpdateDamage(DamageApplied, CurrStrength, CurrStamina, CurrAgility);
 		
 		//stop current played anim
 		this->GetMesh()->GetAnimInstance()->Montage_Stop(3.0f, RPCMultiCastSkillHold);
@@ -1134,7 +1136,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 		SkillMoveset = SkillMovesets;
 
 		//Server
-		ServerSkillMoveset(SkillMoveset, DealDamage, AnimRate, AnimStartTime, SkillTriggered);
+		ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered);
 
 		if (this->BlockedHit == true)
 		{
@@ -1818,11 +1820,22 @@ void ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar(EBarType Type,
 			}
 			else if (StatType == EMainPlayerStats::Energy)
 			{
-				//Decrease the current pain meter value
-				UpdateStatusValueTimer(FirstHandle, EOperation::Addition, false, 10.0f, playerEnergy, MaxEnergy, 0.0f, playerEnergy);
+				//Increase the current energy value
+				//UpdateStatusValueTimer(FirstHandle, EOperation::Addition, false, 10.0f, playerEnergy, MaxEnergy, 0.0f, playerEnergy);
 
-				//Calculate percentage for current pain meter bar
-				EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", playerEnergy, MaxEnergy);
+				if (playerEnergy >= MaxEnergy)
+				{
+					GetWorld()->GetTimerManager().ClearTimer(FirstHandle);
+				}
+				else
+				{
+					float Increment = 5 + (5 * (MaxEnergy / 1000));
+
+					playerEnergy = playerEnergy + Increment;
+
+					//Calculate percentage for current energy bar
+					EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", playerEnergy, MaxEnergy);
+				}
 			}
 		}
 		//If secondary progressbar is exist
@@ -1861,6 +1874,7 @@ void ATodakBattleArenaCharacter::UpdateStatusValueTimer(FTimerHandle newHandle, 
 	if (Operation == EOperation::Addition)
 	{
 		float val = Value + ChangeVal;
+
 		if (val < MaxVal)
 		{
 			totalVal = val;
@@ -1913,12 +1927,9 @@ void ATodakBattleArenaCharacter::UpdateStatusValueTimer(FTimerHandle newHandle, 
 
 /***********************************************************************END_STATUS*******************************************************************************************************************/
 
-void ATodakBattleArenaCharacter::ReduceDamageTaken(float damageValue)
+void ATodakBattleArenaCharacter::ReduceDamageTaken(float damageValue, float CurrStrength, float CurrStamina, float CurrAgility)
 {
-	float minDamage = 30.0f;
-	float maxDamage = 50.0f;
-	damageValue = damage * (FMath::FRandRange(minDamage, maxDamage))/100;
-	damageAfterReduction = damage - damageValue;
+	damageAfterReduction = damageValue - ((CurrStrength + CurrStamina + CurrAgility) / 15000)*(CurrStrength*(CurrStrength / 1000.0f));
 }
 
 APlayerController* ATodakBattleArenaCharacter::GetPlayerControllers()
@@ -2149,7 +2160,7 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 				if (GetMesh()->GetAnimInstance()->Montage_IsActive(SkillHold) == true)
 				{
 					//Stop current active anim
-					ServerSkillMoveset(SkillHold, damage, 1.0f, 0.0f, false);
+					ServerSkillMoveset(SkillHold, damage, MaxStrength, MaxStamina, MaxAgility, 1.0f, 0.0f, false);
 				}
 				InputTouch.RemoveAt(Index);
 			}

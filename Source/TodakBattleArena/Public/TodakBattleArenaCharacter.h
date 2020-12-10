@@ -264,7 +264,7 @@ public:
 
 	// Reduce damage taken when in defensive mode
 	UFUNCTION(BlueprintCallable)
-	void ReduceDamageTaken(float damageValue);
+	void ReduceDamageTaken(float damageValue, float CurrStrength, float CurrStamina, float CurrAgility);
 
 	/*****************BoneParts****************************/
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Bones")
@@ -350,11 +350,11 @@ protected:
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float PlayRate, float StartTime, bool SkillFound);
+	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound);
 
 	//Skill replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, float DamageApplied, float PlayRate, float StartTime, bool SkillFound);
+	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
@@ -502,7 +502,7 @@ protected:
 
 	/**Function to update the client's damage*/
 	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable, Category = "Damage")
-	void UpdateDamage(float DamageValue);
+	void UpdateDamage(float DamageValue, float CurrStrength, float CurrStamina, float CurrAgility);
 
 	//Function to update progressbar over time
 	void UpdateCurrentPlayerMainStatusBar(EBarType Type, EMainPlayerStats StatType, FTimerHandle FirstHandle, FTimerHandle SecondHandle);
@@ -538,7 +538,7 @@ protected:
 
 	//Energy regen time rate
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
-	float EnergyRate = 1.5f;
+	float EnergyRate = 1.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	FTimerHandle StartHealthTimer;
