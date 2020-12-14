@@ -1216,27 +1216,23 @@ void ATodakBattleArenaCharacter::CheckLineTrace(AActor*& HitActor, FName& BoneNa
 	bool IsHit_LPunchArrow = GetWorld()->LineTraceSingleByChannel(Hit_LPunchArrow, Start_LPunchArrow, End_LPunchArrow, ECC_Visibility, CP_LPunchArrow);
 	bool IsHit_RPunchArrow = GetWorld()->LineTraceSingleByChannel(Hit_RPunchArrow, Start_RPunchArrow, End_RPunchArrow, ECC_Visibility, CP_RPunchArrow);
 	
-	
 	if (LeftKickColActivate)
 	{
 		if (IsHit_LKickArrow)
 		{
-			if (Hit_LKickArrow.GetActor() != this)
-			{
-				BoneNames = Hit_LKickArrow.BoneName;
-				Location = Hit_LKickArrow.ImpactPoint;
-				bBlockingHits = Hit_LKickArrow.bBlockingHit;
-				HitActor = Hit_LKickArrow.GetActor();
-				//Hit_LKickArrow.Actor = HitActor;
+			BoneNames = Hit_LKickArrow.BoneName;
+			Location = Hit_LKickArrow.ImpactPoint;
+			bBlockingHits = Hit_LKickArrow.bBlockingHit;
+			HitActor = Hit_LKickArrow.GetActor();
+			//Hit_LKickArrow.Actor = HitActor;
 
-				DrawDebugLine(GetWorld(), Start_LKickArrow, End_LKickArrow, FColor::Green, false, 1, 0, 1);
-				//DrawDebugSphere(GetWorld(), Start_LKickArrow, CP_LKickArrow.GetSphereRadius(), 100, FColor::Green, false);
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *Hit_LKickArrow.BoneName.ToString()));
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Hit_LKickArrow.ImpactPoint.ToString()));
-				//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.bBlockingHit.ToString()));
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *Hit_LKickArrow.GetActor()->GetName()));
-			}
-			
+			DrawDebugLine(GetWorld(), Start_LKickArrow, End_LKickArrow, FColor::Green, false, 1, 0, 1);
+			//DrawDebugSphere(GetWorld(), Start_LKickArrow, CP_LKickArrow.GetSphereRadius(), 100, FColor::Green, false);
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *BoneNames.ToString()));
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (bBlockingHits) ? TEXT("True") : TEXT("False")));
+			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *bBlockingHit.ToString()));
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(HitActor)));
 		}
 
 		else
