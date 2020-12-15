@@ -84,7 +84,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	LeftKickCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftKickCol"));
 	LeftKickCol->SetupAttachment(GetMesh(), "calf_l");
 	LeftKickCol->SetRelativeLocation(FVector(-20.000000f, -0.000016f, -0.000000f));
-	LeftKickCol->SetRelativeRotation(FRotator(90.000000f, 360.000000f, 179.999954f));
+	LeftKickCol->SetRelativeRotation(FRotator(90.000000f, 0.0f, 179.999924f));
 	LeftKickCol->SetCapsuleHalfHeight(33);
 	LeftKickCol->SetCapsuleRadius(10);
 	LeftKickCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -108,7 +108,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	LeftPunchCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftPunchCol"));
 	LeftPunchCol->SetupAttachment(GetMesh(), "hand_l");
 	LeftPunchCol->SetRelativeLocation(FVector(0.000000f, 0.000000f, 0.000000f));
-	LeftPunchCol->SetRelativeRotation(FRotator(0.000000f, 90.000000f, 0.000000f));
+	LeftPunchCol->SetRelativeRotation(FRotator(90.000000f, 0.000000f, 0.000000f));
 	LeftPunchCol->SetCapsuleHalfHeight(16);
 	LeftPunchCol->SetCapsuleRadius(7);
 	LeftPunchCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -116,7 +116,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	RightPunchCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("RightPunchCol"));
 	RightPunchCol->SetupAttachment(GetMesh(), "hand_r");
 	RightPunchCol->SetRelativeLocation(FVector(0.000000f, 0.000000f, 0.000000f));
-	RightPunchCol->SetRelativeRotation(FRotator(0.000000f, 90.000000f, 0.000000f));
+	RightPunchCol->SetRelativeRotation(FRotator(90.000000f, 0.000000f, 0.000000f));
 	RightPunchCol->SetCapsuleHalfHeight(16);
 	RightPunchCol->SetCapsuleRadius(7);
 	RightPunchCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -150,6 +150,10 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	FOnTimelineEvent TimelineFinished{};*/
 	InterpFunction.BindUFunction(this, FName("TimelineFloatReturn"));
 	TimelineFinished.BindUFunction(this, FName("OnTimelineFinished"));
+
+	//Prevent out of sync ragdoll
+	//GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = true;
+	GetCharacterMovement()->bServerAcceptClientAuthoritativePosition = true;
 
 	//check if fCurve is valid
 	/*if (fCurve)
@@ -2393,7 +2397,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, true);
+		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, true);
 
 		//Ignore self upon colliding
 		FCollisionQueryParams CP_LKick;
@@ -2406,7 +2410,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 			if (!bDo)
 			{
 				bDo = true;
-				if (HitFoot.Actor.IsValid() == true)
+				if (HitFoot.Actor.IsValid() == true && HitFoot.Actor != this)
 				{
 					ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitFoot.Actor);
 					if (hitChar)
@@ -2454,7 +2458,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 			if (!bDo)
 			{
 				bDo = true;
-				if (HitFoot.Actor.IsValid() == true)
+				if (HitFoot.Actor.IsValid() == true && HitFoot.Actor != this)
 				{
 					ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitFoot.Actor);
 					if (hitChar)
@@ -2502,7 +2506,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 			if (!bDo)
 			{
 				bDo = true;
-				if (HitFoot.Actor.IsValid() == true)
+				if (HitFoot.Actor.IsValid() == true && HitFoot.Actor != this)
 				{
 					ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitFoot.Actor);
 					if (hitChar)
@@ -2550,7 +2554,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 			if (!bDo)
 			{
 				bDo = true;
-				if (HitFoot.Actor.IsValid() == true)
+				if (HitFoot.Actor.IsValid() == true && HitFoot.Actor != this)
 				{
 					ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitFoot.Actor);
 					if (hitChar)
