@@ -82,18 +82,18 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 	LeftKickCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftKickCol"));
 	LeftKickCol->SetupAttachment(GetMesh(), "calf_l");
-	LeftKickCol->SetRelativeLocation(FVector(-20.000000f, -0.000016f, -0.000000f));
-	LeftKickCol->SetRelativeRotation(FRotator(90.000000f, 360.000000f, 179.999954f));
-	LeftKickCol->SetCapsuleHalfHeight(33);
-	LeftKickCol->SetCapsuleRadius(10);
+	LeftKickCol->SetRelativeLocation(FVector(-15.000000f, 0.000000f, 0.000000f));
+	LeftKickCol->SetRelativeRotation(FRotator(180.000000f, 90.000000f, 0.000000f));
+	LeftKickCol->SetCapsuleHalfHeight(28);
+	LeftKickCol->SetCapsuleRadius(8);
 	LeftKickCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 	RightKickCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("RightKickCol"));
 	RightKickCol->SetupAttachment(GetMesh(), "calf_r");
-	RightKickCol->SetRelativeLocation(FVector( 19.999996f, -0.000005f, -0.000001f));
-	RightKickCol->SetRelativeRotation(FRotator( 90.000000f, 180.000000f, 0.000000f));
-	RightKickCol->SetCapsuleHalfHeight(33);
-	RightKickCol->SetCapsuleRadius(10);
+	RightKickCol->SetRelativeLocation(FVector(15.000000f, 0.000000f, 0.000000f));
+	RightKickCol->SetRelativeRotation(FRotator( 180.000000f, 90.000000f, 0.000000f));
+	RightKickCol->SetCapsuleHalfHeight(28);
+	RightKickCol->SetCapsuleRadius(8);
 	RightKickCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 	LKickArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("LKickArrow"));
@@ -107,17 +107,17 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	LeftPunchCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftPunchCol"));
 	LeftPunchCol->SetupAttachment(GetMesh(), "hand_l");
 	LeftPunchCol->SetRelativeLocation(FVector(0.000000f, 0.000000f, 0.000000f));
-	LeftPunchCol->SetRelativeRotation(FRotator(0.000000f, 90.000000f, 0.000000f));
-	LeftPunchCol->SetCapsuleHalfHeight(16);
-	LeftPunchCol->SetCapsuleRadius(7);
+	LeftPunchCol->SetRelativeRotation(FRotator(0.000000f, 80.000000f, 0.000000f));
+	LeftPunchCol->SetCapsuleHalfHeight(22);
+	LeftPunchCol->SetCapsuleRadius(5);
 	LeftPunchCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 	RightPunchCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("RightPunchCol"));
 	RightPunchCol->SetupAttachment(GetMesh(), "hand_r");
 	RightPunchCol->SetRelativeLocation(FVector(0.000000f, 0.000000f, 0.000000f));
-	RightPunchCol->SetRelativeRotation(FRotator(0.000000f, 90.000000f, 0.000000f));
-	RightPunchCol->SetCapsuleHalfHeight(16);
-	RightPunchCol->SetCapsuleRadius(7);
+	RightPunchCol->SetRelativeRotation(FRotator(0.000000f, 80.000000f, 0.000000f));
+	RightPunchCol->SetCapsuleHalfHeight(22);
+	RightPunchCol->SetCapsuleRadius(5);
 	RightPunchCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 	LPunchArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("LPunchArrow"));
@@ -781,7 +781,7 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 			FTimerDelegate FunctionsName;
 			//FunctionsName = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateHealthStatusBar, EBarType::PrimaryProgressBar);
 			FunctionsName = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::PainMeter, StartHealthTimer, StartSecondaryHealthTimer);
-
+			
 			UE_LOG(LogTemp, Warning, TEXT("TimerHealth has started!"));
 			GetWorld()->GetTimerManager().SetTimer(StartHealthTimer, FunctionsName, MajorHealthRate, true);
 		}

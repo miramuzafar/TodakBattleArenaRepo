@@ -523,6 +523,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skills")
 	FString LevelName;
 
+
 protected:
 	/**************************************START STATS******************************************/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLock")
@@ -548,8 +549,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	FTimerHandle StartEnergyTimer;
-
-
 
 	//Current Stamina value
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
