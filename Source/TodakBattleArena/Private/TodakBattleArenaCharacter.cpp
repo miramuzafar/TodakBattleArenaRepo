@@ -761,8 +761,12 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 	//if can be accessed by the owning client
 	if (IsLocallyControlled())
 	{
+		//Distribute damage for each progressbar
+		float MainDamage = UGestureMathLibrary::CalculateValueFromPercentage(MajorDamage, HealthChange, 100.0f);
+		float SecDamage = HealthChange - MainDamage;
+
 		//Add pain meter value
-		float currVal = Health + HealthChange + MajorDamage;
+		float currVal = Health + MainDamage;
 		if (currVal >= MaxHealth)
 		{
 			Health = MaxHealth;
@@ -770,7 +774,7 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 		else
 			Health = currVal;
 
-		float currSecHealth = Health + HealthChange + MinorDamage;
+		float currSecHealth = Health + SecDamage;
 		if (currSecHealth >= MaxHealth)
 		{
 			SecondaryHealth = MaxHealth;
@@ -1455,11 +1459,7 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 				{
 					MajorDamageDealt = row->MajorDamageReceived;
 				}
-				if (row->MinorDamageReceived > 0.0f)
-				{
-					MinorDamageDealt = row->MinorDamageReceived;
-				}
-				if (row->DamageMoveset != NULL)
+				if (row->DamageBlockMoveset != NULL)
 				{
 					//DamageMovesets = row->DamageMoveset;
 				}
@@ -1495,11 +1495,7 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 				{
 					MajorDamageDealt = row->MajorDamageReceived;
 				}
-				if (row->MinorDamageReceived > 0.0f)
-				{
-					MinorDamageDealt = row->MinorDamageReceived;
-				}
-				if (row->DamageMoveset != NULL)
+				if (row->DamageBlockMoveset != NULL)
 				{
 					//DamageMovesets = row->DamageMoveset;
 				}

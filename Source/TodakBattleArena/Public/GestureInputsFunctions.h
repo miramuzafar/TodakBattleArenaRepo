@@ -129,13 +129,9 @@ struct FBodyDamage : public FTableRowBase
 {
 	GENERATED_BODY()
 
-		//Major damage dealt
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
-		float MajorDamageReceived = 0.0f;
-
-	//Minor damage dealt
+	//Major damage dealt
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
-		float MinorDamageReceived = 0.0f;
+	float MajorDamageReceived = 0.0f;
 
 	//if the bodypart is upperbody or lower body
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
@@ -143,7 +139,7 @@ struct FBodyDamage : public FTableRowBase
 
 	//Anim to be played on hit damage by body part
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
-		UAnimMontage* DamageMoveset;
+		UAnimMontage* DamageBlockMoveset;
 
 	//What time does the swipe anim will start
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
