@@ -471,3 +471,25 @@ FDateTime UGestureMathLibrary::GetCurrentDateAndTime()
 {
 	return FDateTime::Now();
 }
+
+float UGestureMathLibrary::GetCurrentPercentInSeconds(float CurrVal, float IncrementPerSeconds, float& NewVal, int MaxCappedVal)
+{
+	//new value
+	NewVal = CurrVal + IncrementPerSeconds;
+	
+	//new percentage from new value
+	return (CalculatePercentageFromValue(NewVal, MaxCappedVal, 100.0f) / 100.0f);
+}
+
+float UGestureMathLibrary::GetRatePerSeconds(float CurrVal, float ConstantValue, float BoostVal)
+{
+	//rate of increment per seconds
+	return (((1 / CurrVal)*ConstantValue)) + (((1 / CurrVal)*ConstantValue)*(BoostVal/100.0f));
+}
+
+float UGestureMathLibrary::CalculateTotalMaxVal(float Percentage, float MaxVal, float& ValFromPercentage)
+{
+	//Get current value from percentage
+	ValFromPercentage = CalculateValueFromPercentage(Percentage, MaxVal, 100.0f);
+	return (MaxVal+ValFromPercentage);
+}

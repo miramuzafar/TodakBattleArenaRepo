@@ -138,4 +138,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "DateAndTime")
 	static FDateTime GetCurrentDateAndTime();
+
+	UFUNCTION(BlueprintPure, Category = "Rate")
+	static float GetCurrentPercentInSeconds(float CurrVal, float IncrementPerSeconds, float& NewVal, int MaxCappedVal = 1000);
+
+	UFUNCTION(BlueprintPure, Category = "Rate")
+	static float GetRatePerSeconds(float CurrVal, float ConstantValue, float BoostVal);
+
+	UFUNCTION(BlueprintPure, Category = "Rate")
+	static float CalculateTotalMaxVal(float Percentage, float MaxVal, float& ValFromPercentage);
 };
