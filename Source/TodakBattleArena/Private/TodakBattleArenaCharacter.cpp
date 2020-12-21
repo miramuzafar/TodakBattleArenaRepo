@@ -2398,7 +2398,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		FVector Start = LeftKickCol->GetComponentLocation();
 		
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftKickCol->GetComponentRotation())+LeftKickCol->GetScaledCapsuleHalfHeight());
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftKickCol->GetComponentRotation())+(FVector(0,0,LeftKickCol->GetScaledCapsuleHalfHeight())));
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
@@ -2446,7 +2446,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		FVector Start = RightKickCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightKickCol->GetComponentRotation())+RightKickCol->GetScaledCapsuleHalfHeight());
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightKickCol->GetComponentRotation())+(FVector(0,0,RightKickCol->GetScaledCapsuleHalfHeight())));
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
@@ -2494,7 +2494,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		FVector Start = RightPunchCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightPunchCol->GetComponentRotation())+RightPunchCol->GetScaledCapsuleHalfHeight());
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightPunchCol->GetComponentRotation())+(FVector(0,0,RightPunchCol->GetScaledCapsuleHalfHeight())));
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
@@ -2542,7 +2542,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		FVector Start = LeftPunchCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftPunchCol->GetComponentRotation())+LeftPunchCol->GetScaledCapsuleHalfHeight());
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftPunchCol->GetComponentRotation())+(FVector(0,0,LeftPunchCol->GetScaledCapsuleHalfHeight())));
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
