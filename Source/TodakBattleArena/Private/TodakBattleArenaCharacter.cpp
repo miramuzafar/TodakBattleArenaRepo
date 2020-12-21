@@ -226,7 +226,6 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillTriggered);
 
 	//SwipeGesture
-	DOREPLIFETIME(ATodakBattleArenaCharacter, Hit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockedHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, AICanAttack);
@@ -792,7 +791,7 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 		playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("Pain Meter", healthBar_1, nullptr, nullptr, SecondaryHealth, MaxHealth);
 
 		//Start Pain Meter degeneration
-		if (GetWorld()->GetTimerManager().IsTimerActive(StartHealthTimer) == false && (Health > 0.0f))
+		if (GetWorld()->GetTimerManager().IsTimerActive(StartHealthTimer) == false && (Health > 0.0f) && (Health < MaxHealth))
 		{
 			//For first pain meter progress bar
 			FTimerDelegate FunctionsName;
@@ -2403,7 +2402,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, true);
+		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 
 		//Ignore self upon colliding
 		FCollisionQueryParams CP_LKick;
@@ -2451,7 +2450,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, true);
+		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 
 		//Ignore self upon colliding
 		FCollisionQueryParams CP_LKick;
@@ -2499,7 +2498,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, true);
+		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 
 		//Ignore self upon colliding
 		FCollisionQueryParams CP_LKick;
@@ -2547,7 +2546,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, true);
+		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 
 		//Ignore self upon colliding
 		FCollisionQueryParams CP_LKick;
