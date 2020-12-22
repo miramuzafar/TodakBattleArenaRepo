@@ -2423,13 +2423,12 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-<<<<<<< HEAD
+
 		//DrawDebugSphere(GetWorld(), Start_LKickSphere, Sphere_LKick.GetSphereRadius(), 5, FColor::Purple, false, 1, 0, 1);
 		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, false, 1, 0, 1); // isAlwaysShowing, Duration, depth, thickness
 		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, true);
-=======
+
 		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
->>>>>>> 06c8cb998fbfccb3417be993cd8f280c6831caeb
 
 		//Ignore self upon colliding
 		FCollisionQueryParams CP_LKick;
