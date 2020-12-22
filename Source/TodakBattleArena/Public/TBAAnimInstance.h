@@ -16,6 +16,8 @@ class TODAKBATTLEARENA_API UTBAAnimInstance : public UAnimInstance
 
 public:
 
+	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool TurnRight = false;
 
@@ -24,6 +26,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool IsMoving = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float LocoPlayrate;
 
 	
 protected:
@@ -37,8 +42,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Direction = 0.0f;
-
-	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Switcher = 0;
@@ -95,4 +98,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Ragdoll")
 	void ReviveMesh();
+
+
 };

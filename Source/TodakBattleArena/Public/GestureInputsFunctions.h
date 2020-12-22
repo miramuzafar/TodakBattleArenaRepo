@@ -201,6 +201,8 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float SkillMoveSetRate;
 
+	 
+
 	//Time to stop current hold anim
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float StopHoldAnimTime;

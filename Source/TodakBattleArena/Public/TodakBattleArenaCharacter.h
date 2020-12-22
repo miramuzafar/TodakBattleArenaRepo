@@ -222,6 +222,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
 	bool RepIsMoving = false;
 
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SwipeGesture")
+	float RepLocoPlayrate = 1.0f;
+
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseTurnRate;
@@ -648,6 +651,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	bool canMove;
 
+	UPROPERTY(Replicated, EditAnywhere,  BlueprintReadWrite, Category = "Anim")
+	float SkillPlayrate = 1.0f;
+
 	/**************************************END STATS******************************************/
 
 	//Assign data table from bp 
@@ -935,6 +941,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool BurstActivate;
+
+	
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	//FVector ;
