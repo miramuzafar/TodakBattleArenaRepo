@@ -228,7 +228,6 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillTriggered);
 
 	//SwipeGesture
-	DOREPLIFETIME(ATodakBattleArenaCharacter, Hit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockedHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, AICanAttack);
@@ -781,8 +780,12 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 	//if can be accessed by the owning client
 	if (IsLocallyControlled())
 	{
+		//Distribute damage for each progressbar
+		float MainDamage = UGestureMathLibrary::CalculateValueFromPercentage(MajorDamage, HealthChange, 100.0f);
+		float SecDamage = HealthChange - MainDamage;
+
 		//Add pain meter value
-		float currVal = Health + HealthChange + MajorDamage;
+		float currVal = Health + MainDamage;
 		if (currVal >= MaxHealth)
 		{
 			Health = MaxHealth;
@@ -790,7 +793,7 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 		else
 			Health = currVal;
 
-		float currSecHealth = Health + HealthChange + MinorDamage;
+		float currSecHealth = Health + SecDamage;
 		if (currSecHealth >= MaxHealth)
 		{
 			SecondaryHealth = MaxHealth;
@@ -808,7 +811,7 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 		playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("Pain Meter", healthBar_1, nullptr, nullptr, SecondaryHealth, MaxHealth);
 
 		//Start Pain Meter degeneration
-		if (GetWorld()->GetTimerManager().IsTimerActive(StartHealthTimer) == false && (Health > 0.0f))
+		if (GetWorld()->GetTimerManager().IsTimerActive(StartHealthTimer) == false && (Health > 0.0f) && (Health < MaxHealth))
 		{
 			//For first pain meter progress bar
 			FTimerDelegate FunctionsName;
@@ -1476,11 +1479,7 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 				{
 					MajorDamageDealt = row->MajorDamageReceived;
 				}
-				if (row->MinorDamageReceived > 0.0f)
-				{
-					MinorDamageDealt = row->MinorDamageReceived;
-				}
-				if (row->DamageMoveset != NULL)
+				if (row->DamageBlockMoveset != NULL)
 				{
 					//DamageMovesets = row->DamageMoveset;
 				}
@@ -1516,11 +1515,7 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 				{
 					MajorDamageDealt = row->MajorDamageReceived;
 				}
-				if (row->MinorDamageReceived > 0.0f)
-				{
-					MinorDamageDealt = row->MinorDamageReceived;
-				}
-				if (row->DamageMoveset != NULL)
+				if (row->DamageBlockMoveset != NULL)
 				{
 					//DamageMovesets = row->DamageMoveset;
 				}
@@ -2424,13 +2419,17 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		FVector Start = LeftKickCol->GetComponentLocation();
 		
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftKickCol->GetComponentRotation())*HitTraceLength);
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftKickCol->GetComponentRotation())+(FVector(0,0,LeftKickCol->GetScaledCapsuleHalfHeight())));
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
+<<<<<<< HEAD
 		//DrawDebugSphere(GetWorld(), Start_LKickSphere, Sphere_LKick.GetSphereRadius(), 5, FColor::Purple, false, 1, 0, 1);
 		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, false, 1, 0, 1); // isAlwaysShowing, Duration, depth, thickness
 		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, true);
+=======
+		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
+>>>>>>> 06c8cb998fbfccb3417be993cd8f280c6831caeb
 
 		//Ignore self upon colliding
 		FCollisionQueryParams CP_LKick;
@@ -2474,7 +2473,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		FVector Start = RightKickCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightKickCol->GetComponentRotation())*HitTraceLength);
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightKickCol->GetComponentRotation())+(FVector(0,0,RightKickCol->GetScaledCapsuleHalfHeight())));
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
@@ -2522,7 +2521,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		FVector Start = RightPunchCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightPunchCol->GetComponentRotation())*HitTraceLength);
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightPunchCol->GetComponentRotation())+(FVector(0,0,RightPunchCol->GetScaledCapsuleHalfHeight())));
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
@@ -2570,7 +2569,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		FVector Start = LeftPunchCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftPunchCol->GetComponentRotation())*HitTraceLength);
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftPunchCol->GetComponentRotation())+(FVector(0,0,LeftPunchCol->GetScaledCapsuleHalfHeight())));
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);

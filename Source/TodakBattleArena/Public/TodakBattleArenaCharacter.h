@@ -831,9 +831,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool RightHandColActivate;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Damage")
-	bool Hit;
-
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Combo")
 	bool IsAttacking;
 

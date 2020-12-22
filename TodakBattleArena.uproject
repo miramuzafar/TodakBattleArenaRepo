@@ -36,6 +36,10 @@
 		{
 			"Name": "LocationServicesIOSImpl",
 			"Enabled": true
+		},
+		{
+			"Name": "Niagara",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [
