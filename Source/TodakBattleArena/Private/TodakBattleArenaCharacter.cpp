@@ -182,6 +182,8 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 
 		UE_LOG(LogTemp, Warning, TEXT("Timeline is Created"));
 	}*/
+
+	
 }
 
 void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -233,11 +235,14 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepTurnRight);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepTurnLeft);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepIsMoving);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RepLocoPlayrate);
 
 	//**AnimMontage**//
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillMoveset);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillHold);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillPlayrate);
+
 
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerBlockHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerSkill);
@@ -682,6 +687,12 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 
 	bool Found = false;
 	bool SkillFound = false;
+	//float temp = GetMesh()->GetAnimInstance()->LocoPlayrate;
+	//UTBAAnimInstance* AnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
+	
+	//UTBAAnimInstance* UAnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
+	//UAnimInstance->LocoPlayrate;
+	
 
 	//Search the skill available
 	for (auto& name : ActionTable->GetRowNames())
@@ -707,7 +718,12 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 				{
 					row->SkillTrigger = false;
 					SkillTriggered = row->SkillTrigger;
+					row->SkillMoveSetRate = SkillPlayrate; //SkillPlayrate changes on damage
+					//RepLocoPlayrate = SkillPlayrate;
+					//AnimInstance->LocoPlayrate = SkillPlayrate;
+					//temp = SkillPlayrate;
 					row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartMontage, row->SkillMoveset, row->Damage, row->CDSkill);
+					
 					FingerIndex->bDo = true;
 					Found = true;
 					CheckForAction(name);
@@ -725,6 +741,10 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 					//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
 					row->SkillTrigger = true;
 					SkillTriggered = row->SkillTrigger;
+					row->SkillMoveSetRate = SkillPlayrate;
+					//RepLocoPlayrate = SkillPlayrate;
+					//AnimInstance->LocoPlayrate = SkillPlayrate;
+					//temp = SkillPlayrate;
 					row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartMontage, row->SkillMoveset, row->Damage, row->CDSkill);
 					FingerIndex->bDo = true;
 					Found = true;
@@ -1344,6 +1364,7 @@ void ATodakBattleArenaCharacter::CheckSphereTrace(AActor*& HitActor, FName& Bone
 
 	//DrawDebugSphere(GetWorld(), Start_LKickSphere, Sphere_LKick.GetSphereRadius(), 5, FColor::Purple, true);
 	
+
 	FCollisionQueryParams CP_LKick;
 
 	CP_LKick.AddIgnoredActor(this);
@@ -2417,6 +2438,11 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 
 		// create the collision sphere with float value of its radius
 		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
+
+		//DrawDebugSphere(GetWorld(), Start_LKickSphere, Sphere_LKick.GetSphereRadius(), 5, FColor::Purple, false, 1, 0, 1);
+		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, false, 1, 0, 1); // isAlwaysShowing, Duration, depth, thickness
+		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, true);
+
 		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 
 		//Ignore self upon colliding

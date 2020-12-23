@@ -2,6 +2,9 @@
 
 
 #include "TBAAnimInstance.h"
+#include "TodakBattleArenaCharacter.h"
+
+
 
 void UTBAAnimInstance::PlayerIsRagdoll()
 {
@@ -27,3 +30,5 @@ void UTBAAnimInstance::ReviveMesh()
 		IsStopped = false;
 	}
 }
+
+
