@@ -1178,7 +1178,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 	//FRotator Rot_LKickArrow = LKickArrow->GetComponentRotation();
 	//FVector Fforward_LKickArrow = UKismetMathLibrary::GetForwardVector(Rot_LKickArrow);
 	
-	/*FRotator Rot_RKickArrow = RKickArrow->GetComponentRotation();
+	FRotator Rot_RKickArrow = RKickArrow->GetComponentRotation();
 	FRotator Rot_LPunchArrow = LPunchArrow->GetComponentRotation();
 	FRotator Rot_RPunchArrow = RPunchArrow->GetComponentRotation();
 	//UArrowComponent* HitArrow = this->FindComponentByClass<UArrowComponent>();
@@ -1193,7 +1193,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 	//GetController()->GetPlayerViewPoint(Loc, Rot);
 
-	/*FVector Start = Loc;
+	FVector Start = Loc;
 	FVector ForwardVector = HitArrow->GetForwardVector();
 	FVector End = Start + (ForwardVector * HitTraceLength);
 
@@ -1272,7 +1272,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 			{
 				Hit_RKickArrow.Actor = HitActor;
 			}
-			/*if (Hit_RKickArrow.bBlockingHit)
+			if (Hit_RKickArrow.bBlockingHit)
 			{
 				DrawDebugLine(GetWorld(), Start_RKickArrow, End_RKickArrow, FColor::Blue, false, 1, 0, 1);
 				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RKickArrow.GetActor()->GetName()));
@@ -1292,7 +1292,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 			{
 				Hit_LPunchArrow.Actor = HitActor;
 			}
-			/*if (Hit_LPunchArrow.bBlockingHit)
+			if (Hit_LPunchArrow.bBlockingHit)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LPunchArrow.GetActor()->GetName()));
 			}
@@ -1312,7 +1312,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 				Hit_RPunchArrow.Actor = HitActor;
 			}
 			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RPunchArrow.GetActor()->GetName()));
-			/*if (Hit_RPunchArrow.bBlockingHit)
+			if (Hit_RPunchArrow.bBlockingHit)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RPunchArrow.GetActor()->GetName()));
 
@@ -1387,7 +1387,7 @@ void ATodakBattleArenaCharacter::CheckSphereTrace(AActor*& HitActor, FName& Bone
 	//			Hits.bBlockingHit = bBlockingHit;
 	//			Hits.ImpactPoint = Location;
 
-	//			/*EnemyChar.GetActor() = HitActor;
+	//			EnemyChar.GetActor() = HitActor;
 	//			EnemyChar = HitActor;
 	//			Hits.Actor = HitActor;
 	//			EnemyChar.BoneName = BoneNames;
@@ -2023,10 +2023,12 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 		NewIndex.SwipeActions = EInputType::Pressed;
 		NewIndex.bDo = false;
 
-		if (InputTouch.Contains(NewIndex) == false)
+		if (InputTouch.IsValidIndex(0) == false)
 		{
 			//if current touch index does not exist, add it to array
 			InputTouch.Add(NewIndex);
+
+			SwipeStartTime = FPlatformTime::Seconds();
 
 			int Index = InputTouch.Find(NewIndex);
 			if (InputTouch[Index].IsPressed == true)
@@ -2074,6 +2076,10 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 				}
 			}
 		}
+		else
+		{
+			InputTouch.Empty();
+		}
 	}
 }
 
@@ -2081,6 +2087,9 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 {
 	if (InputTouch.IsValidIndex(0) == true)
 	{
+		//float currSwipeTime = FPlatformTime::Seconds();
+		
+		//SwipeStartTime = FPlatformTime::Seconds();
 		TArray<FFingerIndex>& Touches = InputTouch;
 
 		for (FFingerIndex& TouchIndex : Touches)
@@ -2095,8 +2104,10 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 					if (TouchIndex.bDo == false)
 					{
 						//if the current finger position is more than 0 units from starting point
-						if ((TouchIndex.StartLocation - Locations).Size() > 50.0f)
+						if (((TouchIndex.StartLocation - Locations).Size() > 50.0f) && ((TouchIndex.StartLocation - Locations).Size() < 1000.0f))
 						{
+							float sample = (TouchIndex.StartLocation - Locations).Size();
+							UE_LOG(LogTemp, Warning, TEXT("current dist : %f"), sample);
 							/*if (TouchIndex.FingerIndex == ETouchIndex::Touch2 && (TouchIndex.BodyParts == EBodyPart::LeftFoot || TouchIndex.BodyParts == EBodyPart::RightFoot))
 							{
 								if ((TouchIndex.StartLocation - Locations).Size() > 50.0f)
@@ -2391,6 +2402,10 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 	//If left foot is kicking
 	if (LeftKickColActivate == true)
 	{
+		RightKickColActivate = false;
+		RightHandColActivate = false;
+		LeftHandColActivate = false;
+
 		//Hit result storage
 		FHitResult HitFoot;
 
@@ -2430,6 +2445,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
 						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (bBlockingHit) ? TEXT("True") : TEXT("False")));
 						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(HitActor)));
+						//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 					}
 				}
 			}
@@ -2439,6 +2455,10 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 	}
 	else if (RightKickColActivate == true)
 	{
+		LeftKickColActivate = false;
+		RightHandColActivate = false;
+		LeftHandColActivate = false;
+
 		//Hit result storage
 		FHitResult HitFoot;
 
@@ -2478,6 +2498,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
 						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (bBlockingHit) ? TEXT("True") : TEXT("False")));
 						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(HitActor)));
+						//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 					}
 				}
 			}
@@ -2487,6 +2508,10 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 	}
 	else if (RightHandColActivate == true)
 	{
+		LeftKickColActivate = false;
+		RightKickColActivate = false;
+		LeftHandColActivate = false;
+
 		//Hit result storage
 		FHitResult HitFoot;
 
@@ -2526,6 +2551,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
 						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (bBlockingHit) ? TEXT("True") : TEXT("False")));
 						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(HitActor)));
+						//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 					}
 				}
 			}
@@ -2535,6 +2561,10 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 	}
 	else if (LeftHandColActivate == true)
 	{
+		LeftKickColActivate = false;
+		RightKickColActivate = false;
+		RightHandColActivate = false;
+
 		//Hit result storage
 		FHitResult HitFoot;
 
@@ -2574,6 +2604,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
 						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (bBlockingHit) ? TEXT("True") : TEXT("False")));
 						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(HitActor)));
+						//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 					}
 				}
 			}

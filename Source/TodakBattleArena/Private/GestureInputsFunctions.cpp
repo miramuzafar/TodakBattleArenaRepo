@@ -552,7 +552,7 @@ bool UGestureInputsFunctions::DetectLinearSwipe(FVector2D Line1Start, FVector2D 
 		//UE_LOG(LogTemp, Warning, TEXT("NewAbsX : %f"), AbsX);
 		//UE_LOG(LogTemp, Warning, TEXT("NewAbsY : %f"), AbsY);
 
-		if (AbsX > AbsY)
+		/*if (AbsX > AbsY)
 		{
 			if (x > 50.0f)
 			{
@@ -568,8 +568,8 @@ bool UGestureInputsFunctions::DetectLinearSwipe(FVector2D Line1Start, FVector2D 
 				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("%s"), *GETENUMSTRING("EInputType", Branches)));
 				return true;
 			}
-		}
-		else
+		}*/
+		if (AbsY > AbsX)
 		{
 			if (y > 50.0f)
 			{
@@ -605,10 +605,10 @@ bool UGestureInputsFunctions::DetectLinearSwipe(FVector2D Line1Start, FVector2D 
 			}
 			else if (y < -50.0f)
 			{
-				Branches = EInputType::Down;
-				UE_LOG(LogTemp, Warning, TEXT("Down"));
-				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("%s"), *GETENUMSTRING("EInputType", Branches)));
-				return true;
+				//Branches = EInputType::Down;
+				//UE_LOG(LogTemp, Warning, TEXT("Down"));
+				//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("%s"), *GETENUMSTRING("EInputType", Branches)));
+				return false;
 
 				/*if (x > 10.0f)
 				{

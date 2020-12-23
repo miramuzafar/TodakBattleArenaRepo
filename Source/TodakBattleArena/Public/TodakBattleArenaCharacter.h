@@ -864,6 +864,8 @@ protected:
 	
 
 	///////////////For swipe gesture//////////////////////////////
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeAction")
+	float SwipeStartTime;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Status")
 	bool SkillTriggered = false;
