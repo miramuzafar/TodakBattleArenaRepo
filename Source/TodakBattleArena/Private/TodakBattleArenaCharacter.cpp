@@ -877,8 +877,9 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 	{
 		//If the anim is not currently playing
 		FTimerHandle Delay;
-
+		
 		//Play new anim on client
+		
 		RPCMultiCastSkill = MulticastSkill;
 		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
 		UpdateDamage(DamageApplied, CurrStrength, CurrStamina, CurrAgility);
@@ -1449,6 +1450,8 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 	FKSphylElem capsuleElem;
 	bool isFound = false;
 
+	UE_LOG(LogTemp, Warning, TEXT("%s Bone name is : %s"), *ShapeName.ToString(), *ShapeName.ToString());
+
 	//if capsule physics asset is valid
 	if (GetMesh()->GetBodyInstance(ShapeName)->BodySetup.Get()->AggGeom.SphylElems.IsValidIndex(0))
 	{ 
@@ -1461,14 +1464,14 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 			break;
 		}
 
+		UE_LOG(LogTemp, Warning, TEXT("%s Sphere name is : %s"), *ShapeName.ToString(), *ShapeName.ToString());
+
 		if (isFound)
 		{
 			//Used in error reporting
 			FString Context;
 
 			FBodyDamage* row = BodyDamageTable->FindRow<FBodyDamage>(ShapeName, Context);
-
-		
 
 			//if capsule elem is physics asset inside body damage datatable
 			if (row)
@@ -1487,7 +1490,6 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 			}
 		}
 	}
-
 	//else if box physics asset is valid
 	else if (GetMesh()->GetBodyInstance(ShapeName)->BodySetup.Get()->AggGeom.BoxElems.IsValidIndex(0))
 	{
@@ -2452,7 +2454,6 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		//Sphere trace by channel
 		if (GetWorld()->SweepSingleByChannel(HitFoot, Start, End, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick) == true)
 		{
-			//Checked only once
 			if (!bDo)
 			{
 				bDo = true;
@@ -2477,6 +2478,16 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 			}
 			//reset the bool so sweep trace can be executed again
 			bDo = false;
+			return;
+		}
+		else
+		{
+			//hitChar->IsHit = true;
+			HitActor = nullptr;
+			BoneNames = "None";
+			Location = FVector(0, 0, 0);
+			bBlockingHit = false;
+			return;
 		}
 	}
 	else if (RightKickColActivate == true)
@@ -2530,6 +2541,16 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 			}
 			//reset the bool so sweep trace can be executed again
 			bDo = false;
+			return;
+		}
+		else
+		{
+			//hitChar->IsHit = true;
+			HitActor = nullptr;
+			BoneNames = "None";
+			Location = FVector(0, 0, 0);
+			bBlockingHit = false;
+			return;
 		}
 	}
 	else if (RightHandColActivate == true)
@@ -2583,6 +2604,16 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 			}
 			//reset the bool so sweep trace can be executed again
 			bDo = false;
+			return;
+		}
+		else
+		{
+			//hitChar->IsHit = true;
+			HitActor = nullptr;
+			BoneNames = "None";
+			Location = FVector(0, 0, 0);
+			bBlockingHit = false;
+			return;
 		}
 	}
 	else if (LeftHandColActivate == true)
@@ -2636,6 +2667,16 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 			}
 			//reset the bool so sweep trace can be executed again
 			bDo = false;
+			return;
+		}
+		else
+		{
+			//hitChar->IsHit = true;
+			HitActor = nullptr;
+			BoneNames = "None";
+			Location = FVector(0,0,0);
+			bBlockingHit = false;
+			return;
 		}
 	}
 }
