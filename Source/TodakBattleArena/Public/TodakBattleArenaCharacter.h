@@ -496,6 +496,13 @@ protected:
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);
 
+	//Fire hit trace on server
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
+	void FireTrace(FVector StartPoint, FVector EndPoint);
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
+	void DoDamage(AActor* HitActor);
+
 	//Calculate energy spent
 	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable, Category = "Energy")
 	void EnergySpent(float ValDecrement, float PercentageLimit = 1.0f);
@@ -881,6 +888,11 @@ protected:
 	
 
 	///////////////For swipe gesture//////////////////////////////
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
+	bool DoOnce = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeAction")
+	float SwipeStartTime;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Status")
 	bool SkillTriggered = false;

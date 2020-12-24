@@ -775,6 +775,60 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 	}
 }
 
+bool ATodakBattleArenaCharacter::FireTrace_Validate(FVector StartPoint, FVector EndPoint)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FVector EndPoint)
+{
+	//Hit result storage
+	FHitResult HitRes;
+
+	// create the collision sphere with float value of its radius
+	FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
+
+	DrawDebugSphere(GetWorld(), EndPoint, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
+
+	//Ignore self upon colliding
+	FCollisionQueryParams CP_LKick;
+	CP_LKick.AddIgnoredActor(this);
+
+	//Sphere trace by channel
+	if (GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick) == true)
+	{
+		if (HitRes.Actor.IsValid() == true && HitRes.Actor != this)
+		{
+			ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitRes.Actor);
+			if (hitChar)
+			{
+				if (DoOnce == false)
+				{
+					hitChar->IsHit = true;
+					//hitChar = HitRes.Actor.Get();
+					hitChar->BoneName = HitRes.BoneName;
+					hitChar->HitLocation = HitRes.Location;
+
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *hitChar->BoneName.ToString()));
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *hitChar->HitLocation.ToString()));
+					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
+
+					//Apply damage
+					DoDamage(hitChar);
+					DoOnce = true;
+					return;
+				}
+			}
+		}
+	}
+	else
+	{
+		DoOnce = false;
+		return;
+	}
+}
+
 bool ATodakBattleArenaCharacter::UpdateHealth_Validate(int playerIndex, float HealthChange)
 {
 	if (Health >= MaxHealth)
@@ -895,10 +949,14 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		//If the anim is not currently playing
 		FTimerHandle Delay;
 		
+<<<<<<< HEAD
 
 		
 
+=======
+>>>>>>> e81c0321a22b037815fc8d40889ba208cf4691a8
 		//Play new anim on client
+		
 		RPCMultiCastSkill = MulticastSkill;
 		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
 		this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkill);
@@ -1221,7 +1279,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 	//FRotator Rot_LKickArrow = LKickArrow->GetComponentRotation();
 	//FVector Fforward_LKickArrow = UKismetMathLibrary::GetForwardVector(Rot_LKickArrow);
 	
-	/*FRotator Rot_RKickArrow = RKickArrow->GetComponentRotation();
+	FRotator Rot_RKickArrow = RKickArrow->GetComponentRotation();
 	FRotator Rot_LPunchArrow = LPunchArrow->GetComponentRotation();
 	FRotator Rot_RPunchArrow = RPunchArrow->GetComponentRotation();
 	//UArrowComponent* HitArrow = this->FindComponentByClass<UArrowComponent>();
@@ -1236,7 +1294,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 	//GetController()->GetPlayerViewPoint(Loc, Rot);
 
-	/*FVector Start = Loc;
+	FVector Start = Loc;
 	FVector ForwardVector = HitArrow->GetForwardVector();
 	FVector End = Start + (ForwardVector * HitTraceLength);
 
@@ -1315,7 +1373,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 			{
 				Hit_RKickArrow.Actor = HitActor;
 			}
-			/*if (Hit_RKickArrow.bBlockingHit)
+			if (Hit_RKickArrow.bBlockingHit)
 			{
 				DrawDebugLine(GetWorld(), Start_RKickArrow, End_RKickArrow, FColor::Blue, false, 1, 0, 1);
 				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RKickArrow.GetActor()->GetName()));
@@ -1335,7 +1393,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 			{
 				Hit_LPunchArrow.Actor = HitActor;
 			}
-			/*if (Hit_LPunchArrow.bBlockingHit)
+			if (Hit_LPunchArrow.bBlockingHit)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_LPunchArrow.GetActor()->GetName()));
 			}
@@ -1355,7 +1413,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 				Hit_RPunchArrow.Actor = HitActor;
 			}
 			//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RPunchArrow.GetActor()->GetName()));
-			/*if (Hit_RPunchArrow.bBlockingHit)
+			if (Hit_RPunchArrow.bBlockingHit)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString::Printf(TEXT("You are hitting: %s"), *Hit_RPunchArrow.GetActor()->GetName()));
 
@@ -1431,7 +1489,7 @@ void ATodakBattleArenaCharacter::CheckSphereTrace(AActor*& HitActor, FName& Bone
 	//			Hits.bBlockingHit = bBlockingHit;
 	//			Hits.ImpactPoint = Location;
 
-	//			/*EnemyChar.GetActor() = HitActor;
+	//			EnemyChar.GetActor() = HitActor;
 	//			EnemyChar = HitActor;
 	//			Hits.Actor = HitActor;
 	//			EnemyChar.BoneName = BoneNames;
@@ -1472,6 +1530,8 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 	FKSphylElem capsuleElem;
 	bool isFound = false;
 
+	UE_LOG(LogTemp, Warning, TEXT("%s Bone name is : %s"), *ShapeName.ToString(), *ShapeName.ToString());
+
 	//if capsule physics asset is valid
 	if (GetMesh()->GetBodyInstance(ShapeName)->BodySetup.Get()->AggGeom.SphylElems.IsValidIndex(0))
 	{ 
@@ -1484,14 +1544,14 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 			break;
 		}
 
+		UE_LOG(LogTemp, Warning, TEXT("%s Sphere name is : %s"), *ShapeName.ToString(), *ShapeName.ToString());
+
 		if (isFound)
 		{
 			//Used in error reporting
 			FString Context;
 
 			FBodyDamage* row = BodyDamageTable->FindRow<FBodyDamage>(ShapeName, Context);
-
-		
 
 			//if capsule elem is physics asset inside body damage datatable
 			if (row)
@@ -1510,7 +1570,6 @@ void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeN
 			}
 		}
 	}
-
 	//else if box physics asset is valid
 	else if (GetMesh()->GetBodyInstance(ShapeName)->BodySetup.Get()->AggGeom.BoxElems.IsValidIndex(0))
 	{
@@ -1577,6 +1636,8 @@ void ATodakBattleArenaCharacter::MulticastSpawnWounds_Implementation(UMaterialIn
 	//buat variable current hit loc kt h
 
 	UGameplayStatics::SpawnDecalAttached(DecalMat, FVector(10.0f, 10.0f, 10.0f), this->GetMesh(), BoneName, HitLocation, FRotator(0.0f, 0.0f, 0.0f), EAttachLocation::KeepWorldPosition, 0.0f);
+	//reset the bool so sweep trace can be executed again
+	DoOnce = false;
 }
 
 void ATodakBattleArenaCharacter::MoveOnHold()
@@ -1713,6 +1774,28 @@ void ATodakBattleArenaCharacter::ChangeCurrentFitness(EOperation Operations, flo
 		StaminaPercentage = UGestureMathLibrary::SetPercentageValue(Stamina, StaminaVal, MaxStamina, EOperation::Subtraction, PercentageLimit, false, Stamina);
 		StrengthPercentage = UGestureMathLibrary::SetPercentageValue(Strength, StrengthVal, MaxStrength, EOperation::Subtraction, PercentageLimit, false, Strength);
 		AgilityPercentage = UGestureMathLibrary::SetPercentageValue(Agility, AgilityVal, MaxAgility, EOperation::Subtraction, PercentageLimit, false, Agility);
+	}
+}
+
+bool ATodakBattleArenaCharacter::DoDamage_Validate(AActor* HitActor)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::DoDamage_Implementation(AActor* HitActor)
+{
+	if (this != HitActor)
+	{
+		//ApplyDa
+		damage = UGameplayStatics::ApplyDamage(HitActor, damage, nullptr, this, nullptr);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Damage Applied: %f"), damage));
+		UE_LOG(LogTemp, Warning, TEXT("Damage Applied: %f"), damage);
+		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
+
+		//reset the bool so sweep trace can be executed again
+		DoOnce = false;
+
+		//LeftKickColActivate = false;
 	}
 }
 
@@ -2067,10 +2150,12 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 		NewIndex.SwipeActions = EInputType::Pressed;
 		NewIndex.bDo = false;
 
-		if (InputTouch.Contains(NewIndex) == false)
+		if (InputTouch.IsValidIndex(0) == false)
 		{
 			//if current touch index does not exist, add it to array
 			InputTouch.Add(NewIndex);
+
+			SwipeStartTime = FPlatformTime::Seconds();
 
 			int Index = InputTouch.Find(NewIndex);
 			if (InputTouch[Index].IsPressed == true)
@@ -2118,6 +2203,10 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 				}
 			}
 		}
+		else
+		{
+			InputTouch.Empty();
+		}
 	}
 }
 
@@ -2125,6 +2214,9 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 {
 	if (InputTouch.IsValidIndex(0) == true)
 	{
+		//float currSwipeTime = FPlatformTime::Seconds();
+		
+		//SwipeStartTime = FPlatformTime::Seconds();
 		TArray<FFingerIndex>& Touches = InputTouch;
 
 		for (FFingerIndex& TouchIndex : Touches)
@@ -2139,8 +2231,10 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 					if (TouchIndex.bDo == false)
 					{
 						//if the current finger position is more than 0 units from starting point
-						if ((TouchIndex.StartLocation - Locations).Size() > 50.0f)
+						if (((TouchIndex.StartLocation - Locations).Size() > 50.0f) && ((TouchIndex.StartLocation - Locations).Size() < 1000.0f))
 						{
+							float sample = (TouchIndex.StartLocation - Locations).Size();
+							UE_LOG(LogTemp, Warning, TEXT("current dist : %f"), sample);
 							/*if (TouchIndex.FingerIndex == ETouchIndex::Touch2 && (TouchIndex.BodyParts == EBodyPart::LeftFoot || TouchIndex.BodyParts == EBodyPart::RightFoot))
 							{
 								if ((TouchIndex.StartLocation - Locations).Size() > 50.0f)
@@ -2435,8 +2529,9 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 	//If left foot is kicking
 	if (LeftKickColActivate == true)
 	{
-		//Hit result storage
-		FHitResult HitFoot;
+		RightKickColActivate = false;
+		RightHandColActivate = false;
+		LeftHandColActivate = false;
 
 		//Get Start vector
 		FVector Start = LeftKickCol->GetComponentLocation();
@@ -2444,52 +2539,16 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		//Get End Vector
 		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftKickCol->GetComponentRotation())+(FVector(0,0,LeftKickCol->GetScaledCapsuleHalfHeight())));
 
-		// create the collision sphere with float value of its radius
-		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-
-		//DrawDebugSphere(GetWorld(), Start_LKickSphere, Sphere_LKick.GetSphereRadius(), 5, FColor::Purple, false, 1, 0, 1);
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, false, 1, 0, 1); // isAlwaysShowing, Duration, depth, thickness
-		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 4, FColor::Purple, true);
-
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
-
-		//Ignore self upon colliding
-		FCollisionQueryParams CP_LKick;
-		CP_LKick.AddIgnoredActor(this);
-
-		//Sphere trace by channel
-		if (GetWorld()->SweepSingleByChannel(HitFoot, Start, End, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick) == true)
+		if (IsLocallyControlled() == true)
 		{
-			//Checked only once
-			if (!bDo)
-			{
-				bDo = true;
-				if (HitFoot.Actor.IsValid() == true && HitFoot.Actor != this)
-				{
-					ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitFoot.Actor);
-					if (hitChar)
-					{
-						hitChar->IsHit = true;
-						HitActor = HitFoot.Actor.Get();
-						BoneNames = HitFoot.BoneName;
-						Location = HitFoot.Location;
-						bBlockingHit = hitChar->IsHit;
-
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *BoneNames.ToString()));
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
-						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (bBlockingHit) ? TEXT("True") : TEXT("False")));
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(HitActor)));
-					}
-				}
-			}
-			//reset the bool so sweep trace can be executed again
-			bDo = false;
+			FireTrace(Start, End);
 		}
 	}
 	else if (RightKickColActivate == true)
 	{
-		//Hit result storage
-		FHitResult HitFoot;
+		LeftKickColActivate = false;
+		RightHandColActivate = false;
+		LeftHandColActivate = false;
 
 		//Get Start vector
 		FVector Start = RightKickCol->GetComponentLocation();
@@ -2497,47 +2556,16 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		//Get End Vector
 		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightKickCol->GetComponentRotation())+(FVector(0,0,RightKickCol->GetScaledCapsuleHalfHeight())));
 
-		// create the collision sphere with float value of its radius
-		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
-
-		//Ignore self upon colliding
-		FCollisionQueryParams CP_LKick;
-		CP_LKick.AddIgnoredActor(this);
-
-		//Sphere trace by channel
-		if (GetWorld()->SweepSingleByChannel(HitFoot, Start, End, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick) == true)
+		if (IsLocallyControlled() == true)
 		{
-			//Checked only once
-			if (!bDo)
-			{
-				bDo = true;
-				if (HitFoot.Actor.IsValid() == true && HitFoot.Actor != this)
-				{
-					ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitFoot.Actor);
-					if (hitChar)
-					{
-						hitChar->IsHit = true;
-						HitActor = HitFoot.Actor.Get();
-						BoneNames = HitFoot.BoneName;
-						Location = HitFoot.Location;
-						bBlockingHit = hitChar->IsHit;
-
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *BoneNames.ToString()));
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
-						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (bBlockingHit) ? TEXT("True") : TEXT("False")));
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(HitActor)));
-					}
-				}
-			}
-			//reset the bool so sweep trace can be executed again
-			bDo = false;
+			FireTrace(Start, End);
 		}
 	}
 	else if (RightHandColActivate == true)
 	{
-		//Hit result storage
-		FHitResult HitFoot;
+		LeftKickColActivate = false;
+		RightKickColActivate = false;
+		LeftHandColActivate = false;
 
 		//Get Start vector
 		FVector Start = RightPunchCol->GetComponentLocation();
@@ -2545,47 +2573,16 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		//Get End Vector
 		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightPunchCol->GetComponentRotation())+(FVector(0,0,RightPunchCol->GetScaledCapsuleHalfHeight())));
 
-		// create the collision sphere with float value of its radius
-		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
-
-		//Ignore self upon colliding
-		FCollisionQueryParams CP_LKick;
-		CP_LKick.AddIgnoredActor(this);
-
-		//Sphere trace by channel
-		if (GetWorld()->SweepSingleByChannel(HitFoot, Start, End, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick) == true)
+		if (IsLocallyControlled() == true)
 		{
-			//Checked only once
-			if (!bDo)
-			{
-				bDo = true;
-				if (HitFoot.Actor.IsValid() == true && HitFoot.Actor != this)
-				{
-					ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitFoot.Actor);
-					if (hitChar)
-					{
-						hitChar->IsHit = true;
-						HitActor = HitFoot.Actor.Get();
-						BoneNames = HitFoot.BoneName;
-						Location = HitFoot.Location;
-						bBlockingHit = hitChar->IsHit;
-
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *BoneNames.ToString()));
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
-						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (bBlockingHit) ? TEXT("True") : TEXT("False")));
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(HitActor)));
-					}
-				}
-			}
-			//reset the bool so sweep trace can be executed again
-			bDo = false;
+			FireTrace(Start, End);
 		}
 	}
 	else if (LeftHandColActivate == true)
 	{
-		//Hit result storage
-		FHitResult HitFoot;
+		LeftKickColActivate = false;
+		RightKickColActivate = false;
+		RightHandColActivate = false;
 
 		//Get Start vector
 		FVector Start = LeftPunchCol->GetComponentLocation();
@@ -2593,41 +2590,9 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		//Get End Vector
 		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftPunchCol->GetComponentRotation())+(FVector(0,0,LeftPunchCol->GetScaledCapsuleHalfHeight())));
 
-		// create the collision sphere with float value of its radius
-		FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-		DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
-
-		//Ignore self upon colliding
-		FCollisionQueryParams CP_LKick;
-		CP_LKick.AddIgnoredActor(this);
-
-		//Sphere trace by channel
-		if (GetWorld()->SweepSingleByChannel(HitFoot, Start, End, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick) == true)
+		if (IsLocallyControlled() == true)
 		{
-			//Checked only once
-			if (!bDo)
-			{
-				bDo = true;
-				if (HitFoot.Actor.IsValid() == true && HitFoot.Actor != this)
-				{
-					ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitFoot.Actor);
-					if (hitChar)
-					{
-						hitChar->IsHit = true;
-						HitActor = HitFoot.Actor.Get();
-						BoneNames = HitFoot.BoneName;
-						Location = HitFoot.Location;
-						bBlockingHit = hitChar->IsHit;
-
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *BoneNames.ToString()));
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *Location.ToString()));
-						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (bBlockingHit) ? TEXT("True") : TEXT("False")));
-						GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(HitActor)));
-					}
-				}
-			}
-			//reset the bool so sweep trace can be executed again
-			bDo = false;
+			FireTrace(Start, End);
 		}
 	}
 }
