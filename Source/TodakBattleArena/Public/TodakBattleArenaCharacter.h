@@ -531,10 +531,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Skills")
 	TArray<FName> SkillNames;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skills")
-	FString LevelName;
-
-
 protected:
 	/**************************************START STATS******************************************/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLock")
@@ -974,4 +970,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Stats")
 	TSubclassOf<UBaseCharacterWidget> CharacterHUD;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skills")
+	FString LevelName;
 };

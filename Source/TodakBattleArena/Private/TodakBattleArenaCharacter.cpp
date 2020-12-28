@@ -405,8 +405,8 @@ void ATodakBattleArenaCharacter::BeginPlay()
 	{
 		if (LevelName == UGameplayStatics::GetCurrentLevelName(this, true))
 		{
-			SkillNames.AddUnique("Move");
-			SkillNames.AddUnique("Rotate");
+			//SkillNames.AddUnique("Move");
+			//SkillNames.AddUnique("Rotate");
 
 			//Used in error reporting
 			FString Context;
@@ -1812,6 +1812,7 @@ void ATodakBattleArenaCharacter::EnergySpent(float ValDecrement, float Percentag
 
 void ATodakBattleArenaCharacter::CheckForAction(FName CurrentAction)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Check for action"));
 	if (SkillNames.IsValidIndex(0) == true)
 	{
 		if (SkillNames.Find(CurrentAction) == 0 && LevelName == UGameplayStatics::GetCurrentLevelName(this, true))
