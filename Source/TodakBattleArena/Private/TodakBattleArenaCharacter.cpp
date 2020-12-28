@@ -948,13 +948,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 	{
 		//If the anim is not currently playing
 		FTimerHandle Delay;
-		
-<<<<<<< HEAD
 
-		
-
-=======
->>>>>>> e81c0321a22b037815fc8d40889ba208cf4691a8
 		//Play new anim on client
 		
 		RPCMultiCastSkill = MulticastSkill;
@@ -962,9 +956,10 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkill);
 		//this->PlayAnimMontage(RPCMultiCastSkill);
 		
-		
-		UpdateDamage(DamageApplied, CurrStrength, CurrStamina, CurrAgility);
-		
+		if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
+		{
+			UpdateDamage(DamageApplied, CurrStrength, CurrStamina, CurrAgility);
+		}
 		//stop current played anim
 		this->GetMesh()->GetAnimInstance()->Montage_Stop(3.0f, RPCMultiCastSkillHold);
 
@@ -973,31 +968,33 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 			//GetMesh()->SetSimulatePhysics(false);
 			GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
 			
-
-			//if this client has access
-			if (IsLocallyControlled())
+			if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 			{
-				if (this->BlockedHit == true)
+				//if this client has access
+				if (IsLocallyControlled())
 				{
-					this->BlockedHit = false;
-				}
-				//if still in blocked hit state
-				//Reduce player energy after action
-				EnergySpent(10.0f, 100.0f);
-				UE_LOG(LogTemp, Warning, TEXT("Energy: %f"), playerEnergy);
+					if (this->BlockedHit == true)
+					{
+						this->BlockedHit = false;
+					}
+					//if still in blocked hit state
+					//Reduce player energy after action
+					EnergySpent(10.0f, 100.0f);
+					UE_LOG(LogTemp, Warning, TEXT("Energy: %f"), playerEnergy);
 
-				//Update stats after anim is played
-				if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (playerEnergy <= MaxEnergy))
-				{
-					//Set timer for EnergyBar to regen after action
-					FTimerDelegate FunctionsNames;
-					FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, StartEnergyTimer, StartEnergyTimer);
+					//Update stats after anim is played
+					if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (playerEnergy <= MaxEnergy))
+					{
+						//Set timer for EnergyBar to regen after action
+						FTimerDelegate FunctionsNames;
+						FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, StartEnergyTimer, StartEnergyTimer);
 
-					UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
-					GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, FunctionsNames, EnergyRate, true);
+						UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
+						GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, FunctionsNames, EnergyRate, true);
 
-					//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
-					//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+						//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
+						//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+					}
 				}
 			}
 		}
