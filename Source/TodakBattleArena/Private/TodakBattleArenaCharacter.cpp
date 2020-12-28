@@ -948,13 +948,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 	{
 		//If the anim is not currently playing
 		FTimerHandle Delay;
-		
-<<<<<<< HEAD
 
-		
-
-=======
->>>>>>> e81c0321a22b037815fc8d40889ba208cf4691a8
 		//Play new anim on client
 		
 		RPCMultiCastSkill = MulticastSkill;
