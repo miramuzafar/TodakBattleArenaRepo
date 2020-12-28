@@ -242,6 +242,9 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillMoveset);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillHold);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillPlayrate);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, PickedActionSkill);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, SectionName);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RandSection)
 
 
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerBlockHit);
@@ -722,7 +725,13 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 					//RepLocoPlayrate = SkillPlayrate;
 					//AnimInstance->LocoPlayrate = SkillPlayrate;
 					//temp = SkillPlayrate;
-					row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartMontage, row->SkillMoveset, row->Damage, row->CDSkill);
+					/*if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
+					{
+						PickedActionSkill = row->SkillMoveset;
+						AnimInst->Montage_JumpToSection(FName("Attack1"), PickedActionSkill);
+					}*/
+
+					row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartMontage, row->SkillMoveset , row->Damage, row->CDSkill);
 					
 					FingerIndex->bDo = true;
 					Found = true;
@@ -901,30 +910,38 @@ void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue, float CurrStren
 	}
 }
 
-bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		RPCServerSkill = ServerSkill;
 		SkillExecuted = SkillFound;
+		
+		//Get random index from section names
+		FName arr[3] = { "Attack1", "Attack2", "Attack3" };
+		RandSection = rand() % 3;
+		//int random = rand() % 3;
+		SectionNames = arr[RandSection];
+		SectionName = SectionNames;
+
 
 		//damage = DamageApplied;
-		MulticastSkillMoveset(RPCServerSkill, DamageApplied, CurrStrength, CurrStamina, CurrAgility, PlayRate, StartTime, SkillFound);
+		MulticastSkillMoveset(RPCServerSkill, DamageApplied, CurrStrength, CurrStamina, CurrAgility, PlayRate, StartTime, SkillFound, SectionName);
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames)
 {
 	return true;
 }
 
 //Play swipe action anim
-void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames)
 {
 	//if action is found, play new action anim, else stop the current action, else stop the current anim immediately
 	if (SkillFound == true)
@@ -932,10 +949,20 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		//If the anim is not currently playing
 		FTimerHandle Delay;
 		
+<<<<<<< HEAD
+
+		
+
+=======
+>>>>>>> e81c0321a22b037815fc8d40889ba208cf4691a8
 		//Play new anim on client
 		
 		RPCMultiCastSkill = MulticastSkill;
 		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
+		this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkill);
+		//this->PlayAnimMontage(RPCMultiCastSkill);
+		
+		
 		UpdateDamage(DamageApplied, CurrStrength, CurrStamina, CurrAgility);
 		
 		//stop current played anim
@@ -1227,9 +1254,8 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 		//Get the Montage to be play
 		SkillMoveset = SkillMovesets;
-
 		//Server
-		ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered);
+		ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered, SectionName);
 
 		if (this->BlockedHit == true)
 		{
@@ -2279,7 +2305,7 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 				if (GetMesh()->GetAnimInstance()->Montage_IsActive(SkillHold) == true)
 				{
 					//Stop current active anim
-					ServerSkillMoveset(SkillHold, damage, MaxStrength, MaxStamina, MaxAgility, 1.0f, 0.0f, false);
+					ServerSkillMoveset(SkillHold, damage, MaxStrength, MaxStamina, MaxAgility, 1.0f, 0.0f, false, FName(""));
 				}
 				InputTouch.RemoveAt(Index);
 			}

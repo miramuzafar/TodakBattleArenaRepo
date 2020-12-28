@@ -354,11 +354,11 @@ protected:
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound);
+	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames);
 
 	//Skill replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound);
+	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
@@ -657,6 +657,11 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere,  BlueprintReadWrite, Category = "Anim")
 	float SkillPlayrate = 1.0f;
 
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* PickedActionSkill;
+
+	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	//UAnim
 	/**************************************END STATS******************************************/
 
 	//Assign data table from bp 
@@ -699,6 +704,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	float PhysicsAlpha;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	FName SectionName;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	int RandSection;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
 	float IKOffsetRightfoot;

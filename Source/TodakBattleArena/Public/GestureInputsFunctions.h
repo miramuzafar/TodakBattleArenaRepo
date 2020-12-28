@@ -57,6 +57,14 @@ enum class EMainPlayerStats : uint8
 	Energy
 };
 
+//UENUM(BlueprintType)
+//enum class EMontageSection : uint8
+//{
+//	Attack1,
+//	Attack2,
+//	Attack3
+//};
+
 UENUM(BlueprintType)
 enum class EBarType : uint8
 {
@@ -189,6 +197,9 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	UAnimMontage* SkillBlockHit;
 
+	///*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	//TArray<EMontageSection> Sections;*/
+
 	//What time does the swipe anim will start
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float StartMontage;
@@ -197,8 +208,6 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float SkillMoveSetRate;
 
-	 
-
 	//Time to stop current hold anim
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float StopHoldAnimTime;
@@ -206,6 +215,8 @@ struct FActionSkill : public FTableRowBase
 	//Damage to be dealt from the action
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float Damage = 0.0f;
+
+	
 
 	//For array comparison
 	bool operator ==(const FActionSkill &other) const
