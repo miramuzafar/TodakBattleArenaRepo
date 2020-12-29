@@ -350,7 +350,9 @@ protected:
 	//Execute the skill
 	bool ExecuteAction(bool SkillTrigger, float HitTraceLengths, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill);
 
-	
+	//Initialize everything during begin play
+	UFUNCTION(BlueprintCallable, Category = "BeginPlay")
+	void InitializeCharAtt();
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)

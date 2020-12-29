@@ -133,4 +133,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Status")
 	float MaxStrength;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Status")
+	bool FirstTimeLogin = true;
 };
