@@ -909,6 +909,7 @@ void ATodakBattleArenaCharacter::MulticastSkillStartMontage_Implementation(UAnim
 	//Play anim on touch press/hold
 	RPCMultiCastSkillHold = MulticastSkill;
 	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkillHold, 1.0f);
+	this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkillHold);
 }
 
 bool ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Validate(UAnimMontage* ServerSkill)
