@@ -5,6 +5,7 @@
 
 void UBaseCharacterWidget::SynchronizeProperties()
 {
+	//Sync properties
 	Super::SynchronizeProperties();
 }
 
