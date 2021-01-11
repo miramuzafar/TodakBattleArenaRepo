@@ -9,6 +9,7 @@
 #include "Components/BoxComponent.h"
 #include "TargetLockInterface.h"
 #include "Components/PrimitiveComponent.h"
+#include "InventoryComponent.h"
 #include "TodakBattleArenaCharacter.generated.h"
 
 class UBaseCharacterWidget;
@@ -71,6 +72,9 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 	UPROPERTY(VisibleAnywhere, Category = "Timeline")
 	class UTimelineComponent* MyTimeline;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class UInventoryComponent* Inventory;
+
 	void StartAttack1();
 	void StartAttack2();
 	void StartAttack3();
@@ -82,6 +86,9 @@ public:
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Boost")
+	void UseItem(class UItem* Item);
 
 	//Replicated Network setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

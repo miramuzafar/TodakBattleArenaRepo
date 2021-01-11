@@ -22,26 +22,29 @@ void ATodakBattleArenaCharacterHUD::BeginPlay()
 	//Call the base class
 	Super::BeginPlay();
 
-	ACharacter* locChar = GetWorld()->GetFirstPlayerController()->GetCharacter();
+	/*ACharacter* locChar = UGameplayStatics::GetPlayerCharacter(this, 0);
 	if (locChar)
 	{
 		ATodakBattleArenaCharacter* locUIChar = CastChecked<ATodakBattleArenaCharacter>(locChar);
 		if (locUIChar && (locUIChar->LevelName != UGameplayStatics::GetCurrentLevelName(this, true)))
 		{
-			FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
-			if (UClass* locWidgetClass = locWidgetClassRef.TryLoadClass<UBaseCharacterWidget>())
+			if (locUIChar->Controller->IsLocalPlayerController())
 			{
-				CharacterHUDClass = CreateWidget<UBaseCharacterWidget>(this->GetGameInstance(), locWidgetClass);
-				if (CharacterHUDClass)
+				//FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
+				if (locUIChar->CharacterHUD != nullptr)
 				{
-					CharacterHUDClass->AddToViewport();
-					locUIChar->WidgetHUD = CharacterHUDClass;
-					GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor();
-					UE_LOG(LogTemp, Warning, TEXT("Show mouse cursor is %s "), (GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor() == GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor()) ? TEXT("True") : TEXT("False"));
-					GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+					locUIChar->WidgetHUD = CreateWidget<UBaseCharacterWidget>(this->GetGameInstance(), locUIChar->CharacterHUD);
+					if (locUIChar->WidgetHUD)
+					{
+						locUIChar->WidgetHUD->AddToViewport();
+						//locUIChar->WidgetHUD = CharacterHUDClass;
+						GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor();
+						UE_LOG(LogTemp, Warning, TEXT("Show mouse cursor is %s "), (GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor() == GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor()) ? TEXT("True") : TEXT("False"));
+						GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+					}
 				}
 			}
 		}
-	}
+	}*/
 }
 
