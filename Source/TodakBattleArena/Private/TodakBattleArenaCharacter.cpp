@@ -359,7 +359,6 @@ void ATodakBattleArenaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-<<<<<<< Updated upstream
 	/*FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
 	if (UClass* locWidgetClass = locWidgetClassRef.TryLoadClass<UBaseCharacterWidget>())
 	{
@@ -379,8 +378,6 @@ void ATodakBattleArenaCharacter::BeginPlay()
 		}
 	}*/
 
-=======
->>>>>>> Stashed changes
 	//InitializeCharAtt();
 }
 
