@@ -378,7 +378,7 @@ void ATodakBattleArenaCharacter::BeginPlay()
 		}
 	}*/
 
-	//InitializeCharAtt();
+	InitializeCharAtt();
 }
 
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
