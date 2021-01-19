@@ -90,3 +90,5 @@ Plugins/VaRestPlugin/LICENSE
 *.png
 *.jpg
 Plugins/VaRestPlugin/Source/.clang-format
+*.uproject
+TodakBattleArena.uproject
