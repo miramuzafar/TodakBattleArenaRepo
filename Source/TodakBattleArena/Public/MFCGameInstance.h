@@ -141,11 +141,11 @@ protected:
 	bool IsItFem = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* Top;
+	class USkeletalMeshComponent* Top;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* Bot;
+	class USkeletalMeshComponent* Bot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* Hair;
+	class USkeletalMeshComponent* Hair;
 };
