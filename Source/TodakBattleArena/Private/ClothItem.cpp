@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FoodItem.h"
+#include "ClothItem.h"
 
-void UFoodItem::Use(class AActor* Character)
+void UClothItem::Use(AActor* Character)
 {
 	if (Character)
 	{
 		//Do character attribute logic here
-		//Do boost logic here
+		//Do cloth logic here
 	}
 }

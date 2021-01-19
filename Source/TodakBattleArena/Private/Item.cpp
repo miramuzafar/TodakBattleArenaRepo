@@ -5,7 +5,12 @@
 
 UItem::UItem()
 {
-	Weight = 1.0f;
+	Index = 0;
 	ItemDisplayName = FText::FromString("Item");
 	UseActionText = FText::FromString("Use");
+}
+
+void UItem::Use(AActor* Character)
+{
+
 }

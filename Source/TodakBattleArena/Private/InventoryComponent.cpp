@@ -21,6 +21,15 @@ void UInventoryComponent::BeginPlay()
 	}
 }
 
+void UInventoryComponent::UseItem(AActor* Character, UItem* Item)
+{
+	if (Item)
+	{
+		Item->Use(Character);
+		Item->OnUse(Character); //bp event
+	}
+}
+
 bool UInventoryComponent::AddItem(UItem* Item)
 {
 	if (Items.Num() >= Capacity || !Item)

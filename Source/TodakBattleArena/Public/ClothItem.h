@@ -4,21 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Item.h"
-#include "FoodItem.generated.h"
+#include "ClothItem.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TODAKBATTLEARENA_API UFoodItem : public UItem
+class TODAKBATTLEARENA_API UClothItem : public UItem
 {
 	GENERATED_BODY()
 
 public:
-
-	//The weight of the item
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item", meta = (ClampMin = 0.0))
-	float BoostVal;
+	//Check if item is for female character
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
+	bool IsFem = true;
 
 protected:
 

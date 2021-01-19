@@ -21,6 +21,9 @@ public:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintCallable, Category = "Boost")
+	void UseItem(AActor* Character, class UItem* Item);
+
 	bool AddItem(class UItem* Item);
 	bool RemoveItem(class UItem* Item);
 

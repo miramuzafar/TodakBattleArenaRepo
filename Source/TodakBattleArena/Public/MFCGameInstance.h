@@ -136,4 +136,16 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Status")
 	bool FirstTimeLogin = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
+	bool IsItFem = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* Top;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* Bot;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* Hair;
 };

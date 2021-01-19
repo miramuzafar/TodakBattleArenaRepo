@@ -72,8 +72,8 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 	UPROPERTY(VisibleAnywhere, Category = "Timeline")
 	class UTimelineComponent* MyTimeline;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
-	class UInventoryComponent* Inventory;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	//class UInventoryComponent* Inventory;
 
 	void StartAttack1();
 	void StartAttack2();
@@ -86,9 +86,6 @@ public:
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaTime) override;
-
-	UFUNCTION(BlueprintCallable, Category = "Boost")
-	void UseItem(class UItem* Item);
 
 	//Replicated Network setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

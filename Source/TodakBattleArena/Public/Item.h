@@ -28,7 +28,7 @@ public:
 
 	//The mesh to display for this items pickup
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
-	class UStaticMesh* PickupMesh;
+	class USKeletalMesh* PickupMesh;
 
 	//The thumbnail for this item
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
@@ -42,17 +42,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item", meta = (MultiLine = true))
 	FText ItemDescription;
 
-	//The weight of the item
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item", meta = (ClampMin = 0.0))
-	float Weight;
+	//The equipped part of the item exp: 0 is top body etc
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item", meta = (ClampMin = 0))
+	int Index;
 
 	//The inventory that owns the item
 	UPROPERTY()
 	class UInventoryComponent* OwningInventory;
 
-	virtual void Use(class ATodakBattleArenaCharacter* Character) PURE_VIRTUAL(UItem, );
+	virtual void Use(class AActor* Character);
 
 	//Blueprint version of vritual Use function
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnUse(class ATodakBattleArenaCharacter* Character);
+	void OnUse(class AActor* Character);
 };

@@ -165,6 +165,10 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	//GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = true;
 	GetCharacterMovement()->bServerAcceptClientAuthoritativePosition = true;
 
+	//Inventory = CreateDefaultSubobject<UInventoryComponent>("Inventory");
+	//Inventory->Capacity = 20;
+
+
 	//check if fCurve is valid
 	/*if (fCurve)
 	{
@@ -404,15 +408,6 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 	}*/
 	
 	//CheckTraces(HitActor, BoneNames, Location, bBlockingHits);
-}
-
-void ATodakBattleArenaCharacter::UseItem(UItem* Item)
-{
-	if (Item)
-	{
-		Item->Use(this);
-		Item->OnUse(this); //bp event
-	}
 }
 
 //////////////////////////////////// Input //////////////////////////////////////// 
@@ -728,7 +723,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 
 bool ATodakBattleArenaCharacter::UpdateHealth_Validate(int playerIndex, float HealthChange)
 {
-	if (Health >= MaxHealth)
+	if (this->Health >= this->MaxHealth)
 	{
 		//return false; // This will disconnect the caller
 	}
@@ -738,57 +733,57 @@ bool ATodakBattleArenaCharacter::UpdateHealth_Validate(int playerIndex, float He
 void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, float HealthChange)
 {
 	//if can be accessed by the owning client
-	if (IsLocallyControlled())
+	if (this->IsLocallyControlled())
 	{
 		//Distribute damage for each progressbar
-		float MainDamage = UGestureMathLibrary::CalculateValueFromPercentage(MajorDamage, HealthChange, 100.0f);
+		float MainDamage = UGestureMathLibrary::CalculateValueFromPercentage(this->MajorDamage, HealthChange, 100.0f);
 		float SecDamage = HealthChange - MainDamage;
 
 		//Add pain meter value
-		float currVal = Health + MainDamage;
-		if (currVal >= MaxHealth)
+		float currVal = this->Health + MainDamage;
+		if (currVal >= this->MaxHealth)
 		{
-			Health = MaxHealth;
+			this->Health = this->MaxHealth;
 		}
 		else
-			Health = currVal;
+			this->Health = currVal;
 
-		float currSecHealth = Health + SecDamage;
-		if (currSecHealth >= MaxHealth)
+		float currSecHealth = this->Health + SecDamage;
+		if (currSecHealth >= this->MaxHealth)
 		{
-			SecondaryHealth = MaxHealth;
+			this->SecondaryHealth = this->MaxHealth;
 		}
 		else
-			SecondaryHealth = currSecHealth; 
-		UE_LOG(LogTemp, Warning, TEXT("Health : %f"), Health);
+			this->SecondaryHealth = currSecHealth;
+		UE_LOG(LogTemp, Warning, TEXT("Health : %f"), this->Health);
 
 		//Get the secondary progressbar for pain meter
 		const FName locTextControlHealthBar_1 = FName(TEXT("HPBar_1"));
-		UProgressBar* healthBar_1 = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar_1));
+		UProgressBar* healthBar_1 = (UProgressBar*)(this->WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar_1));
 
 		//Update both progress bar for pain meter
-		playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(WidgetHUD, "HPBar", "Health", "HP", "Pain Meter", Health, MaxHealth);
-		playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("Pain Meter", healthBar_1, nullptr, nullptr, SecondaryHealth, MaxHealth);
+		this->playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBar", "Health", "HP", "Pain Meter", this->Health, this->MaxHealth);
+		this->playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("Pain Meter", healthBar_1, nullptr, nullptr, this->SecondaryHealth, this->MaxHealth);
 
 		//Start Pain Meter degeneration
-		if (GetWorld()->GetTimerManager().IsTimerActive(StartHealthTimer) == false && (Health > 0.0f) && (Health < MaxHealth))
+		if (GetWorld()->GetTimerManager().IsTimerActive(this->StartHealthTimer) == false && (this->Health > 0.0f) && (this->Health < this->MaxHealth))
 		{
 			//For first pain meter progress bar
 			FTimerDelegate FunctionsName;
 			//FunctionsName = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateHealthStatusBar, EBarType::PrimaryProgressBar);
-			FunctionsName = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::PainMeter, StartHealthTimer, StartSecondaryHealthTimer);
+			FunctionsName = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::PainMeter, this->StartHealthTimer, this->StartSecondaryHealthTimer);
 			
 			UE_LOG(LogTemp, Warning, TEXT("TimerHealth has started!"));
-			GetWorld()->GetTimerManager().SetTimer(StartHealthTimer, FunctionsName, MajorHealthRate, true);
+			GetWorld()->GetTimerManager().SetTimer(this->StartHealthTimer, FunctionsName, MajorHealthRate, true);
 		}
 		//For second pain meter progress bar
-		if (GetWorld()->GetTimerManager().IsTimerActive(StartSecondaryHealthTimer) == false && ((SecondaryHealth > Health) && (SecondaryHealth > 0.0f)))
+		if (GetWorld()->GetTimerManager().IsTimerActive(this->StartSecondaryHealthTimer) == false && ((this->SecondaryHealth > this->Health) && (this->SecondaryHealth > 0.0f)))
 		{
 			FTimerDelegate FunctionsNames;
-			FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::SecondaryProgressBar, EMainPlayerStats::PainMeter, StartHealthTimer, StartSecondaryHealthTimer);
+			FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::SecondaryProgressBar, EMainPlayerStats::PainMeter, this->StartHealthTimer, this->StartSecondaryHealthTimer);
 
 			UE_LOG(LogTemp, Warning, TEXT("SecondaryHealth has started!"));
-			GetWorld()->GetTimerManager().SetTimer(StartSecondaryHealthTimer, FunctionsNames, MinorHealthRate, true);
+			GetWorld()->GetTimerManager().SetTimer(this->StartSecondaryHealthTimer, FunctionsNames, MinorHealthRate, true);
 		}
 	}
 }
@@ -802,8 +797,8 @@ void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue, float CurrStren
 		//float DamageFromStrength = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, MaxStrength, 100.0f);
 
 		//Calculate total damage applied from current action with current instigator's maximum strength
-		damage = DamageValue + ((CurrStrength + CurrStamina + CurrAgility) / 15000)*(CurrStrength*(CurrStrength / 1000.0f));
-		UE_LOG(LogTemp, Warning, TEXT("Damage : %f"), damage);
+		this->damage = DamageValue + ((CurrStrength + CurrStamina + CurrAgility) / 15000)*(CurrStrength*(CurrStrength / 1000.0f));
+		UE_LOG(LogTemp, Warning, TEXT("Damage : %f"), this->damage);
 	}
 }
 
@@ -877,17 +872,17 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 					//if still in blocked hit state
 					//Reduce player energy after action
 					EnergySpent(10.0f, 100.0f);
-					UE_LOG(LogTemp, Warning, TEXT("Energy: %f"), playerEnergy);
+					UE_LOG(LogTemp, Warning, TEXT("Energy: %f"), this->playerEnergy);
 
 					//Update stats after anim is played
-					if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (playerEnergy <= MaxEnergy))
+					if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
 					{
 						//Set timer for EnergyBar to regen after action
 						FTimerDelegate FunctionsNames;
-						FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, StartEnergyTimer, StartEnergyTimer);
+						FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
 
 						UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
-						GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, FunctionsNames, EnergyRate, true);
+						GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
 
 						//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
 						//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
@@ -1191,25 +1186,25 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 
 	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, FString::Printf(TEXT("Screen resolution : %s"), *Result.ToString()));
 
-	Stamina = MaxStamina;
-	Strength = MaxStrength;
-	Agility = MaxAgility;
+	/*this->Stamina = this->MaxStamina;
+	this->Strength = this->MaxStrength;
+	this->Agility = this->MaxAgility;
 
-	StaminaPercentage = 1.0f;
-	StrengthPercentage = 1.0f;
-	AgilityPercentage = 1.0f;
+	this->StaminaPercentage = 1.0f;
+	this->StrengthPercentage = 1.0f;
+	this->AgilityPercentage = 1.0f;
 
-	MaxHealth = 500;
-	MaxEnergy = 700;
+	this->MaxHealth = 500;
+	this->MaxEnergy = 700;
 
 	//Energy
-	playerEnergy = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, MaxStamina, 100.0f) + UGestureMathLibrary::CalculateValueFromPercentage(10.0f, MaxStrength, 100.0f) + MaxEnergy;
-	MaxEnergy = playerEnergy;
-	EnergyPercentage = 1.0f;
-	UE_LOG(LogTemp, Warning, TEXT("Energy : %f"), playerEnergy);
+	this->playerEnergy = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, this->MaxStamina, 100.0f) + UGestureMathLibrary::CalculateValueFromPercentage(10.0f, this->MaxStrength, 100.0f) + this->MaxEnergy;
+	this->MaxEnergy = this->playerEnergy;
+	this->EnergyPercentage = 1.0f;
+	UE_LOG(LogTemp, Warning, TEXT("Energy : %f"), this->playerEnergy);
 
 	//Health
-	/*Health = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, MaxStrength, 100.0f) + MaxHealth;
+	Health = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, MaxStrength, 100.0f) + MaxHealth;
 	MaxHealth = Health;
 	playerHealth = 1.0f;
 	UE_LOG(LogTemp, Warning, TEXT("MaxHealth : %d"), MaxHealth);*/
@@ -1235,64 +1230,61 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 				}
 			}
 		}
-		else
+		/*if (this->CharacterHUD)
 		{
-			if (this->CharacterHUD)
+			if (UGameplayStatics::GetPlayerController(this, 0)->IsLocalPlayerController())
 			{
-				if (UGameplayStatics::GetPlayerController(this, 0)->IsLocalPlayerController())
+				this->WidgetHUD = CreateWidget<UBaseCharacterWidget>(UGameplayStatics::GetPlayerController(this, 0), CharacterHUD);
+				if (WidgetHUD)
 				{
-					this->WidgetHUD = CreateWidget<UBaseCharacterWidget>(UGameplayStatics::GetPlayerController(this, 0), CharacterHUD);
-					if (WidgetHUD)
+					this->WidgetHUD->AddToViewport();
+					if (this->WidgetHUD)
 					{
-						this->WidgetHUD->AddToViewport();
-						if (WidgetHUD)
+						if (WidgetHUD->IsVisible())
 						{
-							if (WidgetHUD->IsVisible())
+							//Assign values to the widget
+							//Stamina
+							const FName locTextControlStaminaName = FName(TEXT("Stamina"));
+							UTextBlock* locTextControlStamina = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStaminaName));
+
+							if (locTextControlStamina != nullptr)
 							{
-								//Assign values to the widget
-								//Stamina
-								const FName locTextControlStaminaName = FName(TEXT("Stamina"));
-								UTextBlock* locTextControlStamina = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStaminaName));
+								locTextControlStamina->SetText(UGestureMathLibrary::PrintStatusValue(Stamina, MaxStamina, "Stamina: "));
+							}
 
-								if (locTextControlStamina != nullptr)
+							//Strength
+							const FName locTextControlStrengthName = FName(TEXT("Strength"));
+							UTextBlock* locTextControlStrength = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStrengthName));
+
+							if (locTextControlStrength != nullptr)
+							{
+								locTextControlStrength->SetText(UGestureMathLibrary::PrintStatusValue(Strength, MaxStrength, "Strength: "));
+							}
+
+							//Agility
+							const FName locTextControlAgilityName = FName(TEXT("Agility"));
+							UTextBlock* locTextControlAgility = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlAgilityName));
+
+							if (locTextControlAgility != nullptr)
+							{
+								locTextControlAgility->SetText(UGestureMathLibrary::PrintStatusValue(Agility, MaxAgility, "Agility: "));
+							}
+
+							FTimerHandle handle;
+							{
+								//Energy stats
+								const FName locTextControlEnergyName = FName(TEXT("Energy"));
+								UTextBlock* locTextControlEnergy = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyName));
+
+								const FName locTextControlEnergyPercent = FName(TEXT("EnergyText"));
+								UTextBlock* locTextControlEnergyPercentBlock = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyPercent));
+
+								const FName locTextControlEnergyBar = FName(TEXT("EnergyBar"));
+								UProgressBar* energyBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyBar));
+
+								if (energyBar != nullptr)
 								{
-									locTextControlStamina->SetText(UGestureMathLibrary::PrintStatusValue(Stamina, MaxStamina, "Stamina: "));
-								}
-
-								//Strength
-								const FName locTextControlStrengthName = FName(TEXT("Strength"));
-								UTextBlock* locTextControlStrength = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStrengthName));
-
-								if (locTextControlStrength != nullptr)
-								{
-									locTextControlStrength->SetText(UGestureMathLibrary::PrintStatusValue(Strength, MaxStrength, "Strength: "));
-								}
-
-								//Agility
-								const FName locTextControlAgilityName = FName(TEXT("Agility"));
-								UTextBlock* locTextControlAgility = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlAgilityName));
-
-								if (locTextControlAgility != nullptr)
-								{
-									locTextControlAgility->SetText(UGestureMathLibrary::PrintStatusValue(Agility, MaxAgility, "Agility: "));
-								}
-
-								FTimerHandle handle;
-								{
-									//Energy stats
-									const FName locTextControlEnergyName = FName(TEXT("Energy"));
-									UTextBlock* locTextControlEnergy = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyName));
-
-									const FName locTextControlEnergyPercent = FName(TEXT("EnergyText"));
-									UTextBlock* locTextControlEnergyPercentBlock = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyPercent));
-
-									const FName locTextControlEnergyBar = FName(TEXT("EnergyBar"));
-									UProgressBar* energyBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyBar));
-
-									if (energyBar != nullptr)
-									{
-										EnergyPercentage = UGestureMathLibrary::SetProgressBarValue("Energy", energyBar, locTextControlEnergyPercentBlock, locTextControlEnergy, playerEnergy, MaxEnergy);
-									}
+									EnergyPercentage = UGestureMathLibrary::SetProgressBarValue("Energy", energyBar, locTextControlEnergyPercentBlock, locTextControlEnergy, playerEnergy, MaxEnergy);
 								}
 								{
 									//Health stats
@@ -1319,7 +1311,7 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 					}
 				}
 			}
-		}
+		}*/
 	}
 }
 
@@ -1836,9 +1828,9 @@ void ATodakBattleArenaCharacter::DoDamage_Implementation(AActor* HitActor)
 	if (this != HitActor)
 	{
 		//ApplyDa
-		damage = UGameplayStatics::ApplyDamage(HitActor, damage, nullptr, this, nullptr);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Damage Applied: %f"), damage));
-		UE_LOG(LogTemp, Warning, TEXT("Damage Applied: %f"), damage);
+		this->damage = UGameplayStatics::ApplyDamage(HitActor, this->damage, nullptr, this, nullptr);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Damage Applied: %f"), this->damage));
+		UE_LOG(LogTemp, Warning, TEXT("Damage Applied: %f"), this->damage);
 		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 
 		//reset the bool so sweep trace can be executed again
@@ -1851,17 +1843,17 @@ void ATodakBattleArenaCharacter::DoDamage_Implementation(AActor* HitActor)
 void ATodakBattleArenaCharacter::EnergySpent(float ValDecrement, float PercentageLimit)
 {
 	//Reduce energy from current energy
-	float tempEnergy = playerEnergy- ValDecrement;
+	float tempEnergy = this->playerEnergy- ValDecrement;
 
 	if (tempEnergy <= 0.0f)
 	{
-		playerEnergy = 0.0f;
+		this->playerEnergy = 0.0f;
 	}
 	else
-		playerEnergy = tempEnergy;
+		this->playerEnergy = tempEnergy;
 
 	//Update energy after action on progress bar
-	EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", playerEnergy, MaxEnergy);
+	this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
 
 	/*if (WidgetHUD)
 	{
@@ -1972,7 +1964,7 @@ void ATodakBattleArenaCharacter::DetectInputTouch(float CurrEnergyValue, ETouchI
 void ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar(EBarType Type, EMainPlayerStats StatType, FTimerHandle FirstHandle, FTimerHandle SecondHandle)
 {
 	//if the widget is exist
-	if (WidgetHUD)
+	if (this->WidgetHUD)
 	{
 		//if the primary and only one progressbar on each stats is exist
 		if (Type == EBarType::PrimaryProgressBar)
@@ -1981,23 +1973,23 @@ void ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar(EBarType Type,
 			if (StatType == EMainPlayerStats::PainMeter)
 			{
 				//Decrease the current pain meter value
-				UpdateStatusValueTimer(FirstHandle, EOperation::Subtraction, false, 1.0f, Health, MaxHealth, 0.0f, Health);
+				UpdateStatusValueTimer(FirstHandle, EOperation::Subtraction, false, 1.0f, this->Health, this->MaxHealth, 0.0f, this->Health);
 
 				//Calculate percentage for current pain meter bar
-				playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(WidgetHUD, "HPBar", "Health", "HP", "Pain Meter", Health, MaxHealth);
+				this->playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBar", "Health", "HP", "Pain Meter", this->Health, this->MaxHealth);
 
 				//if secondary progressbar value is more than primary progressbar
-				if (SecondaryHealth > Health && SecondaryHealth <= MaxHealth)
+				if (this->SecondaryHealth > this->Health && this->SecondaryHealth <= this->MaxHealth)
 				{
 					//if secondary progressbar timer is not active
-					if (GetWorld()->GetTimerManager().IsTimerActive(StartSecondaryHealthTimer) == false)
+					if (GetWorld()->GetTimerManager().IsTimerActive(this->StartSecondaryHealthTimer) == false)
 					{
 						FTimerDelegate FunctionsName_1;
-						FunctionsName_1 = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::SecondaryProgressBar, EMainPlayerStats::PainMeter, FirstHandle, StartSecondaryHealthTimer);
+						FunctionsName_1 = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::SecondaryProgressBar, EMainPlayerStats::PainMeter, FirstHandle, this->StartSecondaryHealthTimer);
 
 						//Start the secondary progressbar regen timer
 						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, FString::Printf(TEXT("second timer is started")));
-						GetWorld()->GetTimerManager().SetTimer(StartSecondaryHealthTimer, FunctionsName_1, .1f, true);
+						GetWorld()->GetTimerManager().SetTimer(this->StartSecondaryHealthTimer, FunctionsName_1, .1f, true);
 					}
 				}
 			}
@@ -2006,18 +1998,18 @@ void ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar(EBarType Type,
 				//Increase the current energy value
 				//UpdateStatusValueTimer(FirstHandle, EOperation::Addition, false, 10.0f, playerEnergy, MaxEnergy, 0.0f, playerEnergy);
 
-				if (playerEnergy >= MaxEnergy)
+				if (this->playerEnergy >= this->MaxEnergy)
 				{
 					GetWorld()->GetTimerManager().ClearTimer(FirstHandle);
 				}
 				else
 				{
-					float Increment = 5 + (5 * (MaxEnergy / 1000));
+					float Increment = 5 + (5 * (this->MaxEnergy / 1000));
 
-					playerEnergy = playerEnergy + Increment;
+					this->playerEnergy = this->playerEnergy + Increment;
 
 					//Calculate percentage for current energy bar
-					EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", playerEnergy, MaxEnergy);
+					EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
 				}
 			}
 		}
@@ -2025,22 +2017,22 @@ void ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar(EBarType Type,
 		if (Type == EBarType::SecondaryProgressBar)
 		{
 			//if the current secondary timer is active
-			if (GetWorld()->GetTimerManager().IsTimerActive(StartSecondaryHealthTimer) == true)
+			if (GetWorld()->GetTimerManager().IsTimerActive(this->StartSecondaryHealthTimer) == true)
 			{
 				//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Timer %s"), (GetWorld()->GetTimerManager().IsTimerActive(StartSecondaryHealthTimer)) ? TEXT("is Active") : TEXT("is not Active")));
 				if (StatType == EMainPlayerStats::PainMeter)
 				{
 					//Decrease the current pain meter value
-					UpdateStatusValueTimer(StartSecondaryHealthTimer, EOperation::Subtraction, false, 1.0f, SecondaryHealth, MaxHealth, Health, SecondaryHealth);
+					UpdateStatusValueTimer(this->StartSecondaryHealthTimer, EOperation::Subtraction, false, 1.0f, this->SecondaryHealth, this->MaxHealth, this->Health, this->SecondaryHealth);
 
 					const FName locTextControlHealthBar_1 = FName(TEXT("HPBar_1"));
-					UProgressBar* healthBar_1 = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar_1));
+					UProgressBar* healthBar_1 = (UProgressBar*)(this->WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar_1));
 
 					if (healthBar_1 != NULL)
 					{
 						if (healthBar_1->IsValidLowLevel())
 						{
-							playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("", healthBar_1, nullptr, nullptr, SecondaryHealth, MaxHealth);
+							this->playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("", healthBar_1, nullptr, nullptr, this->SecondaryHealth, this->MaxHealth);
 						}
 					}
 					
@@ -2112,7 +2104,7 @@ void ATodakBattleArenaCharacter::UpdateStatusValueTimer(FTimerHandle newHandle, 
 
 void ATodakBattleArenaCharacter::ReduceDamageTaken(float damageValue, float CurrStrength, float CurrStamina, float CurrAgility)
 {
-	damageAfterReduction = damageValue - ((CurrStrength + CurrStamina + CurrAgility) / 15000)*(CurrStrength*(CurrStrength / 1000.0f));
+	this->damageAfterReduction = damageValue - ((CurrStrength + CurrStamina + CurrAgility) / 15000)*(CurrStrength*(CurrStrength / 1000.0f));
 }
 
 APlayerController* ATodakBattleArenaCharacter::GetPlayerControllers()
@@ -2354,7 +2346,7 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 				if (GetMesh()->GetAnimInstance()->Montage_IsActive(SkillHold) == true)
 				{
 					//Stop current active anim
-					ServerSkillMoveset(SkillHold, damage, MaxStrength, MaxStamina, MaxAgility, 1.0f, 0.0f, false, FName(""));
+					ServerSkillMoveset(SkillHold, this->damage, this->MaxStrength, this->MaxStamina, this->MaxAgility, 1.0f, 0.0f, false, FName(""));
 				}
 				InputTouch.RemoveAt(Index);
 			}
@@ -2565,7 +2557,7 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 	ImpulseForce = UKismetMathLibrary::GetForwardVector(GetActorRotation()) * 1.0f;
 	GetMesh()->UPrimitiveComponent::AddImpulse(ImpulseForce, BoneName, false);
 
-	if ((UGestureMathLibrary::CalculatePercentageFromValue(Health, MaxHealth, 100.0f)) >= 50.0f)
+	if ((UGestureMathLibrary::CalculatePercentageFromValue(this->Health, this->MaxHealth, 100.0f)) >= 50.0f)
 	{
 		if (this->IsLocallyControlled())
 		{
@@ -2589,7 +2581,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		//Get End Vector
 		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftKickCol->GetComponentRotation())+(FVector(0,0,LeftKickCol->GetScaledCapsuleHalfHeight())));
 
-		if (IsLocallyControlled() == true)
+		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
@@ -2606,7 +2598,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		//Get End Vector
 		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightKickCol->GetComponentRotation())+(FVector(0,0,RightKickCol->GetScaledCapsuleHalfHeight())));
 
-		if (IsLocallyControlled() == true)
+		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
@@ -2623,7 +2615,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		//Get End Vector
 		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightPunchCol->GetComponentRotation())+(FVector(0,0,RightPunchCol->GetScaledCapsuleHalfHeight())));
 
-		if (IsLocallyControlled() == true)
+		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
@@ -2640,7 +2632,7 @@ void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNam
 		//Get End Vector
 		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftPunchCol->GetComponentRotation())+(FVector(0,0,LeftPunchCol->GetScaledCapsuleHalfHeight())));
 
-		if (IsLocallyControlled() == true)
+		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}

@@ -30,14 +30,14 @@ void ATodakBattleArenaCharacterHUD::BeginPlay()
 		{
 			if (locUIChar->Controller->IsLocalPlayerController())
 			{
-				//FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
-				if (locUIChar->CharacterHUD != nullptr)
+				FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
+				if (locWidgetClassRef != nullptr)
 				{
-					locUIChar->WidgetHUD = CreateWidget<UBaseCharacterWidget>(this->GetGameInstance(), locUIChar->CharacterHUD);
+					CharacterHUDClass = CreateWidget<UBaseCharacterWidget>(this->GetGameInstance(), locWidgetClassRef);
 					if (locUIChar->WidgetHUD)
 					{
-						locUIChar->WidgetHUD->AddToViewport();
-						//locUIChar->WidgetHUD = CharacterHUDClass;
+						CharacterHUDClass->AddToViewport();
+						locUIChar->WidgetHUD = CharacterHUDClass;
 						GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor();
 						UE_LOG(LogTemp, Warning, TEXT("Show mouse cursor is %s "), (GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor() == GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor()) ? TEXT("True") : TEXT("False"));
 						GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
