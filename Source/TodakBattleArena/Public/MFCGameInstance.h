@@ -140,12 +140,30 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
 	bool IsItFem = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMeshComponent* Top;
+	//Saved mesh outfit from character inventory
+	//Female
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* SkinFem;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMeshComponent* Bot;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* FemTop;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMeshComponent* Hair;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* FemBot;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* FemHair;
+
+	//Male
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* SkinMal;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* MalTop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* MalBot;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
+	class USkeletalMesh* MalHair;
 };
