@@ -142,28 +142,29 @@ protected:
 
 	//Saved mesh outfit from character inventory
 	//Female
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* SkinFem;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* FemTop;
+	class UItem* SkinFemItem;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* FemBot;
+	class UItem* FemTopItem;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* FemHair;
+	class UItem* FemBotItem;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
+	class UItem* FemHairItem;
 
 	//Male
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* SkinMal;
+	class UItem* SkinMalItem;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* MalTop;
+	class UItem* MalTopItem;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* MalBot;
+	class UItem* MalBotItem;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
-	class USkeletalMesh* MalHair;
+	class UItem* MalHairItem;
 };

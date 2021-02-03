@@ -6,6 +6,7 @@
 UItem::UItem()
 {
 	Index = 0;
+	ItemID = FText::FromString("Item_ID");
 	ItemDisplayName = FText::FromString("Item");
 	UseActionText = FText::FromString("Use");
 }

@@ -1312,6 +1312,8 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 				}
 			}
 		}*/
+		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+		GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor();
 	}
 }
 
@@ -2183,6 +2185,7 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 {
 	if (!isAI)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Swipe Detect"));
 		//Temp var
 		FFingerIndex NewIndex;
 

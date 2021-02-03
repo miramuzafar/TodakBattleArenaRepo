@@ -21,6 +21,10 @@ public:
 
 	UPROPERTY(Transient)
 	class UWorld* World;
+
+	//The Item ID
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
+	FText ItemID;
 	
 	//The text for using the item, (Equip, Eat, etc)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
