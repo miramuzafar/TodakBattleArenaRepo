@@ -609,7 +609,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 				SkillTriggered = row->SkillTrigger;
 
 				//Execute skill if cooldown is finished
-				if (row->CDSkill == true)
+				/*if (row->CDSkill == true)
 				{
 					row->SkillTrigger = false;
 					SkillTriggered = row->SkillTrigger;
@@ -621,10 +621,14 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 					{
 						PickedActionSkill = row->SkillMoveset;
 						AnimInst->Montage_JumpToSection(FName("Attack1"), PickedActionSkill);
-					}*/
+					}
 
-					row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartMontage, row->SkillMoveset , row->Damage, row->CDSkill);
-					
+					//If current row->StartSwipeMontageTime array is not empty
+					if (row->StartSwipeMontageTime.Num() > 0)
+					{
+						row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
+					}
+
 					FingerIndex->bDo = true;
 					Found = true;
 					CheckForAction(name);
@@ -634,8 +638,8 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 					}
 					SkillFound = false;
 					break;
-				}
-				else if (row->CDSkill == false)
+				}*/
+				if (row->CDSkill == false)
 				{
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
@@ -646,7 +650,10 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 					//RepLocoPlayrate = SkillPlayrate;
 					//AnimInstance->LocoPlayrate = SkillPlayrate;
 					//temp = SkillPlayrate;
-					row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartMontage, row->SkillMoveset, row->Damage, row->CDSkill);
+					if (row->StartSwipeMontageTime.Num() > 0)
+					{
+						row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
+					}
 					FingerIndex->bDo = true;
 					Found = true;
 					CheckForAction(name);
@@ -815,11 +822,11 @@ void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage*
 		SkillExecuted = SkillFound;
 		
 		//Get random index from section names
-		FName arr[3] = { "Attack1", "Attack2", "Attack3" };
+		/*FName arr[3] = { "Attack1", "Attack2", "Attack3" };
 		RandSection = rand() % 3;
 		//int random = rand() % 3;
 		SectionNames = arr[RandSection];
-		SectionName = SectionNames;
+		SectionName = SectionNames;*/
 
 
 		//damage = DamageApplied;
@@ -2229,14 +2236,25 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 						//Check if the input is same as the input needed to execute the skill
 						if (row->BodyParts.Contains(InputTouch[Index].BodyParts))
 						{
+							//Get random index from section names
+							FName arr[3] = { "Attack1", "Attack2", "Attack3" };
+							RandSection = rand() % 3;
+							SectionName = arr[RandSection];
+							//int random = rand() % 3;
+
 							SwipeParts = InputTouch[Index].BodyParts;
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", InputTouch[Index].FingerIndex))));
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", InputTouch[Index].SwipeActions))));
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch bdo is %s"), (InputTouch[Index].bDo) ? TEXT("True") : TEXT("False")));
 							SkillHold = row->StartAnimMontage;
-							SkillStopTime = row->StopHoldAnimTime;
-							BlockHit = row->SkillBlockHit;
-
+							
+							//if current row->StopHoldAnimTime is not empty
+							if (row->StopHoldAnimTime.Num() > 0)
+							{
+								SkillStopTime = row->StopHoldAnimTime[RandSection];
+								BlockHit = row->SkillBlockHit;
+							}
+							
 							//play animation on press
 							this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 							canMove = false;

@@ -199,18 +199,18 @@ struct FActionSkill : public FTableRowBase
 
 	///*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	//TArray<EMontageSection> Sections;*/
-
+	
 	//What time does the swipe anim will start
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
-	float StartMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeAnimTime")
+	TArray<float> StartSwipeMontageTime;
 
 	//Playrate swipe anim
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float SkillMoveSetRate;
 
-	//Time to stop current hold anim
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
-	float StopHoldAnimTime;
+	//Time to stop current touch anim
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AnimHold")
+	TArray<float> StopHoldAnimTime;
 
 	//Damage to be dealt from the action
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
