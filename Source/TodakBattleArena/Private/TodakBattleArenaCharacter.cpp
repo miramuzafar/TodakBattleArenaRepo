@@ -581,10 +581,10 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 	FString Context;
 	//float temp = GetMesh()->GetAnimInstance()->LocoPlayrate;
 	//UTBAAnimInstance* AnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
-	
+
 	//UTBAAnimInstance* UAnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
 	//UAnimInstance->LocoPlayrate;
-	
+
 
 	//Search the skill available
 	for (auto& name : ActionTable->GetRowNames())
@@ -637,6 +637,7 @@ bool ATodakBattleArenaCharacter::FireTrace_Validate(FVector StartPoint, FVector 
 
 void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FVector EndPoint)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Enter Fire Trace")));
 	//Hit result storage
 	FHitResult HitRes;
 
@@ -680,6 +681,46 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 			}
 		}
 	}
+	this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick);
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("Sweep channel")));
+	if (HitRes.Actor.IsValid() == true && HitRes.Actor != this)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Is not self")));
+		ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitRes.Actor);
+		if (hitChar)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
+			if (DoOnce == false)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Do once false")));
+				hitChar->IsHit = true;
+				//hitChar = HitRes.Actor.Get();
+				hitChar->BoneName = HitRes.BoneName;
+				hitChar->HitLocation = HitRes.Location;
+
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *hitChar->BoneName.ToString()));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *hitChar->HitLocation.ToString()));
+				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
+
+				//Apply damage
+				DoDamage(hitChar);
+				DoOnce = true;
+				return;
+			}
+		}
+	}
+
+	//Sphere trace by channel
+	/*if (this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick))
+	{
+
+	}
+	else
+	{
+		DoOnce = false;
+		return;
+	}*/
 }
 
 bool ATodakBattleArenaCharacter::UpdateHealth_Validate(int playerIndex, float HealthChange)
@@ -803,14 +844,14 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		FTimerHandle Delay;
 
 		//Play new anim on client
-		
+
 		RPCMultiCastSkill = MulticastSkill;
 		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
 		this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkill);
 		UE_LOG(LogTemp, Warning, TEXT("Montage Name: %s"), *RPCMultiCastSkill->GetFName().ToString());
 
 		//this->PlayAnimMontage(RPCMultiCastSkill);
-		
+
 		if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 		{
 			UpdateDamage(DamageApplied, CurrStrength, CurrStamina, CurrAgility);
@@ -822,7 +863,6 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		{
 			//GetMesh()->SetSimulatePhysics(false);
 			this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
-			
 			if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 			{
 				//if this client has access
@@ -866,7 +906,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 				this->BlockedHit = false;
 			}
 		}
-		
+
 		//if still in blocked hit state
 	}
 }
@@ -1097,7 +1137,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 		//Emptying arrays
 		SwipeActions.Empty();
 		BodyParts.Empty();
-		
+
 		//Set all the attribute to the current vars of player
 		HitTraceLength = HitTraceLengths;
 		this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
@@ -1107,7 +1147,11 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 		//Get the Montage to be play
 		SkillMoveset = SkillMovesets;
-
+		//Server
+		if (this->IsLocallyControlled())
+		{
+			ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered, SectionName);
+		}
 		//Server
 		if (this->IsLocallyControlled())
 		{
@@ -2207,14 +2251,14 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", InputTouch[Index].SwipeActions))));
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch bdo is %s"), (InputTouch[Index].bDo) ? TEXT("True") : TEXT("False")));
 							SkillHold = row->StartAnimMontage;
-							
+
 							//if current row->StopHoldAnimTime is not empty
 							if (row->StopHoldAnimTime.Num() > 0)
 							{
 								SkillStopTime = row->StopHoldAnimTime[RandSection];
 								BlockHit = row->SkillBlockHit;
 							}
-							
+
 							//play animation on press
 							this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 							this->canMove = false;
@@ -2242,7 +2286,7 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 	if (InputTouch.IsValidIndex(0) == true)
 	{
 		//float currSwipeTime = FPlatformTime::Seconds();
-		
+
 		//SwipeStartTime = FPlatformTime::Seconds();
 		TArray<FFingerIndex>& Touches = InputTouch;
 
@@ -2433,6 +2477,8 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 {
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::FString("Controlled and has loco has value"));
+
 		if (canMove)
 		{
 			// find out which way is forward
@@ -2442,6 +2488,7 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 			// get forward vector
 			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 			AddMovementInput(Direction, Value);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Player is moving forward"));
 		}
 		
 	}

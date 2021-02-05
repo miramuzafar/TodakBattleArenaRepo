@@ -658,7 +658,7 @@ protected:
 	float DelaySpeed = 1.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
-	bool canMove;
+	bool canMove = true;
 
 	UPROPERTY(Replicated, EditAnywhere,  BlueprintReadWrite, Category = "Anim")
 	float SkillPlayrate = 1.0f;
