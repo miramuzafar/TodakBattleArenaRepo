@@ -398,9 +398,9 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 		MoveOnHold();
 	}*/
 	//if hold montage is active, prepare for blocking hit
-	if (isAI == false && GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold) && GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkillHold) >= SkillStopTime && EnableMovement == false)// && EnableMovement == false
+	if (isAI == false && this->GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold) && this->GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkillHold) >= SkillStopTime && this->EnableMovement == false)// && EnableMovement == false
 	{
-		GetMesh()->GetAnimInstance()->Montage_Pause(RPCMultiCastSkillHold);
+		this->GetMesh()->GetAnimInstance()->Montage_Pause(RPCMultiCastSkillHold);
 	}
 	/*if (NearestTarget != nullptr && TargetLocked == true)
 	{
@@ -579,9 +579,6 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 {
 	//Used in error reporting
 	FString Context;
-
-	bool Found = false;
-	bool SkillFound = false;
 	//float temp = GetMesh()->GetAnimInstance()->LocoPlayrate;
 	//UTBAAnimInstance* AnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
 	
@@ -598,10 +595,6 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 			//Check if the input is same as the input needed to execute the skill
 			if (row->SwipeActions.Contains(FingerIndex->SwipeActions) && row->BodyParts.Contains(FingerIndex->BodyParts))
 			{
-				SkillFound = true;
-			}
-			if (SkillFound == true)
-			{
 				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
 				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
 				//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
@@ -609,36 +602,6 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 				SkillTriggered = row->SkillTrigger;
 
 				//Execute skill if cooldown is finished
-				/*if (row->CDSkill == true)
-				{
-					row->SkillTrigger = false;
-					SkillTriggered = row->SkillTrigger;
-					row->SkillMoveSetRate = SkillPlayrate; //SkillPlayrate changes on damage
-					//RepLocoPlayrate = SkillPlayrate;
-					//AnimInstance->LocoPlayrate = SkillPlayrate;
-					//temp = SkillPlayrate;
-					/*if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
-					{
-						PickedActionSkill = row->SkillMoveset;
-						AnimInst->Montage_JumpToSection(FName("Attack1"), PickedActionSkill);
-					}
-
-					//If current row->StartSwipeMontageTime array is not empty
-					if (row->StartSwipeMontageTime.Num() > 0)
-					{
-						row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
-					}
-
-					FingerIndex->bDo = true;
-					Found = true;
-					CheckForAction(name);
-					if (SkillTriggered == false)
-					{
-						row->SkillTrigger = false;
-					}
-					SkillFound = false;
-					break;
-				}*/
 				if (row->CDSkill == false)
 				{
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
@@ -655,22 +618,15 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
 					}
 					FingerIndex->bDo = true;
-					Found = true;
 					CheckForAction(name);
 					if (SkillTriggered == false)
 					{
 						row->SkillTrigger = false;
 					}
-					SkillFound = false;
 					break;
 				}
 			}
 		}
-	}
-
-	if (Found)
-	{
-		return;
 	}
 }
 
@@ -684,47 +640,45 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 	//Hit result storage
 	FHitResult HitRes;
 
-	// create the collision sphere with float value of its radius
-	FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-
-	DrawDebugSphere(GetWorld(), EndPoint, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
+	DrawDebugSphere(this->GetWorld(), StartPoint, 20.0f, 5, FColor::Purple, false , 1, 0, 1);
 
 	//Ignore self upon colliding
 	FCollisionQueryParams CP_LKick;
 	CP_LKick.AddIgnoredActor(this);
 
 	//Sphere trace by channel
-	if (GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick) == true)
+	bool DetectHit = this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat(), ECollisionChannel::ECC_Visibility, FCollisionShape::MakeSphere(20.0f), CP_LKick);
+
+	if (DetectHit)
 	{
-		if (HitRes.Actor.IsValid() == true && HitRes.Actor != this)
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("Sweep channel")));
+		if (HitRes.Actor != this)
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Is not self")));
 			ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitRes.Actor);
 			if (hitChar)
 			{
 				if (DoOnce == false)
 				{
-					hitChar->IsHit = true;
+					//Apply damage
+					//DoOnce = true;
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Do once false")));
+					//hitChar->IsHit = true;
 					//hitChar = HitRes.Actor.Get();
 					hitChar->BoneName = HitRes.BoneName;
 					hitChar->HitLocation = HitRes.Location;
+
+					//DoDamage(hitChar);
 
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *hitChar->BoneName.ToString()));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *hitChar->HitLocation.ToString()));
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
-
-					//Apply damage
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
 					DoDamage(hitChar);
-					DoOnce = true;
-					return;
 				}
 			}
 		}
-	}
-	else
-	{
-		DoOnce = false;
-		return;
 	}
 }
 
@@ -853,6 +807,8 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		RPCMultiCastSkill = MulticastSkill;
 		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
 		this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkill);
+		UE_LOG(LogTemp, Warning, TEXT("Montage Name: %s"), *RPCMultiCastSkill->GetFName().ToString());
+
 		//this->PlayAnimMontage(RPCMultiCastSkill);
 		
 		if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
@@ -865,12 +821,12 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		if (GetWorld()->GetTimerManager().IsTimerActive(Delay) == false)
 		{
 			//GetMesh()->SetSimulatePhysics(false);
-			GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
+			this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
 			
 			if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 			{
 				//if this client has access
-				if (IsLocallyControlled())
+				if (this->IsLocallyControlled())
 				{
 					if (this->BlockedHit == true)
 					{
@@ -902,7 +858,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 	{
 		//If the anim is not currently playing
 		this->StopAnimMontage(RPCMultiCastSkillHold);
-		ResetMovementMode();
+		this->ResetMovementMode();
 		if (IsLocallyControlled())
 		{
 			if (this->BlockedHit == true)
@@ -1151,9 +1107,13 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 		//Get the Montage to be play
 		SkillMoveset = SkillMovesets;
-		//Server
-		ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered, SectionName);
 
+		//Server
+		if (this->IsLocallyControlled())
+		{
+			ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered, SectionName);
+		}
+		
 		if (this->BlockedHit == true)
 		{
 			this->BlockedHit = false;
@@ -2257,8 +2217,12 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 							
 							//play animation on press
 							this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-							canMove = false;
-							ServerSkillStartMontage(row->StartAnimMontage);
+							this->canMove = false;
+
+							if (IsLocallyControlled())
+							{
+								ServerSkillStartMontage(row->StartAnimMontage);
+							}
 							//ServerSkillBlockHitMontage(row->SkillBlockHit);
 							break;
 						}
@@ -2367,7 +2331,10 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 				if (GetMesh()->GetAnimInstance()->Montage_IsActive(SkillHold) == true)
 				{
 					//Stop current active anim
-					ServerSkillMoveset(SkillHold, this->damage, this->MaxStrength, this->MaxStamina, this->MaxAgility, 1.0f, 0.0f, false, FName(""));
+					if (IsLocallyControlled())
+					{
+						ServerSkillMoveset(SkillHold, this->damage, this->MaxStrength, this->MaxStamina, this->MaxAgility, 1.0f, 0.0f, false, FName(""));
+					}
 				}
 				InputTouch.RemoveAt(Index);
 			}
@@ -2587,75 +2554,90 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 	}
 }
 
-void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit)
+void ATodakBattleArenaCharacter::CheckHitTrace(UCapsuleComponent* currCapComp, AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit)
 {
-	//If left foot is kicking
-	if (LeftKickColActivate == true)
+	if (currCapComp != nullptr)
 	{
-		RightKickColActivate = false;
-		RightHandColActivate = false;
-		LeftHandColActivate = false;
-
 		//Get Start vector
-		FVector Start = LeftKickCol->GetComponentLocation();
-		
+		FVector Start = currCapComp->GetComponentLocation();
+
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftKickCol->GetComponentRotation())+(FVector(0,0,LeftKickCol->GetScaledCapsuleHalfHeight())));
+		FVector End = currCapComp->GetComponentLocation();
 
 		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
 	}
-	else if (RightKickColActivate == true)
+	
+
+	//If left foot is kicking
+	/*if (this->LeftKickColActivate == true)
 	{
-		LeftKickColActivate = false;
-		RightHandColActivate = false;
-		LeftHandColActivate = false;
+		this->RightKickColActivate = false;
+		this->RightHandColActivate = false;
+		this->LeftHandColActivate = false;
+
+		//Get Start vector
+		FVector Start = this->LeftKickCol->GetComponentLocation();
+		
+		//Get End Vector
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(this->LeftKickCol->GetComponentRotation())+(FVector(0,0,this->LeftKickCol->GetScaledCapsuleHalfHeight())));
+
+		if (this->IsLocallyControlled() == true)
+		{
+			FireTrace(Start, End);
+		}
+	}
+	else if (this->RightKickColActivate == true)
+	{
+		this->LeftKickColActivate = false;
+		this->RightHandColActivate = false;
+		this->LeftHandColActivate = false;
 
 		//Get Start vector
 		FVector Start = RightKickCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightKickCol->GetComponentRotation())+(FVector(0,0,RightKickCol->GetScaledCapsuleHalfHeight())));
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(this->RightKickCol->GetComponentRotation())+(FVector(0,0, this->RightKickCol->GetScaledCapsuleHalfHeight())));
 
 		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
 	}
-	else if (RightHandColActivate == true)
+	else if (this->RightHandColActivate == true)
 	{
-		LeftKickColActivate = false;
-		RightKickColActivate = false;
-		LeftHandColActivate = false;
+		this->LeftKickColActivate = false;
+		this->RightKickColActivate = false;
+		this->LeftHandColActivate = false;
 
 		//Get Start vector
-		FVector Start = RightPunchCol->GetComponentLocation();
+		FVector Start = currCapComp->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightPunchCol->GetComponentRotation())+(FVector(0,0,RightPunchCol->GetScaledCapsuleHalfHeight())));
+		FVector End = currCapComp->GetComponentLocation();
 
 		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
 	}
-	else if (LeftHandColActivate == true)
+	else if (this->LeftHandColActivate == true)
 	{
-		LeftKickColActivate = false;
-		RightKickColActivate = false;
-		RightHandColActivate = false;
+		this->LeftKickColActivate = false;
+		this->RightKickColActivate = false;
+		this->RightHandColActivate = false;
 
 		//Get Start vector
-		FVector Start = LeftPunchCol->GetComponentLocation();
+		FVector Start = this->LeftPunchCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftPunchCol->GetComponentRotation())+(FVector(0,0,LeftPunchCol->GetScaledCapsuleHalfHeight())));
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(this->LeftPunchCol->GetComponentRotation())+(FVector(0,0, this->LeftPunchCol->GetScaledCapsuleHalfHeight())));
 
 		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
-	}
+	}*/
 }
