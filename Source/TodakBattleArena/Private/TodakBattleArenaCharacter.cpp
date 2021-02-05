@@ -382,7 +382,7 @@ void ATodakBattleArenaCharacter::BeginPlay()
 		}
 	}*/
 
-	InitializeCharAtt();
+	//InitializeCharAtt();
 }
 
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
@@ -628,7 +628,6 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 			}
 		}
 	}
-
 }
 
 bool ATodakBattleArenaCharacter::FireTrace_Validate(FVector StartPoint, FVector EndPoint)
@@ -638,6 +637,7 @@ bool ATodakBattleArenaCharacter::FireTrace_Validate(FVector StartPoint, FVector 
 
 void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FVector EndPoint)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Enter Fire Trace")));
 	//Hit result storage
 	FHitResult HitRes;
 
@@ -650,39 +650,46 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 	FCollisionQueryParams CP_LKick;
 	CP_LKick.AddIgnoredActor(this);
 
-	//Sphere trace by channel
-	if (GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick) == true)
+	this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick);
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("Sweep channel")));
+	if (HitRes.Actor.IsValid() == true && HitRes.Actor != this)
 	{
-		if (HitRes.Actor.IsValid() == true && HitRes.Actor != this)
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Is not self")));
+		ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitRes.Actor);
+		if (hitChar)
 		{
-			ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitRes.Actor);
-			if (hitChar)
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
+			if (DoOnce == false)
 			{
-				if (DoOnce == false)
-				{
-					hitChar->IsHit = true;
-					//hitChar = HitRes.Actor.Get();
-					hitChar->BoneName = HitRes.BoneName;
-					hitChar->HitLocation = HitRes.Location;
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Do once false")));
+				hitChar->IsHit = true;
+				//hitChar = HitRes.Actor.Get();
+				hitChar->BoneName = HitRes.BoneName;
+				hitChar->HitLocation = HitRes.Location;
 
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *hitChar->BoneName.ToString()));
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *hitChar->HitLocation.ToString()));
-					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *hitChar->BoneName.ToString()));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *hitChar->HitLocation.ToString()));
+				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
 
-					//Apply damage
-					DoDamage(hitChar);
-					DoOnce = true;
-					return;
-				}
+				//Apply damage
+				DoDamage(hitChar);
+				DoOnce = true;
+				return;
 			}
 		}
+	}
+
+	//Sphere trace by channel
+	/*if (this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick))
+	{
+
 	}
 	else
 	{
 		DoOnce = false;
 		return;
-	}
+	}*/
 }
 
 bool ATodakBattleArenaCharacter::UpdateHealth_Validate(int playerIndex, float HealthChange)
@@ -806,12 +813,14 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		FTimerHandle Delay;
 
 		//Play new anim on client
-		
+
 		RPCMultiCastSkill = MulticastSkill;
 		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
 		this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkill);
+		UE_LOG(LogTemp, Warning, TEXT("Montage Name: %s"), *RPCMultiCastSkill->GetFName().ToString());
+
 		//this->PlayAnimMontage(RPCMultiCastSkill);
-		
+
 		if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 		{
 			UpdateDamage(DamageApplied, CurrStrength, CurrStamina, CurrAgility);
@@ -822,12 +831,12 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		if (GetWorld()->GetTimerManager().IsTimerActive(Delay) == false)
 		{
 			//GetMesh()->SetSimulatePhysics(false);
-			GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
-			
+			this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
+
 			if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 			{
 				//if this client has access
-				if (IsLocallyControlled())
+				if (this->IsLocallyControlled())
 				{
 					if (this->BlockedHit == true)
 					{
@@ -867,7 +876,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 				this->BlockedHit = false;
 			}
 		}
-		
+
 		//if still in blocked hit state
 	}
 }
