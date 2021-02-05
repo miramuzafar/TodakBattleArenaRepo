@@ -579,15 +579,12 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 {
 	//Used in error reporting
 	FString Context;
-
-	bool Found = false;
-	bool SkillFound = false;
 	//float temp = GetMesh()->GetAnimInstance()->LocoPlayrate;
 	//UTBAAnimInstance* AnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
-	
+
 	//UTBAAnimInstance* UAnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
 	//UAnimInstance->LocoPlayrate;
-	
+
 
 	//Search the skill available
 	for (auto& name : ActionTable->GetRowNames())
@@ -598,10 +595,6 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 			//Check if the input is same as the input needed to execute the skill
 			if (row->SwipeActions.Contains(FingerIndex->SwipeActions) && row->BodyParts.Contains(FingerIndex->BodyParts))
 			{
-				SkillFound = true;
-			}
-			if (SkillFound == true)
-			{
 				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
 				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
 				//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
@@ -609,36 +602,6 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 				SkillTriggered = row->SkillTrigger;
 
 				//Execute skill if cooldown is finished
-				/*if (row->CDSkill == true)
-				{
-					row->SkillTrigger = false;
-					SkillTriggered = row->SkillTrigger;
-					row->SkillMoveSetRate = SkillPlayrate; //SkillPlayrate changes on damage
-					//RepLocoPlayrate = SkillPlayrate;
-					//AnimInstance->LocoPlayrate = SkillPlayrate;
-					//temp = SkillPlayrate;
-					/*if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
-					{
-						PickedActionSkill = row->SkillMoveset;
-						AnimInst->Montage_JumpToSection(FName("Attack1"), PickedActionSkill);
-					}
-
-					//If current row->StartSwipeMontageTime array is not empty
-					if (row->StartSwipeMontageTime.Num() > 0)
-					{
-						row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
-					}
-
-					FingerIndex->bDo = true;
-					Found = true;
-					CheckForAction(name);
-					if (SkillTriggered == false)
-					{
-						row->SkillTrigger = false;
-					}
-					SkillFound = false;
-					break;
-				}*/
 				if (row->CDSkill == false)
 				{
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
@@ -655,23 +618,17 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
 					}
 					FingerIndex->bDo = true;
-					Found = true;
 					CheckForAction(name);
 					if (SkillTriggered == false)
 					{
 						row->SkillTrigger = false;
 					}
-					SkillFound = false;
 					break;
 				}
 			}
 		}
 	}
 
-	if (Found)
-	{
-		return;
-	}
 }
 
 bool ATodakBattleArenaCharacter::FireTrace_Validate(FVector StartPoint, FVector EndPoint)
@@ -902,7 +859,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 	{
 		//If the anim is not currently playing
 		this->StopAnimMontage(RPCMultiCastSkillHold);
-		ResetMovementMode();
+		this->ResetMovementMode();
 		if (IsLocallyControlled())
 		{
 			if (this->BlockedHit == true)
@@ -1141,7 +1098,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 		//Emptying arrays
 		SwipeActions.Empty();
 		BodyParts.Empty();
-		
+
 		//Set all the attribute to the current vars of player
 		HitTraceLength = HitTraceLengths;
 		this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
@@ -1151,8 +1108,12 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 		//Get the Montage to be play
 		SkillMoveset = SkillMovesets;
+
 		//Server
-		ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered, SectionName);
+		if (this->IsLocallyControlled())
+		{
+			ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered, SectionName);
+		}
 
 		if (this->BlockedHit == true)
 		{
@@ -2247,18 +2208,22 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", InputTouch[Index].SwipeActions))));
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch bdo is %s"), (InputTouch[Index].bDo) ? TEXT("True") : TEXT("False")));
 							SkillHold = row->StartAnimMontage;
-							
+
 							//if current row->StopHoldAnimTime is not empty
 							if (row->StopHoldAnimTime.Num() > 0)
 							{
 								SkillStopTime = row->StopHoldAnimTime[RandSection];
 								BlockHit = row->SkillBlockHit;
 							}
-							
+
 							//play animation on press
 							this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-							canMove = false;
-							ServerSkillStartMontage(row->StartAnimMontage);
+							this->canMove = false;
+
+							if (IsLocallyControlled())
+							{
+								ServerSkillStartMontage(row->StartAnimMontage);
+							}
 							//ServerSkillBlockHitMontage(row->SkillBlockHit);
 							break;
 						}
@@ -2278,7 +2243,7 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 	if (InputTouch.IsValidIndex(0) == true)
 	{
 		//float currSwipeTime = FPlatformTime::Seconds();
-		
+
 		//SwipeStartTime = FPlatformTime::Seconds();
 		TArray<FFingerIndex>& Touches = InputTouch;
 
@@ -2367,7 +2332,10 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 				if (GetMesh()->GetAnimInstance()->Montage_IsActive(SkillHold) == true)
 				{
 					//Stop current active anim
-					ServerSkillMoveset(SkillHold, this->damage, this->MaxStrength, this->MaxStamina, this->MaxAgility, 1.0f, 0.0f, false, FName(""));
+					if (IsLocallyControlled())
+					{
+						ServerSkillMoveset(SkillHold, this->damage, this->MaxStrength, this->MaxStamina, this->MaxAgility, 1.0f, 0.0f, false, FName(""));
+					}
 				}
 				InputTouch.RemoveAt(Index);
 			}
@@ -2466,6 +2434,8 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 {
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::FString("Controlled and has loco has value"));
+
 		if (canMove)
 		{
 			// find out which way is forward
@@ -2475,6 +2445,7 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 			// get forward vector
 			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 			AddMovementInput(Direction, Value);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Player is moving forward"));
 		}
 		
 	}
