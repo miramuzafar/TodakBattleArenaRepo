@@ -398,9 +398,9 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 		MoveOnHold();
 	}*/
 	//if hold montage is active, prepare for blocking hit
-	if (isAI == false && GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold) && GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkillHold) >= SkillStopTime && EnableMovement == false)// && EnableMovement == false
+	if (isAI == false && this->GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastSkillHold) && this->GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkillHold) >= SkillStopTime && this->EnableMovement == false)// && EnableMovement == false
 	{
-		GetMesh()->GetAnimInstance()->Montage_Pause(RPCMultiCastSkillHold);
+		this->GetMesh()->GetAnimInstance()->Montage_Pause(RPCMultiCastSkillHold);
 	}
 	/*if (NearestTarget != nullptr && TargetLocked == true)
 	{
@@ -641,15 +641,46 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 	//Hit result storage
 	FHitResult HitRes;
 
-	// create the collision sphere with float value of its radius
-	FCollisionShape SphereKick = FCollisionShape::MakeSphere(10.0f);
-
-	DrawDebugSphere(GetWorld(), EndPoint, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
+	DrawDebugSphere(this->GetWorld(), StartPoint, 20.0f, 5, FColor::Purple, false , 1, 0, 1);
 
 	//Ignore self upon colliding
 	FCollisionQueryParams CP_LKick;
 	CP_LKick.AddIgnoredActor(this);
 
+	//Sphere trace by channel
+	bool DetectHit = this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat(), ECollisionChannel::ECC_Visibility, FCollisionShape::MakeSphere(20.0f), CP_LKick);
+
+	if (DetectHit)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("Sweep channel")));
+		if (HitRes.Actor != this)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Is not self")));
+			ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitRes.Actor);
+			if (hitChar)
+			{
+				if (DoOnce == false)
+				{
+					//Apply damage
+					//DoOnce = true;
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Do once false")));
+					//hitChar->IsHit = true;
+					//hitChar = HitRes.Actor.Get();
+					hitChar->BoneName = HitRes.BoneName;
+					hitChar->HitLocation = HitRes.Location;
+
+					//DoDamage(hitChar);
+
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *hitChar->BoneName.ToString()));
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *hitChar->HitLocation.ToString()));
+					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
+					DoDamage(hitChar);
+				}
+			}
+		}
+	}
 	this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick);
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("Sweep channel")));
 	if (HitRes.Actor.IsValid() == true && HitRes.Actor != this)
@@ -832,7 +863,6 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		{
 			//GetMesh()->SetSimulatePhysics(false);
 			this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
-
 			if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 			{
 				//if this client has access
@@ -1117,13 +1147,17 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 		//Get the Montage to be play
 		SkillMoveset = SkillMovesets;
-
 		//Server
 		if (this->IsLocallyControlled())
 		{
 			ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered, SectionName);
 		}
-
+		//Server
+		if (this->IsLocallyControlled())
+		{
+			ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered, SectionName);
+		}
+		
 		if (this->BlockedHit == true)
 		{
 			this->BlockedHit = false;
@@ -2567,75 +2601,90 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 	}
 }
 
-void ATodakBattleArenaCharacter::CheckHitTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit)
+void ATodakBattleArenaCharacter::CheckHitTrace(UCapsuleComponent* currCapComp, AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit)
 {
-	//If left foot is kicking
-	if (LeftKickColActivate == true)
+	if (currCapComp != nullptr)
 	{
-		RightKickColActivate = false;
-		RightHandColActivate = false;
-		LeftHandColActivate = false;
-
 		//Get Start vector
-		FVector Start = LeftKickCol->GetComponentLocation();
-		
+		FVector Start = currCapComp->GetComponentLocation();
+
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftKickCol->GetComponentRotation())+(FVector(0,0,LeftKickCol->GetScaledCapsuleHalfHeight())));
+		FVector End = currCapComp->GetComponentLocation();
 
 		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
 	}
-	else if (RightKickColActivate == true)
+	
+
+	//If left foot is kicking
+	/*if (this->LeftKickColActivate == true)
 	{
-		LeftKickColActivate = false;
-		RightHandColActivate = false;
-		LeftHandColActivate = false;
+		this->RightKickColActivate = false;
+		this->RightHandColActivate = false;
+		this->LeftHandColActivate = false;
+
+		//Get Start vector
+		FVector Start = this->LeftKickCol->GetComponentLocation();
+		
+		//Get End Vector
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(this->LeftKickCol->GetComponentRotation())+(FVector(0,0,this->LeftKickCol->GetScaledCapsuleHalfHeight())));
+
+		if (this->IsLocallyControlled() == true)
+		{
+			FireTrace(Start, End);
+		}
+	}
+	else if (this->RightKickColActivate == true)
+	{
+		this->LeftKickColActivate = false;
+		this->RightHandColActivate = false;
+		this->LeftHandColActivate = false;
 
 		//Get Start vector
 		FVector Start = RightKickCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightKickCol->GetComponentRotation())+(FVector(0,0,RightKickCol->GetScaledCapsuleHalfHeight())));
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(this->RightKickCol->GetComponentRotation())+(FVector(0,0, this->RightKickCol->GetScaledCapsuleHalfHeight())));
 
 		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
 	}
-	else if (RightHandColActivate == true)
+	else if (this->RightHandColActivate == true)
 	{
-		LeftKickColActivate = false;
-		RightKickColActivate = false;
-		LeftHandColActivate = false;
+		this->LeftKickColActivate = false;
+		this->RightKickColActivate = false;
+		this->LeftHandColActivate = false;
 
 		//Get Start vector
-		FVector Start = RightPunchCol->GetComponentLocation();
+		FVector Start = currCapComp->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(RightPunchCol->GetComponentRotation())+(FVector(0,0,RightPunchCol->GetScaledCapsuleHalfHeight())));
+		FVector End = currCapComp->GetComponentLocation();
 
 		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
 	}
-	else if (LeftHandColActivate == true)
+	else if (this->LeftHandColActivate == true)
 	{
-		LeftKickColActivate = false;
-		RightKickColActivate = false;
-		RightHandColActivate = false;
+		this->LeftKickColActivate = false;
+		this->RightKickColActivate = false;
+		this->RightHandColActivate = false;
 
 		//Get Start vector
-		FVector Start = LeftPunchCol->GetComponentLocation();
+		FVector Start = this->LeftPunchCol->GetComponentLocation();
 
 		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(LeftPunchCol->GetComponentRotation())+(FVector(0,0,LeftPunchCol->GetScaledCapsuleHalfHeight())));
+		FVector End = Start + (UKismetMathLibrary::GetForwardVector(this->LeftPunchCol->GetComponentRotation())+(FVector(0,0, this->LeftPunchCol->GetScaledCapsuleHalfHeight())));
 
 		if (this->IsLocallyControlled() == true)
 		{
 			FireTrace(Start, End);
 		}
-	}
+	}*/
 }

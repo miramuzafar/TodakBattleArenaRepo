@@ -122,7 +122,7 @@ public:
 
 	//Check Trace Upon Collision
 	UFUNCTION(BlueprintCallable, Category = "Collision")
-	void CheckHitTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit);
+	void CheckHitTrace(UCapsuleComponent* currCapComp, AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit);
 
 	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
