@@ -1211,86 +1211,76 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 				}
 			}
 		}
-		/*if (this->CharacterHUD)
+		/*if (this->WidgetHUD)
 		{
-			if (UGameplayStatics::GetPlayerController(this, 0)->IsLocalPlayerController())
+			if (WidgetHUD->IsVisible())
 			{
-				this->WidgetHUD = CreateWidget<UBaseCharacterWidget>(UGameplayStatics::GetPlayerController(this, 0), CharacterHUD);
-				if (WidgetHUD)
+				//Assign values to the widget
+				//Stamina
+				const FName locTextControlStaminaName = FName(TEXT("Stamina"));
+				UTextBlock* locTextControlStamina = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStaminaName));
+
+				if (locTextControlStamina != nullptr)
 				{
-					this->WidgetHUD->AddToViewport();
-					if (this->WidgetHUD)
+					locTextControlStamina->SetText(UGestureMathLibrary::PrintStatusValue(Stamina, MaxStamina, "Stamina: "));
+				}
+
+				//Strength
+				const FName locTextControlStrengthName = FName(TEXT("Strength"));
+				UTextBlock* locTextControlStrength = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStrengthName));
+
+				if (locTextControlStrength != nullptr)
+				{
+					locTextControlStrength->SetText(UGestureMathLibrary::PrintStatusValue(Strength, MaxStrength, "Strength: "));
+				}
+
+				//Agility
+				const FName locTextControlAgilityName = FName(TEXT("Agility"));
+				UTextBlock* locTextControlAgility = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlAgilityName));
+
+				if (locTextControlAgility != nullptr)
+				{
+					locTextControlAgility->SetText(UGestureMathLibrary::PrintStatusValue(Agility, MaxAgility, "Agility: "));
+				}
+
+				FTimerHandle handle;
+				{
+					//Energy stats
+					const FName locTextControlEnergyName = FName(TEXT("Energy"));
+					UTextBlock* locTextControlEnergy = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyName));
+
+					const FName locTextControlEnergyPercent = FName(TEXT("EnergyText"));
+					UTextBlock* locTextControlEnergyPercentBlock = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyPercent));
+
+					const FName locTextControlEnergyBar = FName(TEXT("EnergyBar"));
+					UProgressBar* energyBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyBar));
+
+					if (energyBar != nullptr)
 					{
-						if (WidgetHUD->IsVisible())
+						EnergyPercentage = UGestureMathLibrary::SetProgressBarValue("Energy", energyBar, locTextControlEnergyPercentBlock, locTextControlEnergy, playerEnergy, MaxEnergy);
+					}
+					{
+						//Health stats
+						const FName locTextControlHealthName = FName(TEXT("Health"));
+						UTextBlock* locTextControlHealth = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthName));
+
+						const FName locTextControlHPName = FName(TEXT("HP"));
+						UTextBlock* locTextControlHP = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHPName));
+
+						const FName locTextControlHealthBar = FName(TEXT("HPBar"));
+						UProgressBar* healthBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar));
+
+						if (healthBar != nullptr)
 						{
-							//Assign values to the widget
-							//Stamina
-							const FName locTextControlStaminaName = FName(TEXT("Stamina"));
-							UTextBlock* locTextControlStamina = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStaminaName));
-
-							if (locTextControlStamina != nullptr)
-							{
-								locTextControlStamina->SetText(UGestureMathLibrary::PrintStatusValue(Stamina, MaxStamina, "Stamina: "));
-							}
-
-							//Strength
-							const FName locTextControlStrengthName = FName(TEXT("Strength"));
-							UTextBlock* locTextControlStrength = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlStrengthName));
-
-							if (locTextControlStrength != nullptr)
-							{
-								locTextControlStrength->SetText(UGestureMathLibrary::PrintStatusValue(Strength, MaxStrength, "Strength: "));
-							}
-
-							//Agility
-							const FName locTextControlAgilityName = FName(TEXT("Agility"));
-							UTextBlock* locTextControlAgility = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlAgilityName));
-
-							if (locTextControlAgility != nullptr)
-							{
-								locTextControlAgility->SetText(UGestureMathLibrary::PrintStatusValue(Agility, MaxAgility, "Agility: "));
-							}
-
-							FTimerHandle handle;
-							{
-								//Energy stats
-								const FName locTextControlEnergyName = FName(TEXT("Energy"));
-								UTextBlock* locTextControlEnergy = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyName));
-
-								const FName locTextControlEnergyPercent = FName(TEXT("EnergyText"));
-								UTextBlock* locTextControlEnergyPercentBlock = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyPercent));
-
-								const FName locTextControlEnergyBar = FName(TEXT("EnergyBar"));
-								UProgressBar* energyBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlEnergyBar));
-
-								if (energyBar != nullptr)
-								{
-									EnergyPercentage = UGestureMathLibrary::SetProgressBarValue("Energy", energyBar, locTextControlEnergyPercentBlock, locTextControlEnergy, playerEnergy, MaxEnergy);
-								}
-								{
-									//Health stats
-									const FName locTextControlHealthName = FName(TEXT("Health"));
-									UTextBlock* locTextControlHealth = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthName));
-
-									const FName locTextControlHPName = FName(TEXT("HP"));
-									UTextBlock* locTextControlHP = (UTextBlock*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHPName));
-
-									const FName locTextControlHealthBar = FName(TEXT("HPBar"));
-									UProgressBar* healthBar = (UProgressBar*)(WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar));
-
-									if (healthBar != nullptr)
-									{
-										playerHealth = UGestureMathLibrary::SetProgressBarValue("Pain Meter", healthBar, locTextControlHealth, locTextControlHP, Health, MaxHealth);
-									}
-								}
-							}
-							//locUIChar->WidgetHUD = CharacterHUDClass;
-							//GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor();
-							//UE_LOG(LogTemp, Warning, TEXT("Show mouse cursor is %s "), (GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor() == GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor()) ? TEXT("True") : TEXT("False"));
-							//GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+							playerHealth = UGestureMathLibrary::SetProgressBarValue("Pain Meter", healthBar, locTextControlHealth, locTextControlHP, Health, MaxHealth);
 						}
 					}
 				}
+				//locUIChar->WidgetHUD = CharacterHUDClass;
+				//GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor();
+				//UE_LOG(LogTemp, Warning, TEXT("Show mouse cursor is %s "), (GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor() == GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor()) ? TEXT("True") : TEXT("False"));
+				//GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+				GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("InitIsLoad.")));
 			}
 		}*/
 		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
