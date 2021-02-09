@@ -1183,17 +1183,17 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 	this->MaxHealth = 500;
 	this->MaxEnergy = 700;
 
-	//Energy
-	this->playerEnergy = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, this->MaxStamina, 100.0f) + UGestureMathLibrary::CalculateValueFromPercentage(10.0f, this->MaxStrength, 100.0f) + this->MaxEnergy;
-	this->MaxEnergy = this->playerEnergy;
-	this->EnergyPercentage = 1.0f;
-	UE_LOG(LogTemp, Warning, TEXT("Energy : %f"), this->playerEnergy);
-
 	//Health
 	Health = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, MaxStrength, 100.0f) + MaxHealth;
 	MaxHealth = Health;
 	playerHealth = 1.0f;
 	UE_LOG(LogTemp, Warning, TEXT("MaxHealth : %d"), MaxHealth);*/
+
+	//Energy
+	this->playerEnergy = UGestureMathLibrary::CalculateValueFromPercentage(10.0f, this->MaxStamina, 100.0f) + UGestureMathLibrary::CalculateValueFromPercentage(10.0f, this->MaxStrength, 100.0f) + this->MaxEnergy;
+	this->MaxEnergy = this->playerEnergy;
+	this->EnergyPercentage = 1.0f;
+	UE_LOG(LogTemp, Warning, TEXT("Energy : %f"), this->playerEnergy);
 
 	//Get vitality status from current fitness level when game starts
 	//TotalVitalityFromFitness(0.7f, 0.2f, 0.1f);
@@ -1216,7 +1216,7 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 				}
 			}
 		}
-		/*if (this->WidgetHUD)
+		if (this->WidgetHUD)
 		{
 			if (WidgetHUD->IsVisible())
 			{
@@ -1287,7 +1287,7 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 				//GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 				GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("InitIsLoad.")));
 			}
-		}*/
+		}
 		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 		GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor();
 	}
