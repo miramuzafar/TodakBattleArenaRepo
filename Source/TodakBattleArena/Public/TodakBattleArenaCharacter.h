@@ -368,11 +368,11 @@ protected:
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
-	void ServerSkillStartMontage(UAnimMontage* ServerSkill);
+	void ServerSkillStartMontage(UAnimMontage* ServerSkill, FName SectionNames, float PauseAnimTime);
 
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillStartMontage(UAnimMontage* MulticastSkill);
+	void MulticastSkillStartMontage(UAnimMontage* MulticastSkill, FName SectionNames, float PauseAnimTime);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")

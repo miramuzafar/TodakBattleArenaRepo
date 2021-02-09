@@ -881,31 +881,36 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 	}
 }
 //
-bool ATodakBattleArenaCharacter::ServerSkillStartMontage_Validate(UAnimMontage* ServerSkill)
+bool ATodakBattleArenaCharacter::ServerSkillStartMontage_Validate(UAnimMontage* ServerSkill, FName SectionNames, float PauseAnimTime)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerSkillStartMontage_Implementation(UAnimMontage* ServerSkill)
+void ATodakBattleArenaCharacter::ServerSkillStartMontage_Implementation(UAnimMontage* ServerSkill, FName SectionNames, float PauseAnimTime)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		RPCServerSkillHold = ServerSkill;
-		MulticastSkillStartMontage(RPCServerSkillHold);
+		MulticastSkillStartMontage(RPCServerSkillHold, SectionNames, PauseAnimTime);
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastSkillStartMontage_Validate(UAnimMontage* MulticastSkill)
+bool ATodakBattleArenaCharacter::MulticastSkillStartMontage_Validate(UAnimMontage* MulticastSkill, FName SectionNames, float PauseAnimTime)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::MulticastSkillStartMontage_Implementation(UAnimMontage* MulticastSkill)
+void ATodakBattleArenaCharacter::MulticastSkillStartMontage_Implementation(UAnimMontage* MulticastSkill, FName SectionNames, float PauseAnimTime)
 {
 	//Play anim on touch press/hold
 	RPCMultiCastSkillHold = MulticastSkill;
+	SectionName = SectionNames;
+	SkillStopTime = PauseAnimTime;
 	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkillHold, 1.0f);
 	this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkillHold);
+	UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillHold : %s"), *RPCMultiCastSkillHold->GetFName().ToString());
+	UE_LOG(LogTemp, Warning, TEXT("SectionName : %s"), *SectionName.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
 }
 
 bool ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Validate(UAnimMontage* ServerSkill)
@@ -2225,7 +2230,7 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 
 							if (IsLocallyControlled())
 							{
-								ServerSkillStartMontage(row->StartAnimMontage);
+								ServerSkillStartMontage(SkillHold, SectionName, SkillStopTime);
 							}
 							//ServerSkillBlockHitMontage(row->SkillBlockHit);
 							break;
