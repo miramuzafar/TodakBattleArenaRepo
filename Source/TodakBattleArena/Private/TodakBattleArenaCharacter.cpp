@@ -666,6 +666,17 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Do once false")));
 					//hitChar->IsHit = true;
 					//hitChar = HitRes.Actor.Get();
+					/*if (HitRes.BoneName == "Pelvis" || HitRes.BoneName == "spine_03" || HitRes.BoneName == "spine_01")
+					{
+						hitChar->BoneName = "spine_02";
+						hitChar->HitLocation = hitChar->GetMesh()->GetBoneLocation(hitChar->BoneName);
+					}
+					else
+					{
+						hitChar->BoneName = HitRes.BoneName;
+						hitChar->HitLocation = HitRes.ImpactNormal;
+					}*/
+
 					hitChar->BoneName = HitRes.BoneName;
 					hitChar->HitLocation = HitRes.Location;
 
