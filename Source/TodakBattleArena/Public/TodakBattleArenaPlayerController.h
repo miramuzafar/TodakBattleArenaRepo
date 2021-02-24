@@ -24,6 +24,8 @@ public:
 
 	class UUserWidget* pWidget;
 
+	class ViewController* UIViewController;
+
 	//Exit the application
 	UFUNCTION(BlueprintCallable, Category = "Game")
 	static void MyQuitGame(bool bForce)

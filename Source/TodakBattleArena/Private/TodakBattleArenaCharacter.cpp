@@ -1116,7 +1116,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 		//Set all the attribute to the current vars of player
 		HitTraceLength = HitTraceLengths;
 		this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-		canMove = false;
+		//canMove = false;
 		//this->GetCharacterMovement()->StopMovementImmediately();
 		CDSkill = true;
 
@@ -2226,7 +2226,7 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 
 							//play animation on press
 							this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-							this->canMove = false;
+							//this->canMove = false;
 
 							if (IsLocallyControlled())
 							{
@@ -2442,7 +2442,7 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 {
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::FString("Controlled and has loco has value"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::FString("Controlled and has loco has value"));
 
 		if (canMove)
 		{
@@ -2453,7 +2453,7 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 			// get forward vector
 			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 			AddMovementInput(Direction, Value);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Player is moving forward"));
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Player is moving"));
 		}
 		
 	}
