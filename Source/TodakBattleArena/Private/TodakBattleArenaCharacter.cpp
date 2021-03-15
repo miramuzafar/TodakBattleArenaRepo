@@ -2198,6 +2198,7 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 				}
 
 				//Checks for touch within the input area
+				UGestureInputsFunctions::RightSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
 				UGestureInputsFunctions::CircleSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
 
 				//TArray<EBodyPart>& InputPart = BodyParts;
@@ -2301,6 +2302,7 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 							else*/
 							{
 								//Checks for touch within the input area
+								UGestureInputsFunctions::RightSwipeArea(this, &TouchIndex, Locations);
 								UGestureInputsFunctions::CircleSwipeArea(this, &TouchIndex, Locations);
 								//SwipeDir = TouchIndex.SwipeActions;
 								if (EnableMovement == true)

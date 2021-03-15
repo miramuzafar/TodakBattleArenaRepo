@@ -344,6 +344,9 @@ class TODAKBATTLEARENA_API UGestureInputsFunctions : public UBlueprintFunctionLi
 
 public:
 
+	//UFUNCTION(BlueprintCallable, Category = "GestureInput")
+	static void RightSwipeArea(ATodakBattleArenaCharacter* PlayerCharacter, FFingerIndex* FingerIndex, FVector2D Line1End);
+
 	//Detect swipe areas
 	static void CircleSwipeArea(ATodakBattleArenaCharacter* PlayerCharacter, struct FFingerIndex* FingerIndex, FVector2D Line1End);
 

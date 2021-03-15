@@ -10,6 +10,66 @@
 #include "BaseCharacterWidget.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 
+void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerCharacter, FFingerIndex* FingerIndex, FVector2D Line1End)
+{
+	//Get screen sizes, as well as bot point of the screen
+	const FVector2D ViewportSize = FVector2D(GEngine->GameViewport->Viewport->GetSizeXY());
+	UE_LOG(LogTemp, Warning, TEXT("ViewportSize : %s"), *ViewportSize.ToString());
+
+	//Get Top right point of the screen
+	const FVector2D TopRightPoint = FVector2D(ViewportSize.X, 0.0f);
+	UE_LOG(LogTemp, Warning, TEXT("TopRightPoint : %s"), *TopRightPoint.ToString());
+
+	//Get centre right point of the screen
+	const FVector2D CentRightPoint = FVector2D(ViewportSize.X, ViewportSize.Y/2);
+	UE_LOG(LogTemp, Warning, TEXT("CentRightPoint : %s"), *CentRightPoint.ToString());
+
+	//Get 3rd Quarter of the size x screen
+	const FVector2D QuartX = FVector2D(ViewportSize.X - (ViewportSize.X / 4), ViewportSize.Y);
+	UE_LOG(LogTemp, Warning, TEXT("QuartX : %s"), *QuartX.ToString());
+
+	//Get centre of swipe area between left and right
+	float CentSwipeX = QuartX.X + ((ViewportSize.X / 4) / 2);
+	UE_LOG(LogTemp, Warning, TEXT("CentSwipeX : %f"), CentSwipeX);
+
+
+	//Get player character
+	ATodakBattleArenaCharacter* PlayerChar = Cast<ATodakBattleArenaCharacter>(PlayerCharacter);
+	if (!PlayerChar)
+		return;
+
+	//Bot-left and top-right
+	bool IsInsideTop = UGestureMathLibrary::IsInsideRect(QuartX.X, 0.0f, ViewportSize.X, CentRightPoint.Y, Line1End.X, Line1End.Y);
+
+	bool IsInsideBot = UGestureMathLibrary::IsInsideRect(QuartX.X, CentRightPoint.Y, ViewportSize.X, ViewportSize.Y, Line1End.X, Line1End.Y);
+
+	if (IsInsideTop)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("smallcircle"));
+		FingerIndex->FromSmallCircle = true;
+		if (FingerIndex->FromSmallCircle == true)
+		{
+			//Check if line is within right circle
+			if (FingerIndex->StartLocation.X >= CentSwipeX && Line1End.X >= CentSwipeX)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("righthand"));
+				/*if (FingerIndex->SwipeActions == EInputType::Pressed)
+				{
+					FingerIndex->BodyParts = EBodyPart::RightFoot;
+				}*/
+			}
+		}
+		
+		UE_LOG(LogTemp, Warning, TEXT("Is Inside Top"));
+	}
+	else if (IsInsideBot)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Is Inside Bot"));
+	}
+	else
+		UE_LOG(LogTemp, Warning, TEXT("Is Outside"));
+}
+
 void UGestureInputsFunctions::CircleSwipeArea(ATodakBattleArenaCharacter* PlayerCharacter, FFingerIndex* FingerIndex, FVector2D Line1End)
 {
 	//float Scale = GEngine->GameViewport->GetDPIScale();

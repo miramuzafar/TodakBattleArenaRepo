@@ -80,6 +80,18 @@ float UGestureMathLibrary::RadiusCircle(float FirstVectorX, float SecondVectorX,
 	return sqrt((pow((FirstVectorX - (SecondVectorX)), 2)) + (pow((FirstVectorY - (SecondVectorY)), 2)));
 }
 
+bool UGestureMathLibrary::IsInsideRect(float x1, float y1, float x2, float y2, float x, float y)
+{
+	//function to find if given point lies inside a given rectangle or not. 
+	if (x > x1 && x < x2 && y > y1 && y < y2)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Is Inside"));
+		return true;
+	}
+		
+	return false;
+}
+
 bool UGestureMathLibrary::IsInsideCircle(float circle_x, float circle_y, float rad, float x, float y)
 {
 	// Compare radius of circle with distance  
