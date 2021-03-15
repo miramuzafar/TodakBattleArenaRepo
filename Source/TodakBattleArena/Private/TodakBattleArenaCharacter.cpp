@@ -637,7 +637,7 @@ bool ATodakBattleArenaCharacter::FireTrace_Validate(FVector StartPoint, FVector 
 
 void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FVector EndPoint)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Enter Fire Trace")));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Enter Fire Trace")));
 	//Hit result storage
 	FHitResult HitRes;
 
@@ -824,11 +824,25 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		//If the anim is not currently playing
 		FTimerHandle Delay;
 
-		//Play new anim on client
-
 		RPCMultiCastSkill = MulticastSkill;
-		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
+		//get section end length
+		this->GetMesh()->GetAnimInstance()->Montage_JumpToSectionsEnd(SectionName, RPCMultiCastSkill);
+		float endSection = GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkill);
+
+		
+
+		//Play new anim on client
+		
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
 		this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkill);
+		canMove = false;
+
+		//get current section length
+		float startSection = GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkill);
+
+		//get section length
+		float SectionLength = endSection - startSection;
+
 		UE_LOG(LogTemp, Warning, TEXT("Montage Name: %s"), *RPCMultiCastSkill->GetFName().ToString());
 
 		//this->PlayAnimMontage(RPCMultiCastSkill);
@@ -837,13 +851,20 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		{
 			UpdateDamage(DamageApplied, CurrStrength, CurrStamina, CurrAgility);
 		}
+
 		//stop current played anim
 		this->GetMesh()->GetAnimInstance()->Montage_Stop(3.0f, RPCMultiCastSkillHold);
+		
 
 		if (GetWorld()->GetTimerManager().IsTimerActive(Delay) == false)
 		{
 			//GetMesh()->SetSimulatePhysics(false);
-			this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, Duration, false);
+			
+			// duration to wait for montage finished playing
+			this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, SectionLength, false);
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));
+			//float this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay);
+
 			if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 			{
 				//if this client has access
@@ -873,13 +894,16 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 					}
 				}
 			}
+			
 		}
+		//canMove = true;
 	}
 	else
 	{
 		//If the anim is not currently playing
 		this->StopAnimMontage(RPCMultiCastSkillHold);
 		this->ResetMovementMode();
+
 		if (IsLocallyControlled())
 		{
 			if (this->BlockedHit == true)
@@ -919,6 +943,7 @@ void ATodakBattleArenaCharacter::MulticastSkillStartMontage_Implementation(UAnim
 	SkillStopTime = PauseAnimTime;
 	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkillHold, 1.0f);
 	this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkillHold);
+	canMove = false;
 	UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillHold : %s"), *RPCMultiCastSkillHold->GetFName().ToString());
 	UE_LOG(LogTemp, Warning, TEXT("SectionName : %s"), *SectionName.ToString());
 	UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
@@ -1126,8 +1151,9 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 		//Set all the attribute to the current vars of player
 		HitTraceLength = HitTraceLengths;
-		this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-		//canMove = false;
+		//this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+		
+		
 		//this->GetCharacterMovement()->StopMovementImmediately();
 		CDSkill = true;
 
@@ -1693,6 +1719,7 @@ void ATodakBattleArenaCharacter::MoveOnHold()
 
 void ATodakBattleArenaCharacter::ResetMovementMode()
 {
+	
 	//reset character movement mode back to walking
 	this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	canMove = true;
@@ -2238,7 +2265,8 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 
 							//play animation on press
 							this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-							//this->canMove = false;
+							//canMove = false; causes delay input after actionskill montage is played
+							
 
 							if (IsLocallyControlled())
 							{
@@ -2456,7 +2484,7 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
 		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::FString("Controlled and has loco has value"));
-
+		
 		if (canMove)
 		{
 			// find out which way is forward
