@@ -12,6 +12,11 @@
 
 void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerCharacter, FFingerIndex* FingerIndex, FVector2D Line1End)
 {
+	//Get player character
+	ATodakBattleArenaCharacter* PlayerChar = Cast<ATodakBattleArenaCharacter>(PlayerCharacter);
+	if (!PlayerChar)
+		return;
+
 	//Get screen sizes, as well as bot point of the screen
 	const FVector2D ViewportSize = FVector2D(GEngine->GameViewport->Viewport->GetSizeXY());
 	UE_LOG(LogTemp, Warning, TEXT("ViewportSize : %s"), *ViewportSize.ToString());
@@ -32,11 +37,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 	float CentSwipeX = QuartX.X + ((ViewportSize.X / 4) / 2);
 	UE_LOG(LogTemp, Warning, TEXT("CentSwipeX : %f"), CentSwipeX);
 
-
-	//Get player character
-	ATodakBattleArenaCharacter* PlayerChar = Cast<ATodakBattleArenaCharacter>(PlayerCharacter);
-	if (!PlayerChar)
-		return;
+	EInputType Branches;
 
 	//Bot-left and top-right
 	bool IsInsideTop = UGestureMathLibrary::IsInsideRect(QuartX.X, 0.0f, ViewportSize.X, CentRightPoint.Y, Line1End.X, Line1End.Y);
@@ -53,21 +54,121 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 			if (FingerIndex->StartLocation.X >= CentSwipeX && Line1End.X >= CentSwipeX)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("righthand"));
-				/*if (FingerIndex->SwipeActions == EInputType::Pressed)
+				if (FingerIndex->SwipeActions == EInputType::Pressed)
 				{
 					FingerIndex->BodyParts = EBodyPart::RightFoot;
-				}*/
+				}
+				FVector2D& End = Line1End;
+				if (UGestureInputsFunctions::DetectLinearSwipe(FingerIndex->StartLocation, End, Branches, FingerIndex->bDo, FingerIndex->RightPoints) == true)
+				{
+					if ((FingerIndex->StartLocation - Line1End).Size() > 50.0f)
+					{
+						PlayerChar->RightFoot = false;
+						//FingerIndex->bDo = true;
+						FingerIndex->StartLocation = FVector2D(0, 0);
+						PlayerChar->SwipeActions.Add(Branches);
+						PlayerChar->BodyParts.Add(EBodyPart::RightFoot);
+						FingerIndex->SwipeActions = Branches;
+						PlayerChar->RemoveFromArray();
+						FingerIndex->RightPoints.Empty();
+						return;
+					}
+					else
+						PlayerChar->RightFoot = true;
+				}
+			}
+			else if (FingerIndex->StartLocation.X < CentSwipeX && Line1End.X < CentSwipeX)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("lefthand"));
+				if (FingerIndex->SwipeActions == EInputType::Pressed)
+				{
+					FingerIndex->BodyParts = EBodyPart::LeftFoot;
+				}
+				FVector2D& End = Line1End;
+				if (UGestureInputsFunctions::DetectLinearSwipe(FingerIndex->StartLocation, End, Branches, FingerIndex->bDo, FingerIndex->LeftPoints) == true)
+				{
+					if ((FingerIndex->StartLocation - Line1End).Size() > 50.0f)
+					{
+						PlayerChar->LeftFoot = false;
+						//FingerIndex->bDo = true;
+						FingerIndex->StartLocation = FVector2D(0, 0);
+						PlayerChar->SwipeActions.Add(Branches);
+						PlayerChar->BodyParts.Add(EBodyPart::LeftFoot);
+						FingerIndex->SwipeActions = Branches;
+						PlayerChar->RemoveFromArray();
+						FingerIndex->LeftPoints.Empty();
+						return;
+					}
+					else
+						PlayerChar->LeftFoot = true;
+				}
 			}
 		}
-		
 		UE_LOG(LogTemp, Warning, TEXT("Is Inside Top"));
 	}
+	//If point is within bot swipe area
 	else if (IsInsideBot)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Is Inside Bot"));
+		if (FingerIndex->FromSmallCircle == false)
+		{
+			//Check if line is within right area
+			if (FingerIndex->StartLocation.X > CentSwipeX && Line1End.X > CentSwipeX)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("rightfoot"));
+				if (FingerIndex->SwipeActions == EInputType::Pressed)
+				{
+					FingerIndex->BodyParts = EBodyPart::RightHand;
+				}
+				FVector2D& End = Line1End;
+				if (UGestureInputsFunctions::DetectLinearSwipe(FingerIndex->StartLocation, End, Branches, FingerIndex->bDo, FingerIndex->RightPoints) == true)
+				{
+					if ((FingerIndex->StartLocation - Line1End).Size() > 50.0f)
+					{
+						//FingerIndex->bDo = true;
+						FingerIndex->StartLocation = FVector2D(0, 0);
+						PlayerChar->SwipeActions.Add(Branches);
+						PlayerChar->BodyParts.Add(EBodyPart::RightHand);
+						FingerIndex->SwipeActions = Branches;
+						PlayerChar->RemoveFromArray();
+						FingerIndex->RightPoints.Empty();
+						return;
+					}
+				}
+			}
+			//Check if line is within left area
+			else if (FingerIndex->StartLocation.X < CentSwipeX && Line1End.X < CentSwipeX)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("leftfoot"));
+				if (FingerIndex->SwipeActions == EInputType::Pressed)
+				{
+					FingerIndex->BodyParts = EBodyPart::LeftHand;
+				}
+				FVector2D& End = Line1End;
+				if (UGestureInputsFunctions::DetectLinearSwipe(FingerIndex->StartLocation, End, Branches, FingerIndex->bDo, FingerIndex->LeftPoints) == true)
+				{
+					if ((FingerIndex->StartLocation - Line1End).Size() > 50.0f)
+					{
+						//FingerIndex->bDo = true;
+						FingerIndex->StartLocation = FVector2D(0, 0);
+						PlayerChar->SwipeActions.Add(Branches);
+						PlayerChar->BodyParts.Add(EBodyPart::LeftHand);
+						FingerIndex->SwipeActions = Branches;
+						PlayerChar->RemoveFromArray();
+						FingerIndex->RightPoints.Empty();
+						return;
+					}
+				}
+			}
+		}
 	}
 	else
+	{
+		PlayerChar->RemoveFromArray();
+		FingerIndex->LeftPoints.Empty();
+		FingerIndex->RightPoints.Empty();
 		UE_LOG(LogTemp, Warning, TEXT("Is Outside"));
+	}
 }
 
 void UGestureInputsFunctions::CircleSwipeArea(ATodakBattleArenaCharacter* PlayerCharacter, FFingerIndex* FingerIndex, FVector2D Line1End)
@@ -145,10 +246,6 @@ void UGestureInputsFunctions::CircleSwipeArea(ATodakBattleArenaCharacter* Player
 
 	//bool SmallCircleArea = (DistanceFromStartingPoint < RadiusOfCircle) && (DistanceFromLastPointToTheCircleCenter < RadiusOfCircle) && (FingerIndex->StartLocation.Y < ViewportSize.Y);
 	//bool BigCircleArea = (DistanceFromStartingPoint1 < ViewportSize.Y) && (DistanceFromStartingPoint1 < ViewportSize.Y) && (DistanceFromLastPointToTheCircleCenter > RadiusOfCircle);
-
-	//UE_LOG(LogTemp, Warning, TEXT("initial : %f"), DistanceFromStartingPoint);
-	UE_LOG(LogTemp, Warning, TEXT("ISInsideSmallCircle?: %s"), (IsInsideSmallCircle ? TEXT("True") : TEXT("False")));
-	UE_LOG(LogTemp, Warning, TEXT("ISInsideBigCircle?: %s"), (IsInsideBigCircle ? TEXT("True") : TEXT("False")));
 
 	//If point is within small circle area
 	if (IsInsideSmallCircle)
