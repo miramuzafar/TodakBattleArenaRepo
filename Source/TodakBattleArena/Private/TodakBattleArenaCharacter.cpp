@@ -2,8 +2,10 @@
 
 #include "TodakBattleArenaCharacter.h"
 #include "Engine.h"
+#include "TodakBattleArenaSaveGame.h"
 #include "TodakBattleArenaPlayerController.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
+#include "WidgetFunctionLibrary.h"
+//#include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -33,10 +35,10 @@
 #include "Components/DecalComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TimelineComponent.h"
-#include <extensions/PxD6Joint.h>
-#include <PxRigidBody.h>
-#include <PxRigidDynamic.h>
-#include <PxTransform.h>
+//#include <extensions/PxD6Joint.h>
+//#include <PxRigidBody.h>
+//#include <PxRigidDynamic.h>
+//#include <PxTransform.h>
 #include "GestureMathLibrary.h"
 #include "Components/ArrowComponent.h"
 #include "Math/Rotator.h"
@@ -362,7 +364,6 @@ AController* ATodakBattleArenaCharacter::SetNewControlRotation(FRotator& Rotator
 void ATodakBattleArenaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
 	/*FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
 	if (UClass* locWidgetClass = locWidgetClassRef.TryLoadClass<UBaseCharacterWidget>())
 	{
@@ -585,46 +586,83 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 	//UTBAAnimInstance* UAnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
 	//UAnimInstance->LocoPlayrate;
 
-
-	//Search the skill available
-	for (auto& name : ActionTable->GetRowNames())
+	if (InputStyle != EInputStyle::Button)
 	{
-		FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
-		if (row)
+		//Search the skill available
+		for (auto& name : ActionTable->GetRowNames())
 		{
-			//Check if the input is same as the input needed to execute the skill
-			if (row->SwipeActions.Contains(FingerIndex->SwipeActions) && row->BodyParts.Contains(FingerIndex->BodyParts))
+			FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
+			if (row)
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
-				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
-				//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
-				row->SkillTrigger = true;
-				SkillTriggered = row->SkillTrigger;
-
-				//Execute skill if cooldown is finished
-				if (row->CDSkill == false)
+				//Check if the input is same as the input needed to execute the skill
+				if (row->SwipeActions.Contains(FingerIndex->SwipeActions) && row->BodyParts.Contains(FingerIndex->BodyParts))
 				{
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
 					//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
 					row->SkillTrigger = true;
 					SkillTriggered = row->SkillTrigger;
-					row->SkillMoveSetRate = SkillPlayrate;
-					//RepLocoPlayrate = SkillPlayrate;
-					//AnimInstance->LocoPlayrate = SkillPlayrate;
-					//temp = SkillPlayrate;
-					if (row->StartSwipeMontageTime.Num() > 0)
+
+					//Execute skill if cooldown is finished
+					if (row->CDSkill == false)
 					{
-						row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
+						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
+						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
+						//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
+						row->SkillTrigger = true;
+						SkillTriggered = row->SkillTrigger;
+						row->SkillMoveSetRate = SkillPlayrate;
+						//RepLocoPlayrate = SkillPlayrate;
+						//AnimInstance->LocoPlayrate = SkillPlayrate;
+						//temp = SkillPlayrate;
+						if (row->StartSwipeMontageTime.Num() > 0)
+						{
+							row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
+						}
+						FingerIndex->bDo = true;
+						CheckForAction(name);
+						if (SkillTriggered == false)
+						{
+							row->SkillTrigger = false;
+						}
+						break;
 					}
-					FingerIndex->bDo = true;
-					CheckForAction(name);
-					if (SkillTriggered == false)
-					{
-						row->SkillTrigger = false;
-					}
-					break;
 				}
+			}
+		}
+	}
+}
+
+void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart)
+{
+	//Used in error reporting
+	FString Context;
+
+	//Search the skill available
+	FActionSkill* row = ActionTable->FindRow<FActionSkill>(BodyPart, Context);
+	if (row)
+	{
+		row->SkillTrigger = true;
+		SkillTriggered = row->SkillTrigger;
+
+		//Execute skill if cooldown is finished
+		if (row->CDSkill == false)
+		{
+			row->SkillTrigger = true;
+			SkillTriggered = row->SkillTrigger;
+			row->SkillMoveSetRate = SkillPlayrate;
+			//RepLocoPlayrate = SkillPlayrate;
+			//AnimInstance->LocoPlayrate = SkillPlayrate;
+			//temp = SkillPlayrate;
+			if (row->StartSwipeMontageTime.Num() > 0)
+			{
+				row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
+			}
+			//FingerIndex->bDo = true;
+			CheckForAction(BodyPart);
+			if (SkillTriggered == false)
+			{
+				row->SkillTrigger = false;
 			}
 		}
 	}
@@ -2144,7 +2182,7 @@ void ATodakBattleArenaCharacter::RemoveFromArray()
 
 void ATodakBattleArenaCharacter::OnResetVR()
 {
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
+	//UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 }
 
 void ATodakBattleArenaCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
@@ -2224,10 +2262,16 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 					BlockedHit = true;
 				}
 
-				//Checks for touch within the input area
-				UGestureInputsFunctions::RightSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
-				//UGestureInputsFunctions::CircleSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
-
+				if (InputStyle == EInputStyle::Default)
+				{
+					//Checks for touch within the input area
+					UGestureInputsFunctions::CircleSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
+				}
+				else if (InputStyle == EInputStyle::LeftJoystick)
+				{
+					//Checks for touch within the input area
+					UGestureInputsFunctions::RightSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
+				}
 				//TArray<EBodyPart>& InputPart = BodyParts;
 
 				//Used in error reporting
@@ -2330,8 +2374,14 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 							else*/
 							{
 								//Checks for touch within the input area
-								UGestureInputsFunctions::RightSwipeArea(this, &TouchIndex, Locations);
-								//UGestureInputsFunctions::CircleSwipeArea(this, &TouchIndex, Locations);
+								if (InputStyle == EInputStyle::Default)
+								{
+									UGestureInputsFunctions::CircleSwipeArea(this, &TouchIndex, Locations);
+								}
+								else if (InputStyle == EInputStyle::LeftJoystick)
+								{
+									UGestureInputsFunctions::RightSwipeArea(this, &TouchIndex, Locations);
+								}
 								//SwipeDir = TouchIndex.SwipeActions;
 								if (EnableMovement == true)
 								{

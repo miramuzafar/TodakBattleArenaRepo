@@ -49,6 +49,14 @@ enum class EBodyPart : uint8
 	RightFoot
 };
 
+UENUM(BlueprintType)
+enum class EInputStyle : uint8
+{
+	Default,//The center swipe
+	LeftJoystick,//The Left analog stick with right area swipe
+	Button //Button
+};
+
 //PlayerStats
 UENUM(BlueprintType)
 enum class EMainPlayerStats : uint8

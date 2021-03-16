@@ -15,6 +15,7 @@
 class UBaseCharacterWidget;
 struct FKAggregateGeom;
 class UPhysicsAsset;
+class UTodakBattleArenaSaveGame;
 
 FORCEINLINE uint32 GetTypeHash(const FFingerIndex& Key)
 {
@@ -342,6 +343,10 @@ protected:
 	//Timer to remove touch inputs from array
 	void RemoveElementFromArrayTimer();
 
+	//***************InputStyle****************//
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "InputStyle")
+	EInputStyle InputStyle = EInputStyle::Default;
+
 	//*******************************************TargetLock************************************************************************************************//
 	/** called when something enters the sphere component */
 	UFUNCTION()
@@ -501,6 +506,10 @@ protected:
 
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);
+
+	//Get skills from input touch combo
+	UFUNCTION(BlueprintCallable)
+	void GetButtonSkillAction(FName BodyPart);
 
 	//Fire hit trace on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")

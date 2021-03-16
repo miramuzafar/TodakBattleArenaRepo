@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "..\Public\GestureInputsFunctions.h"
 #include "TodakBattleArenaSaveGame.generated.h"
 
 /**
@@ -24,4 +25,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AudioSettings|SFX")
 	bool SFXAudioOn = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameplaySettings|Input")
+	EInputStyle InputStyle = EInputStyle::Default;
 };

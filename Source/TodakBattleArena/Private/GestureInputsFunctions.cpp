@@ -56,7 +56,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 				UE_LOG(LogTemp, Warning, TEXT("righthand"));
 				if (FingerIndex->SwipeActions == EInputType::Pressed)
 				{
-					FingerIndex->BodyParts = EBodyPart::RightFoot;
+					FingerIndex->BodyParts = EBodyPart::RightHand;
 				}
 				FVector2D& End = Line1End;
 				if (UGestureInputsFunctions::DetectLinearSwipe(FingerIndex->StartLocation, End, Branches, FingerIndex->bDo, FingerIndex->RightPoints) == true)
@@ -67,7 +67,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 						//FingerIndex->bDo = true;
 						FingerIndex->StartLocation = FVector2D(0, 0);
 						PlayerChar->SwipeActions.Add(Branches);
-						PlayerChar->BodyParts.Add(EBodyPart::RightFoot);
+						PlayerChar->BodyParts.Add(EBodyPart::RightHand);
 						FingerIndex->SwipeActions = Branches;
 						PlayerChar->RemoveFromArray();
 						FingerIndex->RightPoints.Empty();
@@ -82,7 +82,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 				UE_LOG(LogTemp, Warning, TEXT("lefthand"));
 				if (FingerIndex->SwipeActions == EInputType::Pressed)
 				{
-					FingerIndex->BodyParts = EBodyPart::LeftFoot;
+					FingerIndex->BodyParts = EBodyPart::LeftHand;
 				}
 				FVector2D& End = Line1End;
 				if (UGestureInputsFunctions::DetectLinearSwipe(FingerIndex->StartLocation, End, Branches, FingerIndex->bDo, FingerIndex->LeftPoints) == true)
@@ -93,7 +93,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 						//FingerIndex->bDo = true;
 						FingerIndex->StartLocation = FVector2D(0, 0);
 						PlayerChar->SwipeActions.Add(Branches);
-						PlayerChar->BodyParts.Add(EBodyPart::LeftFoot);
+						PlayerChar->BodyParts.Add(EBodyPart::LeftHand);
 						FingerIndex->SwipeActions = Branches;
 						PlayerChar->RemoveFromArray();
 						FingerIndex->LeftPoints.Empty();
@@ -118,7 +118,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 				UE_LOG(LogTemp, Warning, TEXT("rightfoot"));
 				if (FingerIndex->SwipeActions == EInputType::Pressed)
 				{
-					FingerIndex->BodyParts = EBodyPart::RightHand;
+					FingerIndex->BodyParts = EBodyPart::RightFoot;
 				}
 				FVector2D& End = Line1End;
 				if (UGestureInputsFunctions::DetectLinearSwipe(FingerIndex->StartLocation, End, Branches, FingerIndex->bDo, FingerIndex->RightPoints) == true)
@@ -128,7 +128,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 						//FingerIndex->bDo = true;
 						FingerIndex->StartLocation = FVector2D(0, 0);
 						PlayerChar->SwipeActions.Add(Branches);
-						PlayerChar->BodyParts.Add(EBodyPart::RightHand);
+						PlayerChar->BodyParts.Add(EBodyPart::RightFoot);
 						FingerIndex->SwipeActions = Branches;
 						PlayerChar->RemoveFromArray();
 						FingerIndex->RightPoints.Empty();
@@ -142,7 +142,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 				UE_LOG(LogTemp, Warning, TEXT("leftfoot"));
 				if (FingerIndex->SwipeActions == EInputType::Pressed)
 				{
-					FingerIndex->BodyParts = EBodyPart::LeftHand;
+					FingerIndex->BodyParts = EBodyPart::LeftFoot;
 				}
 				FVector2D& End = Line1End;
 				if (UGestureInputsFunctions::DetectLinearSwipe(FingerIndex->StartLocation, End, Branches, FingerIndex->bDo, FingerIndex->LeftPoints) == true)
@@ -152,7 +152,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 						//FingerIndex->bDo = true;
 						FingerIndex->StartLocation = FVector2D(0, 0);
 						PlayerChar->SwipeActions.Add(Branches);
-						PlayerChar->BodyParts.Add(EBodyPart::LeftHand);
+						PlayerChar->BodyParts.Add(EBodyPart::LeftFoot);
 						FingerIndex->SwipeActions = Branches;
 						PlayerChar->RemoveFromArray();
 						FingerIndex->RightPoints.Empty();
