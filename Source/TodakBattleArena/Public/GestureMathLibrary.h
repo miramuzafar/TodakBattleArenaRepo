@@ -60,6 +60,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Math|Gesture Utils")
 	static float RadiusCircle(float FirstVectorX, float SecondVectorX, float FirstVectorY, float SecondVectorY);
 
+	//bottom-left and top-right 
+	//corners of rectangle 
+	UFUNCTION(BlueprintPure, Category = "Math|Gesture Utils")
+	static bool IsInsideRect(float x1, float y1, float x2, float y2, float x, float y);
+
 	//Checks if the point is inside a circle
 	UFUNCTION(BlueprintPure, Category = "Math|Gesture Utils")
 	static bool IsInsideCircle(float circle_x, float circle_y, float rad, float x, float y);
