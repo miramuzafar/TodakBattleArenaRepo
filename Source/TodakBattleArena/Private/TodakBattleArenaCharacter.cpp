@@ -633,36 +633,77 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 	}
 }
 
-void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart)
+void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart, bool IsReleased)
 {
-	//Used in error reporting
-	FString Context;
-
-	//Search the skill available
-	FActionSkill* row = ActionTable->FindRow<FActionSkill>(BodyPart, Context);
-	if (row)
+	if (!isAI)
 	{
-		row->SkillTrigger = true;
-		SkillTriggered = row->SkillTrigger;
+		//Used in error reporting
+		FString Context;
 
-		//Execute skill if cooldown is finished
-		if (row->CDSkill == false)
+		if (IsReleased == false)
 		{
-			row->SkillTrigger = true;
-			SkillTriggered = row->SkillTrigger;
-			row->SkillMoveSetRate = SkillPlayrate;
-			//RepLocoPlayrate = SkillPlayrate;
-			//AnimInstance->LocoPlayrate = SkillPlayrate;
-			//temp = SkillPlayrate;
-			if (row->StartSwipeMontageTime.Num() > 0)
+			UE_LOG(LogTemp, Warning, TEXT("Swipe Detect"));
+
+			if (BlockedHit == false)
 			{
-				row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
+				BlockedHit = true;
 			}
-			//FingerIndex->bDo = true;
-			CheckForAction(BodyPart);
-			if (SkillTriggered == false)
+
+			FActionSkill* row = ActionTable->FindRow<FActionSkill>(BodyPart, Context);
+			if (row)
 			{
-				row->SkillTrigger = false;
+				//Get random index from section names
+				FName arr[3] = { "Attack1", "Attack2", "Attack3" };
+				RandSection = rand() % 3;
+				SectionName = arr[RandSection];
+				//int random = rand() % 3;
+
+				SkillHold = row->StartAnimMontage;
+
+				//if current row->StopHoldAnimTime is not empty
+				if (row->StopHoldAnimTime.Num() > 0)
+				{
+					SkillStopTime = row->StopHoldAnimTime[RandSection];
+					BlockHit = row->SkillBlockHit;
+				}
+
+				//play animation on press
+				this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+				//canMove = false; causes delay input after actionskill montage is played
+
+				if (IsLocallyControlled())
+				{
+					ServerSkillStartMontage(SkillHold, SectionName, SkillStopTime);
+				}
+			}
+		}
+		else if (IsReleased == true)
+		{
+			FActionSkill* row = ActionTable->FindRow<FActionSkill>(BodyPart, Context);
+			if (row)
+			{
+				row->SkillTrigger = true;
+				SkillTriggered = row->SkillTrigger;
+
+				//Execute skill if cooldown is finished
+				if (row->CDSkill == false)
+				{
+					row->SkillTrigger = true;
+					SkillTriggered = row->SkillTrigger;
+					row->SkillMoveSetRate = SkillPlayrate;
+					//RepLocoPlayrate = SkillPlayrate;
+					//AnimInstance->LocoPlayrate = SkillPlayrate;
+					//temp = SkillPlayrate;
+					if (row->StartSwipeMontageTime.Num() > 0)
+					{
+						row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
+					}
+					CheckForAction(BodyPart);
+					if (SkillTriggered == false)
+					{
+						row->SkillTrigger = false;
+					}
+				}
 			}
 		}
 	}
@@ -686,7 +727,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 	CP_LKick.AddIgnoredActor(this);
 
 	//Sphere trace by channel
-	bool DetectHit = this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat(), ECollisionChannel::ECC_Visibility, FCollisionShape::MakeSphere(20.0f), CP_LKick);
+	bool DetectHit = this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat(), ECollisionChannel::ECC_PhysicsBody, FCollisionShape::MakeSphere(20.0f), CP_LKick);
 
 	if (DetectHit)
 	{
@@ -714,13 +755,15 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 						hitChar->BoneName = HitRes.BoneName;
 						hitChar->HitLocation = HitRes.ImpactNormal;
 					}*/
-
-					hitChar->BoneName = HitRes.BoneName;
 					hitChar->HitLocation = HitRes.Location;
+					hitChar->BoneName = HitRes.BoneName;
+					hitChar->IsHit = true;
 
 					//DoDamage(hitChar);
 
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *hitChar->BoneName.ToString()));
+					//HitRes.GetComponent();
+
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *HitRes.GetComponent()->GetName()));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *hitChar->HitLocation.ToString()));
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
@@ -863,23 +906,28 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		FTimerHandle Delay;
 
 		RPCMultiCastSkill = MulticastSkill;
+
 		//get section end length
 		this->GetMesh()->GetAnimInstance()->Montage_JumpToSectionsEnd(SectionName, RPCMultiCastSkill);
 		float endSection = GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkill);
 
-		
+		float StartSect = 0.0f;
+		float EndSect = 0.0f;
+
+		RPCMultiCastSkill->GetSectionStartAndEndTime(RPCMultiCastSkill->GetSectionIndex(SectionName), StartSect, EndSect);
 
 		//Play new anim on client
-		
-		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::Duration, StartTime, true);
 		this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkill);
 		canMove = false;
 
 		//get current section length
-		float startSection = GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkill);
+		float startSection = this->GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkill);
 
 		//get section length
-		float SectionLength = endSection - startSection;
+		//float SectionLength = endSection - startSection;
+
+		float SectionLength = EndSect - StartTime;
 
 		UE_LOG(LogTemp, Warning, TEXT("Montage Name: %s"), *RPCMultiCastSkill->GetFName().ToString());
 
@@ -893,6 +941,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		//stop current played anim
 		this->GetMesh()->GetAnimInstance()->Montage_Stop(3.0f, RPCMultiCastSkillHold);
 		
+		//this->GetMesh()->GetAnimInstance()->StopAllMontages(3.0f);
 
 		if (GetWorld()->GetTimerManager().IsTimerActive(Delay) == false)
 		{
@@ -914,7 +963,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 					}
 					//if still in blocked hit state
 					//Reduce player energy after action
-					EnergySpent(10.0f, 100.0f);
+					EnergySpent(5.0f, 100.0f);
 					UE_LOG(LogTemp, Warning, TEXT("Energy: %f"), this->playerEnergy);
 
 					//Update stats after anim is played
@@ -940,6 +989,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 	{
 		//If the anim is not currently playing
 		this->StopAnimMontage(RPCMultiCastSkillHold);
+		//this->GetMesh()->GetAnimInstance()->StopAllMontages(3.0f);
 		this->ResetMovementMode();
 
 		if (IsLocallyControlled())
@@ -2414,6 +2464,8 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 		EnableMovement = false;
 		RightFoot = false;
 		LeftFoot = false;
+		BlockedHit = false;
+		DoOnce = false;
 
 		FFingerIndex NewIndex;
 		NewIndex.FingerIndex = FingerIndex;
@@ -2438,6 +2490,7 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 				}
 				InputTouch.RemoveAt(Index);
 			}
+			InputTouch.Empty();
 		}
 		if (BodyParts.IsValidIndex(0) == true)
 		{
