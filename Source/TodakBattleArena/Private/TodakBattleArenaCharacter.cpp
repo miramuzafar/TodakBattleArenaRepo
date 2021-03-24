@@ -772,6 +772,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 				}
 			}
 		}
+		
 	}
 	//Sphere trace by channel
 	/*if (this->GetWorld()->SweepSingleByChannel(HitRes, StartPoint, EndPoint, FQuat::Identity, ECC_Visibility, SphereKick, CP_LKick))
@@ -2597,7 +2598,7 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 			// get forward vector
 			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 			AddMovementInput(Direction, Value);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Player is moving"));
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Player is moving"));
 		}
 		
 	}
