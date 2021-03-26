@@ -24,8 +24,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool TurnLeft = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool IsMoving = false;
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float LocoPlayrate;
@@ -34,8 +33,8 @@ public:
 protected:
 	//variables
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsInAir = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool IsMoving = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Speed = 0.0f;
@@ -44,7 +43,13 @@ protected:
 	float Direction = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int IdleAnimToPlay = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Switcher = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool SwitchSide = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool DefendMode = false;

@@ -242,6 +242,8 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepTurnLeft);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepIsMoving);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepLocoPlayrate);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RepIdleAnimToPlay);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RepSwitchSide);
 
 	//**AnimMontage**//
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockHit);
@@ -1248,11 +1250,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 
 		//Get the Montage to be play
 		SkillMoveset = SkillMovesets;
-		//Server
-		if (this->IsLocallyControlled())
-		{
-			ServerSkillMoveset(SkillMoveset, DealDamage, MaxStrength, MaxStamina, MaxAgility, AnimRate, AnimStartTime, SkillTriggered, SectionName);
-		}
+
 		//Server
 		if (this->IsLocallyControlled())
 		{
