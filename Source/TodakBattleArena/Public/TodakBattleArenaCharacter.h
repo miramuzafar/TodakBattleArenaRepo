@@ -218,16 +218,22 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
 	bool BlockedHit = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category ="SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	int RepIdleAnimToPlay = 0;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category ="Anim")
 	bool RepTurnRight = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool RepTurnLeft = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	bool RepSwitchSide = false;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool RepIsMoving = false;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SwipeGesture")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float RepLocoPlayrate = 1.0f;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */

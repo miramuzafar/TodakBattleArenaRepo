@@ -197,9 +197,17 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	UAnimMontage* StartAnimMontage;
 
+	//Anim to be played on hold when switch right
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	UAnimMontage* StartAnimMontageLeft;
+
 	//Anim to be played on swipe
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	UAnimMontage* SkillMoveset;
+
+	//Anim to be played on swipe when switch right
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	UAnimMontage* SkillMovesetLeft;
 
 	//Anim to be played on swipe
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
