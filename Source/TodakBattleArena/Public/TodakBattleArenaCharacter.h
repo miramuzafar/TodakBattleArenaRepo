@@ -515,7 +515,7 @@ protected:
 
 	//Get skills from input touch combo
 	UFUNCTION(BlueprintCallable)
-	void GetButtonSkillAction(FName BodyPart);
+	void GetButtonSkillAction(FName BodyPart, bool IsReleased);
 
 	//Fire hit trace on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
