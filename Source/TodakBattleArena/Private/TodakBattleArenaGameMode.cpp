@@ -9,7 +9,6 @@
 #include "BaseCharacterWidget.h"
 
 ATodakBattleArenaGameMode::ATodakBattleArenaGameMode()
-	:Super()
 {
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPersonCPP/Blueprints/ThirdPersonCharacter"));
@@ -17,7 +16,6 @@ ATodakBattleArenaGameMode::ATodakBattleArenaGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
-
 	// use custom HUD Class
 	//HUDClass = ATodakBattleArenaCharacterHUD::StaticClass();
 }
