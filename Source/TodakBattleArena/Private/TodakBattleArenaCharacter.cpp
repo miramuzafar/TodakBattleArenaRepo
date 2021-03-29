@@ -534,8 +534,10 @@ bool ATodakBattleArenaCharacter::CalculatingFacingLocation(USkeletalMeshComponen
 
 	//UE_LOG(LogTemp, Warning, TEXT("DotProduct from c++ is :  : %f"), DotProduct);
 
+	FTransform BoneTransform = UGestureMathLibrary::GetBoneTransform(currMesh, "pelvis");
+
 	//Get the dot product between the mesh right vector location and right vector location
-	float val = UKismetMathLibrary::Dot_VectorVector(UKismetMathLibrary::GetRightVector(currMesh->GetSocketRotation("pelvis")), FVector(0.0f, 0.0f, 1.0f));
+	float val = UKismetMathLibrary::Dot_VectorVector(UKismetMathLibrary::GetRightVector(BoneTransform.Rotator()), FVector(0.0f, 0.0f, 1.0f));
 
 	UE_LOG(LogTemp, Warning, TEXT("DotProduct from c++ is :  : %f"), val);
 
@@ -565,11 +567,11 @@ void ATodakBattleArenaCharacter::SetUpGetUpOrientation(USkeletalMeshComponent* c
 	}
 }
 
-void ATodakBattleArenaCharacter::SetUpGetUpMontage(USkeletalMeshComponent* currMesh)
+void ATodakBattleArenaCharacter::SetUpGetUpMontage(USkeletalMeshComponent* currMesh, bool FacingUp)
 {
 	if (currMesh != nullptr)
 	{
-		if (IsFacingUp == true)
+		if (FacingUp == true)
 		{
 			RPCMulticastGetUp = UpMontage;
 		}
@@ -743,7 +745,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 				if (DoOnce == false)
 				{
 					//Apply damage
-					//DoOnce = true;
+					DoOnce = true;
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Do once false")));
 					//hitChar->IsHit = true;
 					//hitChar = HitRes.Actor.Get();
@@ -1665,8 +1667,6 @@ void ATodakBattleArenaCharacter::CheckSphereTrace(AActor*& HitActor, FName& Bone
 	}
 }*/
 
-
-
 void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets)
 {
 	FKBoxElem boxElem;
@@ -1780,7 +1780,7 @@ void ATodakBattleArenaCharacter::MulticastSpawnWounds_Implementation(UMaterialIn
 
 	UGameplayStatics::SpawnDecalAttached(DecalMat, FVector(10.0f, 10.0f, 10.0f), this->GetMesh(), BoneName, HitLocation, FRotator(0.0f, 0.0f, 0.0f), EAttachLocation::KeepWorldPosition, 0.0f);
 	//reset the bool so sweep trace can be executed again
-	DoOnce = false;
+	//DoOnce = false;
 }
 
 void ATodakBattleArenaCharacter::MoveOnHold()
@@ -1937,7 +1937,7 @@ void ATodakBattleArenaCharacter::DoDamage_Implementation(AActor* HitActor)
 		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 
 		//reset the bool so sweep trace can be executed again
-		DoOnce = false;
+		//DoOnce = false;
 
 		//LeftKickColActivate = false;
 	}
@@ -2464,7 +2464,7 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 		RightFoot = false;
 		LeftFoot = false;
 		BlockedHit = false;
-		DoOnce = false;
+		//DoOnce = false;
 
 		FFingerIndex NewIndex;
 		NewIndex.FingerIndex = FingerIndex;
@@ -2709,90 +2709,14 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 	}
 }
 
-void ATodakBattleArenaCharacter::CheckHitTrace(UCapsuleComponent* currCapComp, AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit)
+void ATodakBattleArenaCharacter::OnCombatColl(UCapsuleComponent* CombatColl)
 {
-	if (currCapComp != nullptr)
-	{
-		//Get Start vector
-		FVector Start = currCapComp->GetComponentLocation();
+	CombatColl->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	CombatColl->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+}
 
-		//Get End Vector
-		FVector End = currCapComp->GetComponentLocation();
-
-		if (this->IsLocallyControlled() == true)
-		{
-			FireTrace(Start, End);
-		}
-	}
-	
-
-	//If left foot is kicking
-	/*if (this->LeftKickColActivate == true)
-	{
-		this->RightKickColActivate = false;
-		this->RightHandColActivate = false;
-		this->LeftHandColActivate = false;
-
-		//Get Start vector
-		FVector Start = this->LeftKickCol->GetComponentLocation();
-		
-		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(this->LeftKickCol->GetComponentRotation())+(FVector(0,0,this->LeftKickCol->GetScaledCapsuleHalfHeight())));
-
-		if (this->IsLocallyControlled() == true)
-		{
-			FireTrace(Start, End);
-		}
-	}
-	else if (this->RightKickColActivate == true)
-	{
-		this->LeftKickColActivate = false;
-		this->RightHandColActivate = false;
-		this->LeftHandColActivate = false;
-
-		//Get Start vector
-		FVector Start = RightKickCol->GetComponentLocation();
-
-		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(this->RightKickCol->GetComponentRotation())+(FVector(0,0, this->RightKickCol->GetScaledCapsuleHalfHeight())));
-
-		if (this->IsLocallyControlled() == true)
-		{
-			FireTrace(Start, End);
-		}
-	}
-	else if (this->RightHandColActivate == true)
-	{
-		this->LeftKickColActivate = false;
-		this->RightKickColActivate = false;
-		this->LeftHandColActivate = false;
-
-		//Get Start vector
-		FVector Start = currCapComp->GetComponentLocation();
-
-		//Get End Vector
-		FVector End = currCapComp->GetComponentLocation();
-
-		if (this->IsLocallyControlled() == true)
-		{
-			FireTrace(Start, End);
-		}
-	}
-	else if (this->LeftHandColActivate == true)
-	{
-		this->LeftKickColActivate = false;
-		this->RightKickColActivate = false;
-		this->RightHandColActivate = false;
-
-		//Get Start vector
-		FVector Start = this->LeftPunchCol->GetComponentLocation();
-
-		//Get End Vector
-		FVector End = Start + (UKismetMathLibrary::GetForwardVector(this->LeftPunchCol->GetComponentRotation())+(FVector(0,0, this->LeftPunchCol->GetScaledCapsuleHalfHeight())));
-
-		if (this->IsLocallyControlled() == true)
-		{
-			FireTrace(Start, End);
-		}
-	}*/
+void ATodakBattleArenaCharacter::OffCombatColl(UCapsuleComponent * CombatColl)
+{
+	CombatColl->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	DoOnce = false;
 }

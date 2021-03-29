@@ -118,12 +118,14 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameOver")
 	void GameOverFunc();
 
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void OnCombatColl(UCapsuleComponent* CombatColl);
+
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void OffCombatColl(UCapsuleComponent* CombatColl);
+
 	//UFUNCTION(BlueprintCallable, Category = "Collision")
 	//void CheckLineTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
-
-	//Check Trace Upon Collision
-	UFUNCTION(BlueprintCallable, Category = "Collision")
-	void CheckHitTrace(UCapsuleComponent* currCapComp, AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit);
 
 	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
@@ -508,7 +510,7 @@ protected:
 		void SetUpGetUpOrientation(USkeletalMeshComponent* currMesh);
 
 	UFUNCTION(BlueprintCallable)
-		void SetUpGetUpMontage(USkeletalMeshComponent* currMesh);
+		void SetUpGetUpMontage(USkeletalMeshComponent* currMesh, bool FacingUp);
 
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);

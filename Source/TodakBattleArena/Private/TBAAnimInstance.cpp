@@ -4,8 +4,6 @@
 #include "TBAAnimInstance.h"
 #include "TodakBattleArenaCharacter.h"
 
-
-
 void UTBAAnimInstance::PlayerIsRagdoll()
 {
 	if (RagdollMode == false)
