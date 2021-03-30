@@ -2355,22 +2355,6 @@ void ATodakBattleArenaCharacter::OnCombatColl(UCapsuleComponent* CombatColl)
 {
 	CombatColl->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	CombatColl->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-
-	//Get Start vector
-	FVector Start = currCapComp->GetComponentLocation();
-
-	//Get End Vector
-	FVector End = currCapComp->GetComponentLocation();
-
-	if (currCapComp != nullptr)
-	{
-		if (this->IsLocallyControlled() == true)
-		{
-			FireTrace(Start, End);
-		}
-	}
-
-	
 }
 
 void ATodakBattleArenaCharacter::OffCombatColl(UCapsuleComponent * CombatColl)
