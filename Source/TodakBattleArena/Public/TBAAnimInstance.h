@@ -16,15 +16,11 @@ class TODAKBATTLEARENA_API UTBAAnimInstance : public UAnimInstance
 
 public:
 
-	
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool TurnRight = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool TurnLeft = false;
-
-	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float LocoPlayrate;
