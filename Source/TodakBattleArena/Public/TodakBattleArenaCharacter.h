@@ -73,6 +73,9 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 	UPROPERTY(VisibleAnywhere, Category = "Timeline")
 	class UTimelineComponent* MyTimeline;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class USkeletalMeshComponent* Hair;
+
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	//class UInventoryComponent* Inventory;
 
@@ -118,6 +121,15 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameOver")
 	void GameOverFunc();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "GetUp")
+	void CallGetUpFunction(AActor* RagdolledActor, USkeletalMeshComponent* CurrMesh);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "GameOver")
+	void CallEventLoseFunction();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "GetUpTimer")
+	void CallEventTimerFunction();
+
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void OnCombatColl(UCapsuleComponent* CombatColl);
 
@@ -160,6 +172,11 @@ public:
 
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	//float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimSequenceBase* FallFrontAnimChar;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimSequenceBase* FallBackAnimChar;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerGetUp;
@@ -441,15 +458,15 @@ protected:
 	void ResetMovementMode();
 
 	//Preparing for ragdoll
-	UFUNCTION(BlueprintCallable)
-	void CallFallRagdoll();
+	UFUNCTION(BlueprintCallable, Category = "Ragdoll")
+	void CallFallRagdoll(AActor* RagdolledActor, bool IsLookingAtTarget);
 
 	//Execute ragdoll
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
-	void ServerFallRagdoll(AActor* RagdolledActor);
+	void ServerFallRagdoll(AActor* RagdolledActor, UAnimSequenceBase* FallAnims);
 
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastFallRagdoll(AActor* RagdolledActor);
+	void MulticastFallRagdoll(AActor* RagdolledActor, UAnimSequenceBase* FallAnims);
 
 	//increase maximum fitness status
 	UFUNCTION(BlueprintCallable)

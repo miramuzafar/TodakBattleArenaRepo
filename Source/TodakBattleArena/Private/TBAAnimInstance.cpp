@@ -4,6 +4,15 @@
 #include "TBAAnimInstance.h"
 #include "TodakBattleArenaCharacter.h"
 
+void UTBAAnimInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTBAAnimInstance, RagdollMode);
+	DOREPLIFETIME(UTBAAnimInstance, FallAnim);
+	DOREPLIFETIME(UTBAAnimInstance, IsStopped);
+}
+
 void UTBAAnimInstance::PlayerIsRagdoll()
 {
 	if (RagdollMode == false)

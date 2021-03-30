@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Net/UnrealNetwork.h"
 #include "TBAAnimInstance.generated.h"
 
 /**
@@ -16,6 +17,9 @@ class TODAKBATTLEARENA_API UTBAAnimInstance : public UAnimInstance
 
 public:
 
+	//Replicated Network setup
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool TurnRight = false;
 
@@ -24,6 +28,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float LocoPlayrate;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+	UAnimSequenceBase* FallAnim;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+	bool RagdollMode = false;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+	bool IsStopped = false;
 
 	
 protected:
@@ -82,12 +95,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float IKMultiplier = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ragdoll")
-	bool RagdollMode = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ragdoll")
-	bool IsStopped = false;
 
 	//Functions
 

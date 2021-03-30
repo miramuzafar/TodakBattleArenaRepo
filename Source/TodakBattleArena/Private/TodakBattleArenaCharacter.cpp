@@ -65,6 +65,11 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	//Hair
+	Hair = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hair"));
+	Hair->SetupAttachment(GetMesh(), "head"); // Attach the hair to head
+	Hair->SetRelativeLocation(FVector(12.0f, -1.999999f, 0.000001f));
+
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
@@ -262,6 +267,10 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastBlockHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastSkill);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastSkillHold);
+
+	//FallDown
+	DOREPLIFETIME(ATodakBattleArenaCharacter, FallBackAnimChar);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, FallFrontAnimChar);
 
 	//GetUpFromFall
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMulticastGetUp);
@@ -1813,42 +1822,51 @@ void ATodakBattleArenaCharacter::ResetMovementMode()
 	SkillTriggered = false;
 }
 
-void ATodakBattleArenaCharacter::CallFallRagdoll()
+void ATodakBattleArenaCharacter::CallFallRagdoll(AActor* RagdolledActor, bool IsLookingAtTarget)
 {
-	//reset character movement mode to none
-	this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-
-	//disable yaw contoller rotation
-	this->GetController()->GetPawn()->bUseControllerRotationYaw = false;
-
-	//disable input on ragdoll
-	this->DisableInput(UGameplayStatics::GetPlayerController(this, 0));
-
-	if (this->IsLocallyControlled())
+	if (RagdolledActor == this)
 	{
-		ServerFallRagdoll(this);
+		//Disable input
+		this->DisableInput(UGameplayStatics::GetPlayerController(this, 0));
+
+		//Stop movement
+		this->GetCharacterMovement()->StopMovementImmediately();
+
+		//Start ragdoll
+		if (this->IsLocallyControlled())
+		{
+			if (IsLookingAtTarget == true)
+			{
+				ServerFallRagdoll(RagdolledActor, FallBackAnimChar);
+			}
+			else
+				ServerFallRagdoll(RagdolledActor, FallFrontAnimChar);
+		}
 	}
 }
 
-bool ATodakBattleArenaCharacter::ServerFallRagdoll_Validate(AActor* RagdolledActor)
+bool ATodakBattleArenaCharacter::ServerFallRagdoll_Validate(AActor* RagdolledActor, UAnimSequenceBase* FallAnims)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerFallRagdoll_Implementation(AActor* RagdolledActor)
+void ATodakBattleArenaCharacter::ServerFallRagdoll_Implementation(AActor* RagdolledActor, UAnimSequenceBase* FallAnims)
 {
-	MulticastFallRagdoll(RagdolledActor);
+	if (this->GetLocalRole() == ROLE_Authority)
+	{
+		MulticastFallRagdoll(RagdolledActor, FallAnims);
+	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastFallRagdoll_Validate(AActor* RagdolledActor)
+bool ATodakBattleArenaCharacter::MulticastFallRagdoll_Validate(AActor* RagdolledActor, UAnimSequenceBase* FallAnims)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::MulticastFallRagdoll_Implementation(AActor* RagdolledActor)
+void ATodakBattleArenaCharacter::MulticastFallRagdoll_Implementation(AActor* RagdolledActor, UAnimSequenceBase* FallAnims)
 {
 	//
-	if (GetLocalRole() == ROLE_Authority)
+	if (this->GetLocalRole() == ROLE_Authority)
 	{
 		if (IsRunningDedicatedServer() == true)
 		{
@@ -1860,16 +1878,55 @@ void ATodakBattleArenaCharacter::MulticastFallRagdoll_Implementation(AActor* Rag
 		}
 
 	}
-	if (GetLocalRole() < ROLE_Authority)
+	else
 	{
 	Fall:
-		this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
-		this->PhysicsAlpha = 0.0f;
-		this->InRagdoll = true;
+		UTBAAnimInstance* currAnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
+		currAnimInst->FallAnim = FallAnims;
+		currAnimInst->RagdollMode = true;
 
-		if (this->IsLocallyControlled())
+		FLatentActionInfo LatentInfo;
+
+		//Delay before simulate physics
+		UKismetSystemLibrary::Delay(this, currAnimInst->FallAnim->SequenceLength, LatentInfo);
+
+		//Disable hair physics
+		this->Hair->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Ignore);
+
+		//Start simulate body
+		//this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
+
+		//Stop any movement
+		this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+
+		//Delay before simulate physics
+		UKismetSystemLibrary::Delay(this, 3.0f, LatentInfo);
+
+		float currHp = UGestureMathLibrary::CalculatePercentageFromValue(this->Health, this->MaxHealth, 100.0f);
+
+		if (currHp < 100.0f)
 		{
-			this->SetReplicateMovement(false);
+			if (currHp < 80.0f)
+			{
+				if (this->IsLocallyControlled())
+				{
+					this->CallGetUpFunction(RagdolledActor, this->GetMesh());
+				}
+			}
+			else
+			{
+				if (this->IsLocallyControlled())
+				{
+					this->CallEventTimerFunction();
+				}
+			}
+		}
+		else
+		{
+			if (this->IsLocallyControlled())
+			{
+				this->CallEventLoseFunction();
+			}
 		}
 	}
 }
@@ -2692,6 +2749,9 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 	bwTimeline->SetTimelineFinishedFunc(TimelineFinished);
 	bwTimeline->PlayFromStart();
 
+	//Get direction view of the player
+	bool Front = UGestureMathLibrary::IsLooking(this->GetActorLocation(), this->EnemyElement->GetActorLocation(), this->GetActorRotation().Yaw);
+
 	/*if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline is played from start"));
@@ -2702,10 +2762,8 @@ void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
 
 	if ((UGestureMathLibrary::CalculatePercentageFromValue(this->Health, this->MaxHealth, 100.0f)) >= 50.0f)
 	{
-		if (this->IsLocallyControlled())
-		{
-			ServerFallRagdoll(this);
-		}
+		//Call the ragdoll
+		this->CallFallRagdoll(this, Front);
 	}
 }
 

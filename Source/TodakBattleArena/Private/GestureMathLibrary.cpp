@@ -505,3 +505,18 @@ float UGestureMathLibrary::CalculateTotalMaxVal(float Percentage, float MaxVal, 
 	ValFromPercentage = CalculateValueFromPercentage(Percentage, MaxVal, 100.0f);
 	return (MaxVal+ValFromPercentage);
 }
+
+bool UGestureMathLibrary::IsLooking(FVector Start, FVector Target, float ZVal)
+{
+	//Get look at rotation value
+	FRotator RotatorVal = UKismetMathLibrary::FindLookAtRotation(Start, Target);
+
+	bool InView = UKismetMathLibrary::InRange_FloatFloat(ZVal, RotatorVal.Yaw + (-90.0), RotatorVal.Yaw + 90.0);
+
+	//If object is facing the target
+	if (InView)
+	{
+		return true;
+	}
+	return false;
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "ReferenceSkeleton.h"
@@ -152,4 +153,8 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Rate")
 	static float CalculateTotalMaxVal(float Percentage, float MaxVal, float& ValFromPercentage);
+
+	//Rotations
+	UFUNCTION(BlueprintPure, Category = "Rotation")
+	static bool IsLooking(FVector Start, FVector Target, float ZVal);
 };
