@@ -189,32 +189,25 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	TArray<EBodyPart> BodyParts;
 
-	//How far the collision detection will be registered
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	float HitTraceLength;
-
-	//Anim to be played on hold
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	UAnimMontage* StartAnimMontage;
-
 	//Anim to be played on hold when switch right
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	UAnimMontage* StartAnimMontageRight;
+
+	//Anim to be played on hold when switch left
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	UAnimMontage* StartAnimMontageLeft;
 
-	//Anim to be played on swipe
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	UAnimMontage* SkillMoveset;
-
 	//Anim to be played on swipe when switch right
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	UAnimMontage* SkillMovesetRight;
+
+	//Anim to be played on swipe when switch left
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	UAnimMontage* SkillMovesetLeft;
 
-	//Anim to be played on swipe
+	//Anim to be played on block
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	UAnimMontage* SkillBlockHit;
-
-	///*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	//TArray<EMontageSection> Sections;*/
 	
 	//What time does the swipe anim will start
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeAnimTime")
