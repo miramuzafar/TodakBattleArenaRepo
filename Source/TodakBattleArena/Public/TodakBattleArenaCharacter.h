@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "..\Public\GestureInputsFunctions.h"
-#include "Components/TimelineComponent.h"
 #include "Components/BoxComponent.h"
 #include "TargetLockInterface.h"
 #include "Components/PrimitiveComponent.h"
@@ -28,7 +27,6 @@ UCLASS(config=Game)
 class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, public ITargetLockInterface
 {
 	GENERATED_BODY()
-	//class UTimelineComponent* RagdollTimeline;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -70,8 +68,6 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	class UArrowComponent* RPunchArrow;
 
-	UPROPERTY(VisibleAnywhere, Category = "Timeline")
-	class UTimelineComponent* MyTimeline;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	//class UInventoryComponent* Inventory;
@@ -128,12 +124,6 @@ public:
 	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
 
-	UPROPERTY(EditAnywhere, Category = "Timeline")
-	class UCurveFloat* fCurve;
-
-	UPROPERTY(VisibleAnywhere, Category = "Timeline")
-	class UTimelineComponent* bwTimeline;
-
 	UPROPERTY(VisibleAnywhere, Replicated)
 	bool DoneRagdoll = false;
 
@@ -141,20 +131,16 @@ public:
 	bool IsFacingUp = false;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
-		FVector CapsuleLocation;
+	FVector CapsuleLocation;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
-		FVector MeshLocation;
+	FVector MeshLocation;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		FVector TestMeshLoc;
+	FVector TestMeshLoc;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
-		FRotator MeshRotation;
-
-	//FTimeline RagdollTimeLine = FTimeline();
-	//UCurveFloat* RagdollCurve;
-	//void TimeLineFloat(float Value);
+	FRotator MeshRotation;
 
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	//float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
@@ -174,25 +160,11 @@ public:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMulticastGetUp;
 
-	/*UFUNCTION()
-	virtual void AddImpulse(FVector Impulse, FName BoneName, bool bVelChange);*/
-
-	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
+	/*UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
 	void SvrOnHitRagdoll();
 
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastOnHitRagdoll();
-
-	UFUNCTION()
-	void TimelineFloatReturn(float value);
-
-	UFUNCTION()
-	void OnTimelineFinished();
-
-	FOnTimelineFloat InterpFunction{};
-
-	FOnTimelineEvent TimelineFinished{};
-
+	void MulticastOnHitRagdoll();*/
 
 	/////////////////////////End of hit reaction///////////////////////////
 
@@ -363,7 +335,7 @@ protected:
 	void OnEndOverlap(class UPrimitiveComponent* OverlappedActor, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	//Execute the skill
-	bool ExecuteAction(bool SkillTrigger, float HitTraceLengths, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill);
+	bool ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill);
 
 	//Initialize everything during begin play
 	UFUNCTION(BlueprintCallable, Category = "BeginPlay")
@@ -678,8 +650,7 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere,  BlueprintReadWrite, Category = "Anim")
 	float SkillPlayrate = 1.0f;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
-	UAnimMontage* PickedActionSkill;
+
 
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	//UAnim
