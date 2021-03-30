@@ -160,14 +160,6 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
 
-	/*MyTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));*/
-	bwTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline"));
-
-	/*FOnTimelineFloat InterpFunction{};
-	FOnTimelineEvent TimelineFinished{};*/
-	InterpFunction.BindUFunction(this, FName("TimelineFloatReturn"));
-	TimelineFinished.BindUFunction(this, FName("OnTimelineFinished"));
-
 	//Prevent out of sync ragdoll
 	//GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = true;
 	GetCharacterMovement()->bServerAcceptClientAuthoritativePosition = true;
@@ -175,26 +167,6 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	//Inventory = CreateDefaultSubobject<UInventoryComponent>("Inventory");
 	//Inventory->Capacity = 20;
 
-
-	//check if fCurve is valid
-	/*if (fCurve)
-	{
-		MyTimeline->AddInterpFloat(fCurve, InterpFunction, FName("Alpha"));
-		MyTimeline->SetTimelineFinishedFunc(TimelineFinished);
-
-		StartLocation = GetActorLocation();
-
-		EndLocation = FVector(StartLocation.X, StartLocation.Y, StartLocation.Z + ZOffset);
-
-		MyTimeline->SetLooping(false);
-		MyTimeline->SetIgnoreTimeDilation(true);
-
-		MyTimeline->Play();
-
-		UE_LOG(LogTemp, Warning, TEXT("Timeline is Created"));
-	}*/
-
-	
 }
 
 void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -255,7 +227,6 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillMoveset);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillHold);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillPlayrate);
-	DOREPLIFETIME(ATodakBattleArenaCharacter, PickedActionSkill);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SectionName);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RandSection)
 
@@ -630,7 +601,15 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						//temp = SkillPlayrate;
 						if (row->StartSwipeMontageTime.Num() > 0)
 						{
-							row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
+							if (RepSwitchSide)
+							{
+								row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMovesetLeft, row->Damage, row->CDSkill);
+							}
+							
+							if (RepSwitchSide)
+							{
+								row->CDSkill = ExecuteAction(row->SkillTrigger,  row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMovesetRight, row->Damage, row->CDSkill);
+							}
 						}
 						FingerIndex->bDo = true;
 						CheckForAction(name);
@@ -671,8 +650,16 @@ void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart, bool IsRel
 				SectionName = arr[RandSection];
 				//int random = rand() % 3;
 
-				SkillHold = row->StartAnimMontage;
+				if (RepSwitchSide)
+				{
+					SkillHold = row->StartAnimMontageLeft;
+				}
 
+				if (!RepSwitchSide)
+				{
+					SkillHold = row->StartAnimMontageRight;
+				}
+				
 				//if current row->StopHoldAnimTime is not empty
 				if (row->StopHoldAnimTime.Num() > 0)
 				{
@@ -709,7 +696,15 @@ void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart, bool IsRel
 					//temp = SkillPlayrate;
 					if (row->StartSwipeMontageTime.Num() > 0)
 					{
-						row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
+						if (RepSwitchSide)
+						{
+							row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMovesetLeft, row->Damage, row->CDSkill);
+						}
+
+						if (!RepSwitchSide)
+						{
+							row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMovesetRight, row->Damage, row->CDSkill);
+						}
 					}
 					CheckForAction(BodyPart);
 					if (SkillTriggered == false)
@@ -1243,7 +1238,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 	}
 }
 
-bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTraceLengths, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill)
+bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill)
 {
 	if (SkillTrigger == true)
 	{
@@ -1252,11 +1247,6 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float HitTrace
 		BodyParts.Empty();
 
 		//Set all the attribute to the current vars of player
-		HitTraceLength = HitTraceLengths;
-		//this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-		
-		
-		//this->GetCharacterMovement()->StopMovementImmediately();
 		CDSkill = true;
 
 		//Get the Montage to be play
@@ -2404,7 +2394,16 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", InputTouch[Index].FingerIndex))));
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", InputTouch[Index].SwipeActions))));
 							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch bdo is %s"), (InputTouch[Index].bDo) ? TEXT("True") : TEXT("False")));
-							SkillHold = row->StartAnimMontage;
+
+							if (RepSwitchSide)
+							{
+								SkillHold = row->StartAnimMontageLeft;
+							}
+
+							if (!RepSwitchSide)
+							{
+								SkillHold = row->StartAnimMontageRight;
+							}
 
 							//if current row->StopHoldAnimTime is not empty
 							if (row->StopHoldAnimTime.Num() > 0)
@@ -2562,74 +2561,7 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 void ATodakBattleArenaCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
-
-	//if (AActor::GetInputAxisKeyValue(InputAxisKey)
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), Rate);
-	//float Value = InputComponent->AActor::GetAxisKeyValue(InputAxisKey);
-	//float Value = AActor::GetInputAxisKeyValue(Rate);
-	//float Value = InputComponent->GetInputAxisKeyValue(Rate);
-
-
-	//if ((Controller != NULL) && (Rate != 0.0f))
-	//{
-	//	if (Rate != 0.0f)
-	//	{
-	//		if (Rate > 0.0f)
-	//		{
-	//			// turn right
-	//			TurnRight = true;
-	//			TurnLeft = false;
-	//			UE_LOG(LogTemp, Warning, TEXT("TurnRight: %s"), TurnRight ? TEXT("true") : TEXT("false"));
-	//			UE_LOG(LogTemp, Warning, TEXT("Is Moving: %s"), IsMoving ? TEXT("true") : TEXT("false"));
-
-	//		}
-
-	//		else
-	//		{
-	//			// turn left
-	//			TurnLeft = true;
-	//			TurnRight = false;
-	//			UE_LOG(LogTemp, Warning, TEXT("TurnLeft: %s"), TurnLeft ? TEXT("true") : TEXT("false"));
-
-	//		}
-	//	}
-	//	
-	//	else
-	//	{
-	//		// idle
-	//		TurnRight = false;
-	//		TurnLeft = false;
-	//	}
-
-	//}
-	
-
-
-
-	/*if (Rate > 0.0)
-	{
-		TurnLeft = false;
-		TurnRight = true;
-	}
-
-	else
-	{
-		if (Rate < 0.0)
-		{
-			TurnRight = false;
-			TurnLeft = true;
-		}
-		
-		else if (Rate == 0.0)
-		{
-			TurnRight = false;
-			TurnLeft = false;
-		}
-		
-	}*/
-
-	
+	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());	
 }
 
 void ATodakBattleArenaCharacter::LookUpAtRate(float Rate)
@@ -2699,73 +2631,62 @@ void ATodakBattleArenaCharacter::StartAttack4()
 }
 
 
-void ATodakBattleArenaCharacter::TimelineFloatReturn(float value)
-{
-	/*SetActorLocation(FMath::Lerp(StartLocation, EndLocation, value));*/
-	BlendWeight = value;
-	//set blendweight value
-	/*if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline Update"));
-	}*/
-}
-
-void ATodakBattleArenaCharacter::OnTimelineFinished()
-{
-	
-	IsHit = false;
-
-	//set boolean is hit to false
-	/*if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline Finished"));
-	}*/
-		
-}
-
-bool ATodakBattleArenaCharacter::SvrOnHitRagdoll_Validate()
-{
-	return true;
-}
-
-void ATodakBattleArenaCharacter::SvrOnHitRagdoll_Implementation()
-{
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		MulticastOnHitRagdoll();
-	}
-}
-
-bool ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Validate()
-{
-	return true;
-}
-
-void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
-{	
-
-	bwTimeline->SetTimelineLength(1.0f);
-	bwTimeline->AddInterpFloat(fCurve, InterpFunction);
-	bwTimeline->SetTimelineFinishedFunc(TimelineFinished);
-	bwTimeline->PlayFromStart();
-
-	//Get direction view of the player
-	bool Front = UGestureMathLibrary::IsLooking(this->GetActorLocation(), this->EnemyElement->GetActorLocation(), this->GetActorRotation().Yaw);
-
-	/*if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline is played from start"));
-	}*/
-	FVector ImpulseForce;
-	ImpulseForce = UKismetMathLibrary::GetForwardVector(GetActorRotation()) * 1.0f;
-	GetMesh()->UPrimitiveComponent::AddImpulse(ImpulseForce, BoneName, false);
-
-	if ((UGestureMathLibrary::CalculatePercentageFromValue(this->Health, this->MaxHealth, 100.0f)) >= 50.0f)
-	{
-		//Call the ragdoll
-		this->CallFallRagdoll(this, Front);
-	}
-}
+//void ATodakBattleArenaCharacter::TimelineFloatReturn(float value)
+//{
+//	/*SetActorLocation(FMath::Lerp(StartLocation, EndLocation, value));*/
+//	BlendWeight = value;
+//	//set blendweight value
+//}
+//
+//void ATodakBattleArenaCharacter::OnTimelineFinished()
+//{
+//	
+//	IsHit = false;
+//		
+//}
+//bool ATodakBattleArenaCharacter::SvrOnHitRagdoll_Validate()
+//{
+//	return true;
+//}
+//
+//void ATodakBattleArenaCharacter::SvrOnHitRagdoll_Implementation()
+//{
+//	if (GetLocalRole() == ROLE_Authority)
+//	{
+//		MulticastOnHitRagdoll();
+//	}
+//}
+//
+//bool ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Validate()
+//{
+//	return true;
+//}
+//
+//void ATodakBattleArenaCharacter::MulticastOnHitRagdoll_Implementation()
+//{	
+//
+//	bwTimeline->SetTimelineLength(1.0f);
+//	bwTimeline->AddInterpFloat(fCurve, InterpFunction);
+//	bwTimeline->SetTimelineFinishedFunc(TimelineFinished);
+//	bwTimeline->PlayFromStart();
+//
+//	//Get direction view of the player
+//	bool Front = UGestureMathLibrary::IsLooking(this->GetActorLocation(), this->EnemyElement->GetActorLocation(), this->GetActorRotation().Yaw);
+//
+//	/*if (GEngine)
+//	{
+//		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Timeline is played from start"));
+//	}*/
+//	FVector ImpulseForce;
+//	ImpulseForce = UKismetMathLibrary::GetForwardVector(GetActorRotation()) * 1.0f;
+//	GetMesh()->UPrimitiveComponent::AddImpulse(ImpulseForce, BoneName, false);
+//
+//	if ((UGestureMathLibrary::CalculatePercentageFromValue(this->Health, this->MaxHealth, 100.0f)) >= 50.0f)
+//	{
+//		//Call the ragdoll
+//		this->CallFallRagdoll(this, Front);
+//	}
+//}
 
 void ATodakBattleArenaCharacter::OnCombatColl(UCapsuleComponent* CombatColl)
 {
