@@ -36,7 +36,9 @@ enum class EInputType : uint8
 	UpwardLeftCurve,
 	UpwardRightCurve,
 	DownwardLeftCurve,
-	DownwardRightCurve
+	DownwardRightCurve, 
+	Tap,
+	Hold
 };
 
 //Bodypart
@@ -189,37 +191,17 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	TArray<EBodyPart> BodyParts;
 
-	//Anim to be played on hold when switch right
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	UAnimMontage* StartAnimMontageRight;
-
-	//Anim to be played on hold when switch left
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	UAnimMontage* StartAnimMontageLeft;
-
 	//Anim to be played on swipe when switch right
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	UAnimMontage* SkillMovesetRight;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillSwipe")
+	UAnimMontage* SkillMoveset;
 
-	//Anim to be played on swipe when switch left
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	UAnimMontage* SkillMovesetLeft;
-
-	//Anim to be played on block
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	UAnimMontage* SkillBlockHit;
-	
 	//What time does the swipe anim will start
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeAnimTime")
-	TArray<float> StartSwipeMontageTime;
+	float SkillMovesetTime;
 
 	//Playrate swipe anim
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float SkillMoveSetRate;
-
-	//Time to stop current touch anim
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AnimHold")
-	TArray<float> StopHoldAnimTime;
 
 	//Damage to be dealt from the action
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")

@@ -244,6 +244,8 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "BlockedHit")
 	bool AICanAttack = false;
 
+	//RagdollTimer
+	FTimerHandle FallTimerHandle;
 
 	FTimerHandle IterateArray;
 
@@ -362,27 +364,27 @@ protected:
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames);
+	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound);
 
 	//Skill replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames);
+	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
-	void ServerSkillStartMontage(UAnimMontage* ServerSkill, FName SectionNames, float PauseAnimTime);
+	void ServerSkillStartMontage(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime);
 
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillStartMontage(UAnimMontage* MulticastSkill, FName SectionNames, float PauseAnimTime);
+	void MulticastSkillStartMontage(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
-	void ServerSkillBlockHitMontage(UAnimMontage* ServerSkill);
+	void ServerSkillBlockHitMontage(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
 
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill);
+	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
@@ -428,6 +430,8 @@ protected:
 
 	//Reset movement after skill is executed
 	void ResetMovementMode();
+
+	void SimulatePhysicRagdoll(AActor* RagdolledActor);
 
 	//Preparing for ragdoll
 	UFUNCTION(BlueprintCallable, Category = "Ragdoll")
@@ -475,7 +479,7 @@ protected:
 
 	//OnRelease
 	UFUNCTION(BlueprintCallable)
-	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime);
+	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime, FVector2D Locations);
 
 	UFUNCTION(BlueprintCallable)
 		void CalculateMeshLocation(USceneComponent* Capsule, FVector& FinalLoc);
@@ -544,6 +548,16 @@ protected:
 	TArray<FName> SkillNames;
 
 protected:
+
+	APlayerController* playerController;
+	//get start touch time
+	double startTouch;
+
+	//is current touch is on hold mode?
+	bool TouchIsHold = false;
+
+	FFingerIndex* CurrFingerIndex;
+
 	/**************************************START STATS******************************************/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLock")
 	bool isAI = false;
@@ -866,6 +880,10 @@ protected:
 	int Combo;
 
 	//********************TargetOnLock**************************************//
+
+	UPROPERTY(EditDefaultsOnly, Category = "Targetlock")
+	float Radius = 50.0f;
+
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Targetlock")
 	float PlayerToEnemyDistance;
 
@@ -904,7 +922,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Status")
 	bool SkillTriggered = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	float SkillStopTime;
 
 	//The amount of damage to apply
