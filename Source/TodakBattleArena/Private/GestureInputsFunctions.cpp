@@ -65,7 +65,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 					{
 						PlayerChar->RightFoot = false;
 						//FingerIndex->bDo = true;
-						FingerIndex->StartLocation = FVector2D(0, 0);
+						//FingerIndex->StartLocation = FVector2D(0, 0);
 						PlayerChar->SwipeActions.Add(Branches);
 						PlayerChar->BodyParts.Add(EBodyPart::RightHand);
 						FingerIndex->SwipeActions = Branches;
@@ -91,7 +91,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 					{
 						PlayerChar->LeftFoot = false;
 						//FingerIndex->bDo = true;
-						FingerIndex->StartLocation = FVector2D(0, 0);
+						//FingerIndex->StartLocation = FVector2D(0, 0);
 						PlayerChar->SwipeActions.Add(Branches);
 						PlayerChar->BodyParts.Add(EBodyPart::LeftHand);
 						FingerIndex->SwipeActions = Branches;
@@ -126,7 +126,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 					if ((FingerIndex->StartLocation - Line1End).Size() > 50.0f)
 					{
 						//FingerIndex->bDo = true;
-						FingerIndex->StartLocation = FVector2D(0, 0);
+						//FingerIndex->StartLocation = FVector2D(0, 0);
 						PlayerChar->SwipeActions.Add(Branches);
 						PlayerChar->BodyParts.Add(EBodyPart::RightFoot);
 						FingerIndex->SwipeActions = Branches;
@@ -150,7 +150,7 @@ void UGestureInputsFunctions::RightSwipeArea(ATodakBattleArenaCharacter* PlayerC
 					if ((FingerIndex->StartLocation - Line1End).Size() > 50.0f)
 					{
 						//FingerIndex->bDo = true;
-						FingerIndex->StartLocation = FVector2D(0, 0);
+						//FingerIndex->StartLocation = FVector2D(0, 0);
 						PlayerChar->SwipeActions.Add(Branches);
 						PlayerChar->BodyParts.Add(EBodyPart::LeftFoot);
 						FingerIndex->SwipeActions = Branches;
@@ -257,10 +257,8 @@ void UGestureInputsFunctions::CircleSwipeArea(ATodakBattleArenaCharacter* Player
 			//Check if line is within right circle
 			if (FingerIndex->StartLocation.X >= ViewportCenter.X && Line1End.X >= ViewportCenter.X)
 			{
-				if (FingerIndex->SwipeActions == EInputType::Pressed)
-				{
-					FingerIndex->BodyParts = EBodyPart::RightFoot;
-				}
+				//FingerIndex->BodyParts = EBodyPart::RightFoot;
+				FingerIndex->BodyParts = EBodyPart::RightFoot;
 				//PlayerChar->BodyParts.AddUnique(EBodyPart::RightFoot);
 				//UE_LOG(LogTemp, Warning, TEXT("Current Location : %f"), (FingerIndex->StartLocation - Line1End).Size());
 				//Get the highest curve vector if possible
@@ -314,7 +312,7 @@ void UGestureInputsFunctions::CircleSwipeArea(ATodakBattleArenaCharacter* Player
 					{
 						PlayerChar->RightFoot = false;
 						//FingerIndex->bDo = true;
-						FingerIndex->StartLocation = FVector2D(0, 0);
+						//FingerIndex->StartLocation = FVector2D(0, 0);
 						PlayerChar->SwipeActions.Add(Branches);
 						PlayerChar->BodyParts.Add(EBodyPart::RightFoot);
 						FingerIndex->SwipeActions = Branches;
@@ -335,10 +333,7 @@ void UGestureInputsFunctions::CircleSwipeArea(ATodakBattleArenaCharacter* Player
 			//Check if line is within left circle
 			else if (FingerIndex->StartLocation.X < ViewportCenter.X && Line1End.X < ViewportCenter.X)
 			{
-				if (FingerIndex->SwipeActions == EInputType::Pressed)
-				{
-					FingerIndex->BodyParts = EBodyPart::LeftFoot;
-				}
+				FingerIndex->BodyParts = EBodyPart::LeftFoot;
 				//PlayerChar->BodyParts.AddUnique(EBodyPart::LeftFoot);
 				//UE_LOG(LogTemp, Warning, TEXT("Current Location : %f"), (FingerIndex->StartLocation - Line1End).Size());
 				//Get the highest curve vector if possible
@@ -419,10 +414,12 @@ void UGestureInputsFunctions::CircleSwipeArea(ATodakBattleArenaCharacter* Player
 			//Check if line is within right circle
 			if (FingerIndex->StartLocation.X > ViewportCenter.X && Line1End.X > ViewportCenter.X)
 			{
-				if (FingerIndex->SwipeActions == EInputType::Pressed)
+				FingerIndex->BodyParts = EBodyPart::RightHand;
+				/*if (FingerIndex->SwipeActions == EInputType::Pressed)
 				{
+					UE_LOG(LogTemp, Warning, TEXT("success"));
 					FingerIndex->BodyParts = EBodyPart::RightHand;
-				}
+				}*/
 				//PlayerChar->BodyParts.AddUnique(EBodyPart::RightHand);
 				//UE_LOG(LogTemp, Warning, TEXT("Current Location : %f"), (FingerIndex->StartLocation - Line1End).Size());
 				//Get the highest curve vector if possible
@@ -492,10 +489,7 @@ void UGestureInputsFunctions::CircleSwipeArea(ATodakBattleArenaCharacter* Player
 			//Check if line is within left circle
 			else if (FingerIndex->StartLocation.X < ViewportCenter.X && Line1End.X < ViewportCenter.X)
 			{
-				if (FingerIndex->SwipeActions == EInputType::Pressed)
-				{
-					FingerIndex->BodyParts = EBodyPart::LeftHand;
-				}
+				FingerIndex->BodyParts = EBodyPart::LeftHand;
 				//PlayerChar->BodyParts.AddUnique(EBodyPart::LeftHand);
 				//UE_LOG(LogTemp, Warning, TEXT("Current Location : %f"), (FingerIndex->StartLocation - Line1End).Size());
 				//Get the highest curve vector if possible
