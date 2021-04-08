@@ -259,6 +259,7 @@ void UGestureInputsFunctions::CircleSwipeArea(ATodakBattleArenaCharacter* Player
 			{
 				//FingerIndex->BodyParts = EBodyPart::RightFoot;
 				FingerIndex->BodyParts = EBodyPart::RightFoot;
+				//Heloooo
 				//PlayerChar->BodyParts.AddUnique(EBodyPart::RightFoot);
 				//UE_LOG(LogTemp, Warning, TEXT("Current Location : %f"), (FingerIndex->StartLocation - Line1End).Size());
 				//Get the highest curve vector if possible
