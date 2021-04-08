@@ -253,8 +253,11 @@ public:
 	FTimerHandle DistanceEnemTimer;
 	FTimerHandle ToggleTimer;
 
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated,  Category = "SwipeGesture")
 	FTimerHandle BlockHitTimer;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	bool IsEffectiveBlock = false;
 
 	////////////////Swipe pattern enums////////////////////////////////
 	TArray<FName> RowNames;

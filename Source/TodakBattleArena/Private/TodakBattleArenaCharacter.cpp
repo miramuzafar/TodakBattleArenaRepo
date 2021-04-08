@@ -80,7 +80,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	CameraBoom->bUsePawnControlRotation = false; // Rotate the arm based on the controller
 	CameraBoom->bDoCollisionTest = true;
 
 	// Create a follow camera
@@ -245,6 +245,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 
 	//**AnimMontage**//
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockHit);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, IsEffectiveBlock);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillMoveset);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillHold);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillPlayrate);
@@ -332,6 +333,17 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 
 			//Locate player position based of the radius size
 			this->SetActorLocation(this->EnemyElement->GetActorLocation() + FromOriginToTarget);
+			
+			//Enemy anim changes to fighting stance
+			EnemyElement->RepIsMoving = true;
+
+			// Set camera to fight
+			
+			//EnemyElement->CameraBoom->SetRelativeLocation(FVector((198.000000f, 194.000000f, 50.000000f)));
+			//EnemyElement->CameraBoom->RelativeRotation += (FRotator((0.000000f, -50.000000f, 0.000000f)));
+			
+			//this->FollowCamera->SetRelativeRotation(FRotator(((0.000000f, -50.000069f, 0.000000f))));
+
 		}
 		if (GetCharacterMovement()->Velocity.Size() > 0.0f)
 		{
@@ -339,6 +351,8 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 		}
 		else
 			Controller->SetControlRotation(Controller->GetControlRotation());
+			
+			
 	}
 }
 
@@ -1187,6 +1201,7 @@ bool ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Validate(UAnimMon
 
 void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
+	this->BlockedHit = IsBlocked;
 	if (IsBlocked == true)
 	{
 		//Play anim on touch press/hold
@@ -1200,20 +1215,20 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UA
 		//UE_LOG(LogTemp, Warning, TEXT("SectionName : %s"), *SectionName.ToString());
 		UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
 
-		if (this->IsLocallyControlled())
+		/*if (this->IsLocallyControlled())
 		{
 			this->BlockedHit = true;
-		}
+		}*/
 	}
 	else
 	{
 		//If the anim is not currently playing
 		this->StopAnimMontage(RPCMultiCastBlockHit);
 
-		if (this->IsLocallyControlled())
+		/*if (this->IsLocallyControlled())
 		{
 			this->BlockedHit = true;
-		}
+		}*/
 		//this->GetMesh()->GetAnimInstance()->StopAllMontages(3.0f);
 		//this->ResetMovementMode();
 	}
@@ -1343,6 +1358,18 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 							GetWorld()->GetTimerManager().SetTimer(ToggleTimer, this, &ATodakBattleArenaCharacter::TriggerToggleLockOn, 0.001f, true);
 							//GetWorld()->GetFirstPlayerController()->PlayerCameraManager->
 							TargetLocked = true;
+
+							if (TargetLocked == true)
+							{
+								float deltaTime = this->GetWorld()->GetDeltaSeconds();
+								
+								//this->CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, 700.0f, deltaTime, 1.0f);
+								//this->CameraBoom->SetRelativeLocation(FVector((198.000000f, 194.000000f, 50.000000f)));
+								//this->CameraBoom->SetRelativeRotation(FRotator((0.000000f, -50.000000f, 0.000000f)));
+								//this->CameraBoom->SetRelativeRotation(FRotator(((0.000000f, 0.000069f, 0.000000f))));
+								//this->FollowCamera->SetRelativeLocation(FVector((198.203995f, 194.413834f, -20.000000f)));
+								//this->FollowCamera->SetRelativeRotation(FRotator(((0.000000f, -50.000069f, 0.000000f))));
+							}
 						}
 					}
 				}
