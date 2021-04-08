@@ -624,65 +624,70 @@ void ATodakBattleArenaCharacter::SetUpGetUpMontage(USkeletalMeshComponent* currM
 
 void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 {
-	//Used in error reporting
-	FString Context;
-	//float temp = GetMesh()->GetAnimInstance()->LocoPlayrate;
-	//UTBAAnimInstance* AnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
-
-	//UTBAAnimInstance* UAnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
-	//UAnimInstance->LocoPlayrate;
-
-	if (InputStyle != EInputStyle::Button)
+	if (SkillTriggered == false)
 	{
-		//Search the skill available
-		for (auto& name : ActionTable->GetRowNames())
-		{
-			FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
-			if (row)
-			{
-				//Check if the input is same as the input needed to execute the skill
-				if (row->SwipeActions.Contains(FingerIndex->SwipeActions) && row->BodyParts.Contains(FingerIndex->BodyParts))
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
-					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
-					//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
-					row->SkillTrigger = true;
-					SkillTriggered = row->SkillTrigger;
+		//Used in error reporting
+		FString Context;
+		//float temp = GetMesh()->GetAnimInstance()->LocoPlayrate;
+		//UTBAAnimInstance* AnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
 
-					//Execute skill if cooldown is finished
-					if (row->CDSkill == false)
+		//UTBAAnimInstance* UAnimInstance = Cast<UTBAAnimInstance>(GetMesh()->GetAnimInstance());
+		//UAnimInstance->LocoPlayrate;
+
+		if (InputStyle != EInputStyle::Button)
+		{
+			//Search the skill available
+			for (auto& name : ActionTable->GetRowNames())
+			{
+				FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
+				if (row)
+				{
+					//Do once
+					SkillTriggered = true;
+					//Check if the input is same as the input needed to execute the skill
+					if (row->SwipeActions.Contains(FingerIndex->SwipeActions) && row->BodyParts.Contains(FingerIndex->BodyParts))
 					{
 						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
 						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
 						//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
-						row->SkillTrigger = true;
-						SkillTriggered = row->SkillTrigger;
-						row->SkillMoveSetRate = SkillPlayrate;
-						//RepLocoPlayrate = SkillPlayrate;
-						//AnimInstance->LocoPlayrate = SkillPlayrate;
-						//temp = SkillPlayrate;
+						//row->SkillTrigger = true;
+						//SkillTriggered = row->SkillTrigger;
 
-						row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->CDSkill);
+						//Execute skill if cooldown is finished
+						if (row->CDSkill == false)
+						{
+							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
+							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
+							//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
+							//row->SkillTrigger = true;
+							//SkillTriggered = row->SkillTrigger;
+							row->SkillMoveSetRate = SkillPlayrate;
+							//RepLocoPlayrate = SkillPlayrate;
+							//AnimInstance->LocoPlayrate = SkillPlayrate;
+							//temp = SkillPlayrate;
 
-						/*if (FingerIndex->SwipeActions == EInputType::Up)
-						{
-							row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillMoveset, row->Damage, row->CDSkill);
+							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->CDSkill);
+
+							/*if (FingerIndex->SwipeActions == EInputType::Up)
+							{
+								row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillMoveset, row->Damage, row->CDSkill);
+							}
+							else if (FingerIndex->SwipeActions == EInputType::Tap)
+							{
+								row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillTap, row->Damage, row->CDSkill);
+							}*/
+							/*if (row->StartSwipeMontageTime.Num() > 0)
+							{
+								row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->Damage, row->CDSkill);
+							}*/
+							FingerIndex->bDo = true;
+							CheckForAction(name);
+							/*if (SkillTriggered == false)
+							{
+								row->SkillTrigger = false;
+							}*/
+							break;
 						}
-						else if (FingerIndex->SwipeActions == EInputType::Tap)
-						{
-							row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillTap, row->Damage, row->CDSkill);
-						}*/
-						/*if (row->StartSwipeMontageTime.Num() > 0)
-						{
-							row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->Damage, row->CDSkill);
-						}*/
-						FingerIndex->bDo = true;
-						CheckForAction(name);
-						if (SkillTriggered == false)
-						{
-							row->SkillTrigger = false;
-						}
-						break;
 					}
 				}
 			}
@@ -1214,7 +1219,6 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UA
 		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
 		//UE_LOG(LogTemp, Warning, TEXT("SectionName : %s"), *SectionName.ToString());
 		UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
-
 		/*if (this->IsLocallyControlled())
 		{
 			this->BlockedHit = true;
@@ -1225,6 +1229,7 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UA
 		//If the anim is not currently playing
 		this->StopAnimMontage(RPCMultiCastBlockHit);
 
+		//this->BlockedHit = IsBlocked;
 		/*if (this->IsLocallyControlled())
 		{
 			this->BlockedHit = true;
@@ -1740,7 +1745,6 @@ void ATodakBattleArenaCharacter::MoveOnHold()
 
 void ATodakBattleArenaCharacter::ResetMovementMode()
 {
-	
 	//reset character movement mode back to walking
 	this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	canMove = true;
