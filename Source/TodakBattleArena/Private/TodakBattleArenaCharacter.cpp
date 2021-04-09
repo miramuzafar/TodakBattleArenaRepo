@@ -333,16 +333,6 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 
 			//Locate player position based of the radius size
 			this->SetActorLocation(this->EnemyElement->GetActorLocation() + FromOriginToTarget);
-			
-			//Enemy anim changes to fighting stance
-			EnemyElement->RepIsMoving = true;
-
-			// Set camera to fight
-			
-			//EnemyElement->CameraBoom->SetRelativeLocation(FVector((198.000000f, 194.000000f, 50.000000f)));
-			//EnemyElement->CameraBoom->RelativeRotation += (FRotator((0.000000f, -50.000000f, 0.000000f)));
-			
-			//this->FollowCamera->SetRelativeRotation(FRotator(((0.000000f, -50.000069f, 0.000000f))));
 
 		}
 		if (GetCharacterMovement()->Velocity.Size() > 0.0f)
@@ -351,6 +341,7 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 		}
 		else
 			Controller->SetControlRotation(Controller->GetControlRotation());
+			
 			
 			
 	}
@@ -1366,14 +1357,15 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 
 							if (TargetLocked == true)
 							{
-								float deltaTime = this->GetWorld()->GetDeltaSeconds();
 								
-								//this->CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, 700.0f, deltaTime, 1.0f);
-								//this->CameraBoom->SetRelativeLocation(FVector((198.000000f, 194.000000f, 50.000000f)));
-								//this->CameraBoom->SetRelativeRotation(FRotator((0.000000f, -50.000000f, 0.000000f)));
-								//this->CameraBoom->SetRelativeRotation(FRotator(((0.000000f, 0.000069f, 0.000000f))));
-								//this->FollowCamera->SetRelativeLocation(FVector((198.203995f, 194.413834f, -20.000000f)));
-								//this->FollowCamera->SetRelativeRotation(FRotator(((0.000000f, -50.000069f, 0.000000f))));
+								//Forces player to enter ready stance
+								//EnemyElement->RepIsMoving = true;
+
+								//Sets player camera nearer
+								FLatentActionInfo LatentInfo = FLatentActionInfo();
+								LatentInfo.CallbackTarget = this;
+								UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(200.0f, 195.0f, 0.0f), FRotator(0.0f, -50.0f, 0.0f), true, true, 1.5f, true, EMoveComponentAction::Type::Move, LatentInfo);
+								
 							}
 						}
 					}
@@ -1407,6 +1399,12 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 						{
 							ClosestTargetDistance = 0.0f;
 							TargetLocked = false;
+							
+
+							//Sets player camera further
+							FLatentActionInfo LatentInfo = FLatentActionInfo();
+							LatentInfo.CallbackTarget = this;
+							UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(0.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f), true, true, 1.5f, true, EMoveComponentAction::Type::Move, LatentInfo);
 						}
 						//Stop target lock timer
 						GetWorld()->GetTimerManager().ClearTimer(ToggleTimer);
