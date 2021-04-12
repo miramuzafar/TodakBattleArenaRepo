@@ -15,6 +15,7 @@ class UBaseCharacterWidget;
 struct FKAggregateGeom;
 class UPhysicsAsset;
 class UTodakBattleArenaSaveGame;
+class UCameraShake;
 
 FORCEINLINE uint32 GetTypeHash(const FFingerIndex& Key)
 {
@@ -293,6 +294,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Bones")
 	TArray<FName> LegBone;
 	/**************EndBoneParts***************************/
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	TSubclassOf<UCameraShake> DamageCameraShake;
 
 	/*UPROPERTY(VisibleAnywhere, Category = "Trace")
 	AActor* HitActor;
