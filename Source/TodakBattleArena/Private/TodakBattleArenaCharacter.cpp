@@ -821,6 +821,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
 					DoDamage(hitChar);
+					
 					//hitChar->GetWorld()->GetFirstPlayerController()->PlayerCameraManager->PlayCameraShake(DamageCameraShake, 1.0f);
 					
 					
@@ -1933,8 +1934,7 @@ void ATodakBattleArenaCharacter::DoDamage_Implementation(AActor* HitActor)
 		UE_LOG(LogTemp, Warning, TEXT("Damage Applied: %f"), this->damage);
 		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 
-		this->FollowCamera->GetWorld()->GetFirstPlayerController()->PlayerCameraManager->PlayCameraShake(DamageCameraShake, 1.0f);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Camera Shake!!!")));
+		
 
 		//reset the bool so sweep trace can be executed again
 		//DoOnce = false;
