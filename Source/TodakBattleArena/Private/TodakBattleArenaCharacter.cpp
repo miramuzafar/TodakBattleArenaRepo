@@ -1355,7 +1355,10 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 							if (TargetLocked == true)
 							{
 								
+
+
 								//Forces player to enter ready stance
+								EnemyElement->isLocked = true;
 								//EnemyElement->RepIsMoving = true;
 
 								//Sets player camera nearer
@@ -1396,7 +1399,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 						{
 							ClosestTargetDistance = 0.0f;
 							TargetLocked = false;
-							
+							EnemyElement->isLocked = false;
 
 							//Sets player camera further
 							FLatentActionInfo LatentInfo = FLatentActionInfo();
