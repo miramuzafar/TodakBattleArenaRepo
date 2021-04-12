@@ -520,3 +520,32 @@ bool UGestureMathLibrary::IsLooking(FVector Start, FVector Target, float ZVal)
 	}
 	return false;
 }
+
+float UGestureMathLibrary::GetAngleOffsetFromForwardVector(AActor* A, AActor* B)
+{
+	FRotator actorRot = A->GetActorRotation();
+
+	FVector FWVector = UKismetMathLibrary::GetForwardVector(actorRot);
+
+	//Normalize
+	FWVector.Normalize();
+
+	//Opponet loc
+	FVector OpCurrVect = FVector(B->GetActorLocation().X, B->GetActorLocation().Y, 0.0f);
+
+	//Player loc
+	FVector PlayerCurrVect = FVector(A->GetActorLocation().X, A->GetActorLocation().Y, 0.0f);
+
+	FVector SubVal = OpCurrVect - PlayerCurrVect;
+
+	//Normalize both
+	SubVal.Normalize();
+
+	//get degree acos
+	float totalacosd = UKismetMathLibrary::DegAcos(UKismetMathLibrary::Dot_VectorVector(FWVector, SubVal));
+
+	//sign of float
+	float signfloat = UKismetMathLibrary::SignOfFloat(UKismetMathLibrary::Cross_VectorVector(FWVector, SubVal).Z);
+
+	return totalacosd * signfloat;
+}

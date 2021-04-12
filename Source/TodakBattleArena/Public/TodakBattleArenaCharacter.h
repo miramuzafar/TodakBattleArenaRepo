@@ -543,7 +543,13 @@ protected:
 	//Update value when the timer is active
 	void UpdateStatusValueTimer(FTimerHandle newHandle, EOperation Operation, bool StopOnFull, float ChangeVal, float Value, int MaxVal, float MinVal, float& totalVal);
 
-	
+	//***************************update targetlock anim*******************************//
+	//Loco Anim replicate on server
+	UFUNCTION(Reliable, Server, WithValidation)
+	void ServerTurnAnim(AActor* thisActor, float TurnLeft, float TurnRight);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastTurnAnim(AActor* thisActor, float TurnLeft, float TurnRight);
 
 
 	//***********************************Variables********************************************//
@@ -886,6 +892,11 @@ protected:
 	int Combo;
 
 	//********************TargetOnLock**************************************//
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Targetlock")
+	float RightVal = 0.0f;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Targetlock")
+	bool IsRotating = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Targetlock")
 	float Radius = 50.0f;
