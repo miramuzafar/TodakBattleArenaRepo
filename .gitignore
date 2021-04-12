@@ -110,3 +110,7 @@ TodakBattleArena.uproject
 TodakBattleArena.uproject
 TodakBattleArena.uproject
 TodakBattleArena.uproject
+*.ini
+*.ini
+*.cs
+*.uproject
