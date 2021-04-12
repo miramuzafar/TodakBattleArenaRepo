@@ -157,4 +157,7 @@ public:
 	//Rotations
 	UFUNCTION(BlueprintPure, Category = "Rotation")
 	static bool IsLooking(FVector Start, FVector Target, float ZVal);
+
+	UFUNCTION(BlueprintPure, Category = "Rotation")
+	static float GetAngleOffsetFromForwardVector(AActor* A, AActor* B);
 };

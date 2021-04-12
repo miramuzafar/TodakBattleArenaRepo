@@ -20,11 +20,15 @@ public:
 	//Replicated Network setup
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_TurnRight, BlueprintReadWrite)
 	bool TurnRight = false;
+	UFUNCTION()
+		void OnRep_TurnRight();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_TurnLeft, BlueprintReadWrite)
 	bool TurnLeft = false;
+	UFUNCTION()
+		void OnRep_TurnLeft();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float LocoPlayrate;

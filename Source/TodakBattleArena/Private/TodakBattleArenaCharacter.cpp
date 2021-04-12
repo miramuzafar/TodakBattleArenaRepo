@@ -229,6 +229,8 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, isLocked);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, PhysicsAlpha);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillTriggered);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RightVal);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, IsRotating);
 
 	//SwipeGesture
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillStopTime);
@@ -323,7 +325,7 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 		//if distance between players are smaller than the accepted radius
 		if (Dist < Radius)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("You are within the effective range"));
+			//UE_LOG(LogTemp, Warning, TEXT("You are within the effective range"));
 
 			//Get Vector from player minus target
 			FVector FromOriginToTarget = this->GetActorLocation() - this->EnemyElement->GetActorLocation();
@@ -333,26 +335,149 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 
 			//Locate player position based of the radius size
 			this->SetActorLocation(this->EnemyElement->GetActorLocation() + FromOriginToTarget);
-			
-			//Enemy anim changes to fighting stance
-			EnemyElement->RepIsMoving = true;
-
 			// Set camera to fight
 			
 			//EnemyElement->CameraBoom->SetRelativeLocation(FVector((198.000000f, 194.000000f, 50.000000f)));
 			//EnemyElement->CameraBoom->RelativeRotation += (FRotator((0.000000f, -50.000000f, 0.000000f)));
-			
 			//this->FollowCamera->SetRelativeRotation(FRotator(((0.000000f, -50.000069f, 0.000000f))));
+		}
+		NewController->SetControlRotation(NewRotator);
 
-		}
-		if (GetCharacterMovement()->Velocity.Size() > 0.0f)
+		if (this->RightVal == 0.0f)
 		{
-			NewController->SetControlRotation(NewRotator);
+			UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
+			//enemy forward vector
+			FVector FWEnem = UKismetMathLibrary::GetRightVector(this->EnemyElement->GetActorRotation());
+
+			//velocity of Enemy
+			FVector VEnem = this->EnemyElement->GetCharacterMovement()->Velocity;
+			VEnem.Normalize();
+
+			//get dot product
+			UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem);
+
+			if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) > 0.0f)
+			{
+				AnimInst->TurnRight = false;
+				AnimInst->TurnLeft = true;
+				/*if (this->IsLocallyControlled())
+				{
+					ServerTurnAnim(this, true, false);
+					AnimInst->TurnRight = false;
+					AnimInst->TurnLeft = true;
+					UE_LOG(LogTemp, Warning, TEXT("left"));
+				}*/
+			}
+			else if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) < 0.0f)
+			{
+				AnimInst->TurnLeft = false;
+				AnimInst->TurnRight = true;
+				//if (this->IsLocallyControlled())
+				//{
+				//	ServerTurnAnim(this, false, true);
+				//	//AnimInst->TurnLeft = false;
+				//	//AnimInst->TurnRight = true;
+				//	UE_LOG(LogTemp, Warning, TEXT("right"));
+				//}
+			}
+			else
+			{
+				AnimInst->TurnRight = false;
+				AnimInst->TurnLeft = false;
+				/*if (this->IsLocallyControlled())
+				{
+					ServerTurnAnim(this, false, false);
+					AnimInst->TurnRight = false;
+					AnimInst->TurnLeft = false;
+					UE_LOG(LogTemp, Warning, TEXT("out"));
+				}*/
+			}
 		}
-		else
-			Controller->SetControlRotation(Controller->GetControlRotation());
-			
-			
+		if (NearestTarget->RightVal == 0.0f)
+		{
+			UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(NearestTarget->GetMesh()->GetAnimInstance());
+			//enemy forward vector
+			FVector FWEnem = UKismetMathLibrary::GetRightVector(NearestTarget->EnemyElement->GetActorRotation());
+
+			//velocity of Enemy
+			FVector VEnem = NearestTarget->EnemyElement->GetCharacterMovement()->Velocity;
+			VEnem.Normalize();
+
+			//get dot product`
+			UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem);
+
+			if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) > 0.0f)
+			{
+				AnimInst->TurnRight = false;
+				AnimInst->TurnLeft = true;
+				/*if (this->IsLocallyControlled())
+				{
+					ServerTurnAnim(this, true, false);
+					AnimInst->TurnRight = false;
+					AnimInst->TurnLeft = true;
+					UE_LOG(LogTemp, Warning, TEXT("left"));
+				}*/
+			}
+			else if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) < 0.0f)
+			{
+				AnimInst->TurnLeft = false;
+				AnimInst->TurnRight = true;
+				//if (this->IsLocallyControlled())
+				//{
+				//	ServerTurnAnim(this, false, true);
+				//	//AnimInst->TurnLeft = false;
+				//	//AnimInst->TurnRight = true;
+				//	UE_LOG(LogTemp, Warning, TEXT("right"));
+				//}
+			}
+			else
+			{
+				AnimInst->TurnRight = false;
+				AnimInst->TurnLeft = false;
+				/*if (this->IsLocallyControlled())
+				{
+					ServerTurnAnim(this, false, false);
+					AnimInst->TurnRight = false;
+					AnimInst->TurnLeft = false;
+					UE_LOG(LogTemp, Warning, TEXT("out"));
+				}*/
+			}
+		}
+	}
+}
+
+bool ATodakBattleArenaCharacter::ServerTurnAnim_Validate(AActor* thisActor, float TurnLeft, float TurnRight)
+{
+	if (this == thisActor)
+	{
+		return true;
+	}
+	return false;
+}
+
+void ATodakBattleArenaCharacter::ServerTurnAnim_Implementation(AActor* thisActor, float TurnLeft, float TurnRight)
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		MulticastTurnAnim(thisActor, TurnLeft, TurnRight);
+	}
+}
+
+bool ATodakBattleArenaCharacter::MulticastTurnAnim_Validate(AActor* thisActor, float TurnLeft, float TurnRight)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::MulticastTurnAnim_Implementation(AActor* thisActor, float TurnLeft, float TurnRight)
+{
+	if (thisActor == this)
+	{
+		UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
+		if (AnimInst != nullptr)
+		{
+			AnimInst->TurnLeft = TurnLeft;
+			AnimInst->TurnRight = TurnRight;
+		}
 	}
 }
 
@@ -1402,6 +1527,12 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 					{
 						if (TargetLocked == true)
 						{
+							UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
+							AnimInst->TurnRight = false;
+							AnimInst->TurnLeft = false;
+							UTBAAnimInstance* AnimEnemInst = Cast<UTBAAnimInstance>(NearestTarget->GetMesh()->GetAnimInstance());
+							AnimEnemInst->TurnRight = false;
+							AnimEnemInst->TurnLeft = false;
 							ClosestTargetDistance = 0.0f;
 							TargetLocked = false;
 						}
@@ -2644,8 +2775,8 @@ void ATodakBattleArenaCharacter::MoveRight(float Value)
 			// add movement in that direction
 			AddMovementInput(Direction, Value);
 		}
-		
 	}
+	RightVal = Value;
 }
 
 void ATodakBattleArenaCharacter::StartAttack1()

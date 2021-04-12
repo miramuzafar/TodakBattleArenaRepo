@@ -11,6 +11,17 @@ void UTBAAnimInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UTBAAnimInstance, RagdollMode);
 	DOREPLIFETIME(UTBAAnimInstance, FallAnim);
 	DOREPLIFETIME(UTBAAnimInstance, IsStopped);
+	DOREPLIFETIME(UTBAAnimInstance, TurnLeft);
+	DOREPLIFETIME(UTBAAnimInstance, TurnRight);
+}
+
+void UTBAAnimInstance::OnRep_TurnRight()
+{
+
+}
+
+void UTBAAnimInstance::OnRep_TurnLeft()
+{
 }
 
 void UTBAAnimInstance::PlayerIsRagdoll()
