@@ -402,7 +402,6 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 			//velocity of Enemy
 			FVector VEnem = NearestTarget->EnemyElement->GetCharacterMovement()->Velocity;
 			VEnem.Normalize();
-
 			//get dot product`
 			UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem);
 
@@ -955,6 +954,10 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
 					DoDamage(hitChar);
+					//hitChar->GetWorld()->GetFirstPlayerController()->PlayerCameraManager->PlayCameraShake(DamageCameraShake, 1.0f);
+					
+					
+					
 				}
 			}
 		}
@@ -1483,19 +1486,23 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 						{
 							//Start target lock timer
 							GetWorld()->GetTimerManager().SetTimer(ToggleTimer, this, &ATodakBattleArenaCharacter::TriggerToggleLockOn, 0.001f, true);
-							//GetWorld()->GetFirstPlayerController()->PlayerCameraManager->
+							//
 							TargetLocked = true;
 
 							if (TargetLocked == true)
 							{
-								float deltaTime = this->GetWorld()->GetDeltaSeconds();
 								
-								//this->CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, 700.0f, deltaTime, 1.0f);
-								//this->CameraBoom->SetRelativeLocation(FVector((198.000000f, 194.000000f, 50.000000f)));
-								//this->CameraBoom->SetRelativeRotation(FRotator((0.000000f, -50.000000f, 0.000000f)));
-								//this->CameraBoom->SetRelativeRotation(FRotator(((0.000000f, 0.000069f, 0.000000f))));
-								//this->FollowCamera->SetRelativeLocation(FVector((198.203995f, 194.413834f, -20.000000f)));
-								//this->FollowCamera->SetRelativeRotation(FRotator(((0.000000f, -50.000069f, 0.000000f))));
+
+
+								//Forces player to enter ready stance
+								EnemyElement->isLocked = true;
+								//EnemyElement->RepIsMoving = true;
+
+								//Sets player camera nearer
+								FLatentActionInfo LatentInfo = FLatentActionInfo();
+								LatentInfo.CallbackTarget = this;
+								UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(200.0f, 195.0f, 0.0f), FRotator(0.0f, -50.0f, 0.0f), true, true, 1.5f, true, EMoveComponentAction::Type::Move, LatentInfo);
+								
 							}
 						}
 					}
@@ -1535,6 +1542,12 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 							AnimEnemInst->TurnLeft = false;
 							ClosestTargetDistance = 0.0f;
 							TargetLocked = false;
+							EnemyElement->isLocked = false;
+
+							//Sets player camera further
+							FLatentActionInfo LatentInfo = FLatentActionInfo();
+							LatentInfo.CallbackTarget = this;
+							UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(0.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f), true, true, 1.5f, true, EMoveComponentAction::Type::Move, LatentInfo);
 						}
 						//Stop target lock timer
 						GetWorld()->GetTimerManager().ClearTimer(ToggleTimer);
@@ -2058,6 +2071,9 @@ void ATodakBattleArenaCharacter::DoDamage_Implementation(AActor* HitActor)
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Damage Applied: %f"), this->damage));
 		UE_LOG(LogTemp, Warning, TEXT("Damage Applied: %f"), this->damage);
 		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
+
+		this->FollowCamera->GetWorld()->GetFirstPlayerController()->PlayerCameraManager->PlayCameraShake(DamageCameraShake, 1.0f);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Camera Shake!!!")));
 
 		//reset the bool so sweep trace can be executed again
 		//DoOnce = false;
