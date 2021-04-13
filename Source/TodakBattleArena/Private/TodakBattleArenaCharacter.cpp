@@ -955,7 +955,9 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
 					DoDamage(hitChar);
 					
-					//hitChar->GetWorld()->GetFirstPlayerController()->PlayerCameraManager->PlayCameraShake(DamageCameraShake, 1.0f);
+					//Camera Shake
+					//GetWorld()->GetFirstPlayerController()->PlayerCameraManager->PlayCameraShake(DamageCameraShake, 1.0f);
+					UGameplayStatics::PlayWorldCameraShake(hitChar->GetWorld()->GetFirstPlayerController(), DamageCameraShake, hitChar->GetActorLocation(), 0.0f, 300.0f, 1.0f, true);
 					
 					
 					
@@ -1492,9 +1494,6 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 
 							if (TargetLocked == true)
 							{
-								
-
-
 								//Forces player to enter ready stance
 								EnemyElement->isLocked = true;
 								//EnemyElement->RepIsMoving = true;
@@ -2072,9 +2071,6 @@ void ATodakBattleArenaCharacter::DoDamage_Implementation(AActor* HitActor)
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Damage Applied: %f"), this->damage));
 		UE_LOG(LogTemp, Warning, TEXT("Damage Applied: %f"), this->damage);
 		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
-
-		
-
 		//reset the bool so sweep trace can be executed again
 		//DoOnce = false;
 
