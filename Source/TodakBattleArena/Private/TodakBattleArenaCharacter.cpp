@@ -1568,7 +1568,10 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate
 	if (SkillTrigger == true)
 	{
 		//Emptying arrays
-		SwipeActions.Empty();
+		if (SwipeActions.IsValidIndex(0))
+		{
+			SwipeActions.Empty();
+		}
 		BodyParts.Empty();
 
 		//Set all the attribute to the current vars of player
@@ -2397,17 +2400,19 @@ void ATodakBattleArenaCharacter::MyDoOnce()
 
 void ATodakBattleArenaCharacter::RemoveElementFromArrayTimer()
 {
-	if (SwipeActions.IsValidIndex(0) || BodyParts.IsValidIndex(0) && GetWorld()->GetTimerManager().IsTimerActive(IterateArray))
+	if (BodyParts.IsValidIndex(0) && GetWorld()->GetTimerManager().IsTimerActive(IterateArray))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("%s is removed"), *KeyName[0].KeyInput.ToString());
 		//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, FString::Printf(TEXT("%s is removed"), *KeyName[0].KeyInput.ToString()));
 
 		//Remove key at index 0;
-		SwipeActions.RemoveAt(0);
+		//SwipeActions.RemoveAt(0);
 		BodyParts.RemoveAt(0);
 
+		//(SwipeActions.Num() < 1 || BodyParts.Num() < 1)
+
 		//if array is empty and timer still active, clear the timer
-		if (GetWorld()->GetTimerManager().IsTimerActive(IterateArray) == true && (SwipeActions.Num() < 1 || BodyParts.Num() < 1))
+		if (GetWorld()->GetTimerManager().IsTimerActive(IterateArray) == true && BodyParts.Num() < 1)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Timer has stopped!"));
 			GetWorld()->GetTimerManager().ClearTimer(IterateArray);
