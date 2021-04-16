@@ -78,15 +78,12 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->SetupAttachment(GetMesh(), "head");
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = false; // Rotate the arm based on the controller
-	CameraBoom->bDoCollisionTest = true;
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	LeftKickCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftKickCol"));
 	LeftKickCol->SetupAttachment(GetMesh(), "calf_l");
@@ -226,7 +223,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MaximumTargetDistance);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, EnemyElement);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, isOverlap);
-	DOREPLIFETIME(ATodakBattleArenaCharacter, isLocked);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, IsLocked);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, PhysicsAlpha);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillTriggered);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RightVal);
@@ -1511,7 +1508,7 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 							if (TargetLocked == true)
 							{
 								//Forces player to enter ready stance
-								EnemyElement->isLocked = true;
+								EnemyElement->IsLocked = true;
 								//EnemyElement->RepIsMoving = true;
 
 								//Sets player camera nearer
@@ -1552,7 +1549,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 						{
 							ClosestTargetDistance = 0.0f;
 							TargetLocked = false;
-							EnemyElement->isLocked = false;
+							EnemyElement->IsLocked = false;
 
 							//Sets player camera further
 							FLatentActionInfo LatentInfo = FLatentActionInfo();

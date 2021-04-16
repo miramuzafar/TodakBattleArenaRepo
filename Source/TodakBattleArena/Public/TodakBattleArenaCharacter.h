@@ -140,10 +140,10 @@ public:
 	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
 
-	UPROPERTY(VisibleAnywhere, Replicated)
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Ragdoll")
 	bool DoneRagdoll = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category = "Ragdoll")
 	bool IsFacingUp = false;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
@@ -152,7 +152,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
 	FVector MeshLocation;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Ragdoll")
 	FVector TestMeshLoc;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
@@ -196,8 +196,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeGesture")
 	bool FromSmallCircle = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
-	bool isLocked = false;
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "TargetLock")
+	bool IsLocked = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SwipeGesture")
 	bool LeftFoot = false;
@@ -240,10 +240,10 @@ public:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "DoOnce")
 	bool bDo = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLockOn")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLock")
 	bool isCollisionInScript = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "BlockedHit")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "AI")
 	bool AICanAttack = false;
 
 	//RagdollTimer
@@ -403,7 +403,7 @@ protected:
 	void MulticastStopBlockHitMontage(UAnimMontage* MulticastSkill);
 
 	//Get montage to play from server
-	UFUNCTION(Unreliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
+	UFUNCTION(Unreliable, Server, WithValidation, BlueprintCallable, Category = "HitReaction")
 	void ServerPlayMontage(UAnimInstance* CurrMesh, UAnimMontage* MontageToPlay);
 
 	//Play and replicate montages on all client
@@ -418,15 +418,15 @@ protected:
 	void GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets);
 	
 	//HitLocation where wounds spawned
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "HitReaction")
 	FVector HitLocation;
 	
 	//Material used to spawn wound
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "HitReaction")
 	UMaterialInterface * DecalMat;
 
 	//Server spawn wounds
-	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "HitReaction")
 	void SvrSpawnWounds(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location);
 
 	//Multicast spawn wounds
@@ -495,7 +495,7 @@ protected:
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
 		void ServerGetMeshLocation(FVector TempMeshLoc);
 
-	UFUNCTION(Reliable, Client, WithValidation, Category = "Ragdoll")
+	UFUNCTION(Reliable, Client, WithValidation)
 		void MulticastGetMeshLocation(FVector TempMeshLoc);
 
 	UFUNCTION()
@@ -727,7 +727,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
 	float damageAfterReduction;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "HitReaction")
 	FName BoneName = "pelvis";
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
@@ -930,6 +930,8 @@ protected:
 
 	//*********************************************************************//
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera")
+	int CameraPerspective;
 	
 
 	///////////////For swipe gesture//////////////////////////////
