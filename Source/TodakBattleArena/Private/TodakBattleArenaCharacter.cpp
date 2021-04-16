@@ -117,7 +117,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	RKickArrow->SetRelativeRotation(FRotator( 0.000000f, 90.000000f, 0.000000f));
 
 	LeftPunchCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftPunchCol"));
-	LeftPunchCol->SetupAttachment(GetMesh(), "middle_01_l");
+	LeftPunchCol->SetupAttachment(GetMesh(), "hand_l");
 	LeftPunchCol->SetRelativeLocation(FVector(0.000000f, 0.000000f, 0.000000f));
 	LeftPunchCol->SetRelativeRotation(FRotator(0.000000f, 80.000000f, 0.000000f));
 	LeftPunchCol->SetCapsuleHalfHeight(22);
@@ -128,7 +128,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	LeftPunchCol->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 	RightPunchCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("RightPunchCol"));
-	RightPunchCol->SetupAttachment(GetMesh(), "middle_01_r");
+	RightPunchCol->SetupAttachment(GetMesh(), "hand_r");
 	RightPunchCol->SetRelativeLocation(FVector(0.000000f, 0.000000f, 0.000000f));
 	RightPunchCol->SetRelativeRotation(FRotator(0.000000f, 80.000000f, 0.000000f));
 	RightPunchCol->SetCapsuleHalfHeight(22);
