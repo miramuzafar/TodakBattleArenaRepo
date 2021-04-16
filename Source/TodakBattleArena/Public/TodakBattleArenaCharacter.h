@@ -134,6 +134,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void OffCombatColl(UCapsuleComponent* CombatColl);
 
+
+	// Timeline
+
+	UCurveFloat* fCurve;
+
+	UCurveFloat* fCurve2;
+
+	FOnTimelineFloat Interp_FPPToFar{};
+
+	FOnTimelineFloat Interp_FarToTPP{};
+
+	UFUNCTION()
+	void FPPToFarFloatReturn(float val);
+
+	UFUNCTION()
+	void FarToTPPFloatReturn(float val);
+
 	//UFUNCTION(BlueprintCallable, Category = "Collision")
 	//void CheckLineTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
 
@@ -230,11 +247,11 @@ public:
 	float RepLocoPlayrate = 1.0f;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Camera")
 	float BaseTurnRate;
 
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	float BaseLookUpRate;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "DoOnce")
@@ -353,6 +370,20 @@ protected:
 	//***************InputStyle****************//
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "InputStyle")
 	EInputStyle InputStyle = EInputStyle::Default;
+
+	UPROPERTY()
+	UTimelineComponent* FPPToFarTimeline;
+
+	UPROPERTY()
+	UTimelineComponent* FarToTPPTimeline;
+
+	
+	UFUNCTION()
+	void OnFPPCameraFinished();
+	
+
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void ChangeCameraPerspective(int CamPers);
 
 	//*******************************************TargetLock************************************************************************************************//
 	/** called when something enters the sphere component */
@@ -931,8 +962,10 @@ protected:
 	//*********************************************************************//
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera")
-	int CameraPerspective;
-	
+	int CameraPerspective = 0;
+
+	UPROPERTY(VisibleAnywhere, Category = "Camera")
+	float ChangingCamera = 0.0f;
 
 	///////////////For swipe gesture//////////////////////////////
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
@@ -1009,7 +1042,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool BurstActivate;
 
+	UPROPERTY(VisibleAnywhere, Category = "Latent")
+	int32 NextUUID = 0;
 	
+	
+	int32 GetNextUUID()
+	{
+		return NextUUID++;
+	}
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	//FVector ;
