@@ -364,7 +364,7 @@ protected:
 	void OnEndOverlap(class UPrimitiveComponent* OverlappedActor, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	//Execute the skill
-	bool ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill);
+	bool ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, float DealDamage, float StaminaUsed, bool& CDSkill);
 
 	//Initialize everything during begin play
 	UFUNCTION(BlueprintCallable, Category = "BeginPlay")
@@ -372,11 +372,11 @@ protected:
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound);
+	void ServerSkillMoveset(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float PlayRate, float StartTime, bool SkillFound);
 
 	//Skill replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound);
+	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float PlayRate, float StartTime, bool SkillFound);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
@@ -525,10 +525,13 @@ protected:
 	void FireTrace(FVector StartPoint, FVector EndPoint);
 
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
+	void HitEnemyPlayer(ATodakBattleArenaCharacter* Player, ATodakBattleArenaCharacter* Enemy);
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
 	void DoDamage(AActor* HitActor);
 
 	//Calculate energy spent
-	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable, Category = "Energy")
+	UFUNCTION(BlueprintCallable, Category = "Energy")
 	void EnergySpent(float ValDecrement, float PercentageLimit = 1.0f);
 
 	/**Function to update the damaged client's health**/
@@ -537,7 +540,7 @@ protected:
 
 	/**Function to update the client's damage*/
 	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable, Category = "Damage")
-	void UpdateDamage(float DamageValue, float CurrStrength, float CurrStamina, float CurrAgility);
+	void UpdateDamage(float DamageValue);
 
 	//Function to update progressbar over time
 	void UpdateCurrentPlayerMainStatusBar(EBarType Type, EMainPlayerStats StatType, FTimerHandle FirstHandle, FTimerHandle SecondHandle);
@@ -649,8 +652,10 @@ protected:
 	int MaxEnergy;
 
 	//current energy in percentage
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_CurrentEnergy, BlueprintReadWrite, Category = "Status")
 	float EnergyPercentage;
+	UFUNCTION()
+		void OnRep_CurrentEnergy();
 
 	//The amount of fatigue resistance the character currently has
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
@@ -901,7 +906,7 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Targetlock")
 	bool IsRotating = false;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Targetlock")
+	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Targetlock")
 	float Radius = 50.0f;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Targetlock")
@@ -970,6 +975,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* SkillMoveset;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* HitReactionsMoveset;
+
 	/////////////////////////////////////////////////////////////
 
 	/////////////////For touch start/hold/////////////////////////

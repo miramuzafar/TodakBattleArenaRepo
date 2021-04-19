@@ -195,6 +195,9 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillSwipe")
 	UAnimMontage* SkillMoveset;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitReaction")
+	UAnimMontage* HitReactionMoveset;
+
 	//What time does the swipe anim will start
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeAnimTime")
 	float SkillMovesetTime;
@@ -206,6 +209,14 @@ struct FActionSkill : public FTableRowBase
 	//Damage to be dealt from the action
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float Damage = 0.0f;
+
+	//Damage to be dealt from the action
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float StaminaUsage = 0.0f;
+
+	//Damage to be dealt from the action
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float StaminaDrain = 0.0f;
 
 	
 

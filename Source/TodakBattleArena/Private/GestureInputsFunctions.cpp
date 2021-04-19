@@ -998,6 +998,7 @@ float UGestureInputsFunctions::UpdateProgressBarComponent(UBaseCharacterWidget* 
 
 	if (ProgressBar != nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ProgressBar is valid"));
 		return UGestureMathLibrary::SetProgressBarValue(StatusName, ProgressBar, locTextControl, locTextControlPercentBlock, Val, MaxVal);
 	}
 	return 0.0f;
