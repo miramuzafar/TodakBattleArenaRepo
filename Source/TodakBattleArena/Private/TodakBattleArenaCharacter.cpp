@@ -566,6 +566,9 @@ void ATodakBattleArenaCharacter::BeginPlay()
 	}*/
 
 	//InitializeCharAtt();
+	this->CameraBoom->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f));
+	this->FollowCamera->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f));
+
 }
 
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
@@ -1509,9 +1512,22 @@ void ATodakBattleArenaCharacter::ChangeCameraPerspective(int CamPers)
 
 	if (CamPers == 0)
 	{
-		FarToTPPTimeline->PlayFromStart();
-		FarToTPPTimeline->AddInterpFloat(fCurve, Interp_FarToTPP, FName{ TEXT("TL_FarToTPP") });
-		
+		if (IsLocked)
+		{
+			
+			FLatentActionInfo LatentInfo = FLatentActionInfo();
+			LatentInfo.CallbackTarget = this;
+			LatentInfo.ExecutionFunction = FName("OnLockedTPPFinished");
+			LatentInfo.UUID = GetNextUUID();
+			LatentInfo.Linkage = 0;
+			UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(200.0f, 195.0f, 0.0f), FRotator(0.0f, -50.0f, 0.0f), true, true, 1.0f, true, EMoveComponentAction::Type::Move, LatentInfo);
+		}
+
+		else if (!IsLocked)
+		{
+			FarToTPPTimeline->PlayFromStart();
+			FarToTPPTimeline->AddInterpFloat(fCurve, Interp_FarToTPP, FName{ TEXT("TL_FarToTPP") });
+		}
 	}
 
 	if (CamPers == 1)
@@ -1530,16 +1546,36 @@ void ATodakBattleArenaCharacter::ChangeCameraPerspective(int CamPers)
 
 	if (CamPers == 2)
 	{
-		FLatentActionInfo LatentInfo = FLatentActionInfo();
-		LatentInfo.CallbackTarget = this;
-		this->FollowCamera->AttachToComponent(this->CameraBoom, FAttachmentTransformRules::KeepWorldTransform, "NONE");
-		UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(0.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f), true, true, 1.0f, true, EMoveComponentAction::Type::Move, LatentInfo);
-		this->FollowCamera->bUsePawnControlRotation = false;
-		this->FollowCamera->bLockToHmd = false;
-		FPPToFarTimeline->PlayFromStart();
-		FPPToFarTimeline->AddInterpFloat(fCurve2, Interp_FPPToFar, FName{ TEXT("TL_FPPToFar") });
+		if (IsLocked)
+		{
+			FLatentActionInfo LatentInfo = FLatentActionInfo();
+			LatentInfo.CallbackTarget = this;
+			this->FollowCamera->AttachToComponent(this->CameraBoom, FAttachmentTransformRules::KeepWorldTransform, "NONE");
+			UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(360.0f, 360.0f, 10.0f), FRotator(-5.0f, -60.0f, 0.0f), true, true, 1.0f, true, EMoveComponentAction::Type::Move, LatentInfo);
+			this->FollowCamera->bUsePawnControlRotation = false;
+			this->FollowCamera->bLockToHmd = false;
+			FPPToFarTimeline->PlayFromStart();
+			FPPToFarTimeline->AddInterpFloat(fCurve2, Interp_FPPToFar, FName{ TEXT("TL_FPPToFar") });
+		}
 		
+		else if (!IsLocked)
+		{
+			FLatentActionInfo LatentInfo = FLatentActionInfo();
+			LatentInfo.CallbackTarget = this;
+			this->FollowCamera->AttachToComponent(this->CameraBoom, FAttachmentTransformRules::KeepWorldTransform, "NONE");
+			UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(0.0f, 0.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f), true, true, 1.0f, true, EMoveComponentAction::Type::Move, LatentInfo);
+			this->FollowCamera->bUsePawnControlRotation = false;
+			this->FollowCamera->bLockToHmd = false;
+			FPPToFarTimeline->PlayFromStart();
+			FPPToFarTimeline->AddInterpFloat(fCurve2, Interp_FPPToFar, FName{ TEXT("TL_FPPToFar") });
+		}
 	}
+}
+
+void ATodakBattleArenaCharacter::OnLockedTPPFinished()
+{
+	FarToTPPTimeline->PlayFromStart();
+	FarToTPPTimeline->AddInterpFloat(fCurve, Interp_FarToTPP, FName{ TEXT("TL_FarToTPP") });
 }
 
 void ATodakBattleArenaCharacter::OnFPPCameraFinished()
@@ -1584,7 +1620,7 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 
 								if (CameraPerspective == 0)
 								{
-									//Sets player camera nearer
+									//Sets player camera nearer TPP
 									FLatentActionInfo LatentInfo = FLatentActionInfo();
 									LatentInfo.CallbackTarget = this;
 									UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(200.0f, 195.0f, 0.0f), FRotator(0.0f, -50.0f, 0.0f), true, true, 1.5f, true, EMoveComponentAction::Type::Move, LatentInfo);
@@ -1592,7 +1628,7 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 
 								if (CameraPerspective == 2)
 								{
-									//Sets player camera nearer
+									//Sets player camera nearer FAR
 									FLatentActionInfo LatentInfo = FLatentActionInfo();
 									LatentInfo.CallbackTarget = this;
 									UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(360.0f, 360.0f, 10.0f), FRotator(-5.0f, -60.0f, 0.0f), true, true, 2.0f, true, EMoveComponentAction::Type::Move, LatentInfo);

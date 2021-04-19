@@ -377,6 +377,8 @@ protected:
 	UPROPERTY()
 	UTimelineComponent* FarToTPPTimeline;
 
+	UFUNCTION()
+	void OnLockedTPPFinished();
 	
 	UFUNCTION()
 	void OnFPPCameraFinished();
