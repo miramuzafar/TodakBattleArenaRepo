@@ -114,3 +114,6 @@ TodakBattleArena.uproject
 *.ini
 *.cs
 *.uproject
+Config/DefaultEngine.ini
+Config/DefaultGame.ini
+Source/TodakBattleArenaServer.Target.cs
