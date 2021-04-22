@@ -16,6 +16,6 @@ class TODAKBATTLEARENA_API UTBACameraShake : public UCameraShake
 
 	public:
 
-		// declaration consctructor
+		
 		UTBACameraShake();
 };

@@ -135,7 +135,7 @@ public:
 	void OffCombatColl(UCapsuleComponent* CombatColl);
 
 
-	// Timeline
+	// Timeline for Camera Transitions
 
 	UCurveFloat* fCurve;
 
@@ -150,6 +150,9 @@ public:
 
 	UFUNCTION()
 	void FarToTPPFloatReturn(float val);
+
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void CameraShake();
 
 	//UFUNCTION(BlueprintCallable, Category = "Collision")
 	//void CheckLineTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
@@ -387,6 +390,14 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void ChangeCameraPerspective(int CamPers);
 
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "HitReaction")
+	void ServerSlowmo(float TimeDilation);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastSlowmo(float TimeDilation);
+
+	
+
 	//*******************************************TargetLock************************************************************************************************//
 	/** called when something enters the sphere component */
 	UFUNCTION()
@@ -525,28 +536,28 @@ protected:
 	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime, FVector2D Locations);
 
 	UFUNCTION(BlueprintCallable)
-		void CalculateMeshLocation(USceneComponent* Capsule, FVector& FinalLoc);
+	void CalculateMeshLocation(USceneComponent* Capsule, FVector& FinalLoc);
 
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
-		void ServerGetMeshLocation(FVector TempMeshLoc);
+	void ServerGetMeshLocation(FVector TempMeshLoc);
 
 	UFUNCTION(Reliable, Client, WithValidation)
-		void MulticastGetMeshLocation(FVector TempMeshLoc);
+	void MulticastGetMeshLocation(FVector TempMeshLoc);
 
 	UFUNCTION()
-		void OnRep_SetMeshLocation();
+	void OnRep_SetMeshLocation();
 
 	UFUNCTION()
-		void OnRep_SetMeshRotation();
+	void OnRep_SetMeshRotation();
 
 	UFUNCTION(BlueprintPure)
-		bool CalculatingFacingLocation(class USkeletalMeshComponent* currMesh);
+	bool CalculatingFacingLocation(class USkeletalMeshComponent* currMesh);
 
 	UFUNCTION(BlueprintCallable)
-		void SetUpGetUpOrientation(USkeletalMeshComponent* currMesh);
+	void SetUpGetUpOrientation(USkeletalMeshComponent* currMesh);
 
 	UFUNCTION(BlueprintCallable)
-		void SetUpGetUpMontage(USkeletalMeshComponent* currMesh, bool FacingUp);
+	void SetUpGetUpMontage(USkeletalMeshComponent* currMesh, bool FacingUp);
 
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);
@@ -594,6 +605,9 @@ protected:
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastTurnAnim(AActor* thisActor, float TurnLeft, float TurnRight);
 
+	//***************************end update targetlock anim*******************************//
+
+	
 
 	//***********************************Variables********************************************//
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeDirection")
