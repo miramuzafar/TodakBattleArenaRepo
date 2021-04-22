@@ -987,19 +987,22 @@ void UGestureInputsFunctions::DrawJoyLine(const FVector2D & Start, const FVector
 
 float UGestureInputsFunctions::UpdateProgressBarComponent(UBaseCharacterWidget* WidgetToUse, const FString ProgressBarName, const FString TextBlockName, const FString AdditionalTextBlockName, FString StatusName, float Val, int MaxVal)
 {
-	const FName locTextControlName = FName(*TextBlockName);
-	UTextBlock* locTextControl = (UTextBlock*)(WidgetToUse->WidgetTree->FindWidget(locTextControlName));
-
-	const FName locTextControlPercent = FName(*AdditionalTextBlockName);
-	UTextBlock* locTextControlPercentBlock = (UTextBlock*)(WidgetToUse->WidgetTree->FindWidget(locTextControlPercent));
-
-	const FName locProgressBar = FName(*ProgressBarName);
-	UProgressBar* ProgressBar = (UProgressBar*)(WidgetToUse->WidgetTree->FindWidget(locProgressBar));
-
-	if (ProgressBar != nullptr)
+	if (WidgetToUse)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ProgressBar is valid"));
-		return UGestureMathLibrary::SetProgressBarValue(StatusName, ProgressBar, locTextControl, locTextControlPercentBlock, Val, MaxVal);
+		const FName locTextControlName = FName(*TextBlockName);
+		UTextBlock* locTextControl = (UTextBlock*)(WidgetToUse->WidgetTree->FindWidget(locTextControlName));
+
+		const FName locTextControlPercent = FName(*AdditionalTextBlockName);
+		UTextBlock* locTextControlPercentBlock = (UTextBlock*)(WidgetToUse->WidgetTree->FindWidget(locTextControlPercent));
+
+		const FName locProgressBar = FName(*ProgressBarName);
+		UProgressBar* ProgressBar = (UProgressBar*)(WidgetToUse->WidgetTree->FindWidget(locProgressBar));
+
+		if (ProgressBar != nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ProgressBar is valid"));
+			return UGestureMathLibrary::SetProgressBarValue(StatusName, ProgressBar, locTextControl, locTextControlPercentBlock, Val, MaxVal);
+		}
 	}
 	return 0.0f;
 }

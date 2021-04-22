@@ -23,4 +23,8 @@ protected:
 
 	// Optionally override the Blueprint "Event Construct" event
 	virtual void NativeConstruct() override;
+
+public:
+	UFUNCTION(BlueprintCallable)
+		void ChangeProgressBarValue(AActor* currPlayer, float currVal, int MaxVal, float& currPercentage);
 };

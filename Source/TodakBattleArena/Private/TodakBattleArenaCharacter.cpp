@@ -211,6 +211,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ATodakBattleArenaCharacter, damage);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, staminaDrained);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MajorDamage);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MinorDamage);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Stamina);
@@ -318,6 +319,8 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	//SpawnWounds
 	DOREPLIFETIME(ATodakBattleArenaCharacter, HitLocation);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, DecalMat);
+
+	DOREPLIFETIME(ATodakBattleArenaCharacter, WidgetHUD);
 
 	
 }
@@ -548,7 +551,15 @@ void ATodakBattleArenaCharacter::BeginPlay()
 
 	playerController = Cast<APlayerController>(Controller);
 
-
+	/*if (this->IsLocallyControlled() == true)
+	{
+		this->WidgetHUD = CreateWidget<UBaseCharacterWidget>(GetWorld(), CharacterHUD);
+		this->WidgetHUD->AddToViewport();
+		if (this->WidgetHUD)
+		{
+			InitializeCharAtt();
+		}
+	}*/
 	/*FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
 	if (UClass* locWidgetClass = locWidgetClassRef.TryLoadClass<UBaseCharacterWidget>())
 	{
@@ -826,10 +837,10 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						//AnimInstance->LocoPlayrate = SkillPlayrate;
 						//temp = SkillPlayrate;
 
-						if (SkillTriggered == false)
+						if (SkillTriggered == false && (this->playerEnergy >= row->StaminaUsage))
 						{
 							SkillTriggered = true;
-							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->Damage, row->StaminaDrain, row->CDSkill);
+							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 						}
 						/*if (FingerIndex->SwipeActions == EInputType::Up)
 						{
@@ -918,7 +929,7 @@ void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart, bool IsRel
 					//RepLocoPlayrate = SkillPlayrate;
 					//AnimInstance->LocoPlayrate = SkillPlayrate;
 					//temp = SkillPlayrate;
-					row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->HitReactionMoveset, row->Damage, row->StaminaDrain, row->CDSkill);
+					row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->HitReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 					/*if (row->StartSwipeMontageTime.Num() > 0)
 					{
 						row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->Damage, row->CDSkill);
@@ -985,7 +996,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Is not self")));
 			ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitRes.Actor);
-			if (hitChar)
+			if (hitChar && hitChar->InRagdoll == false)
 			{
 				if (DoOnce == false)
 				{
@@ -1007,7 +1018,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					hitChar->HitLocation = HitRes.Location;
 					hitChar->BoneName = HitRes.BoneName;
 					hitChar->IsHit = true;
-
+					hitChar->staminaDrained = this->staminaDrained;
 					//DoDamage(hitChar);
 
 					//HitRes.GetComponent();
@@ -1018,10 +1029,13 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
 					DoDamage(hitChar);
-					
+					this->staminaDrained = 0.0f;
 					//Camera Shake
 					//GetWorld()->GetFirstPlayerController()->PlayerCameraManager->PlayCameraShake(DamageCameraShake, 1.0f);
-					UGameplayStatics::PlayWorldCameraShake(hitChar->GetWorld()->GetFirstPlayerController(), DamageCameraShake, hitChar->GetActorLocation(), 0.0f, 300.0f, 1.0f, true);
+					if (hitChar->InRagdoll == false)
+					{
+						UGameplayStatics::PlayWorldCameraShake(hitChar->GetWorld()->GetFirstPlayerController(), DamageCameraShake, hitChar->GetActorLocation(), 0.0f, 300.0f, 1.0f, true);
+					}
 				}
 			}
 		}
@@ -1160,7 +1174,7 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 	}*/
 }
 
-void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue)
+void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue, float StaminaDrained)
 {
 	//damage = DamageValue;
 	// Increase (or decrease) current damage
@@ -1170,16 +1184,17 @@ void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue)
 
 		//Calculate total damage applied from current action with current instigator's maximum strength
 		this->damage = DamageValue;
+		this->staminaDrained = StaminaDrained;
 		UE_LOG(LogTemp, Warning, TEXT("Damage : %f"), this->damage);
 	}
 }
 
-bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
@@ -1195,20 +1210,21 @@ void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage*
 
 
 		//damage = DamageApplied;
-		MulticastSkillMoveset(RPCServerSkill, HitReaction, DamageApplied, StaminaUsed, PlayRate, StartTime, SkillFound);
+		MulticastSkillMoveset(RPCServerSkill, HitReaction, DamageApplied, StaminaUsed, StaminaDrain, PlayRate, StartTime, SkillFound);
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	return true;
 }
 
 //Play swipe action anim
-void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	if (SkillFound == true)
 	{
+		this->GetWorld()->GetTimerManager().ClearTimer(StartEnergyTimer);
 		//If the anim is not currently playing
 		FTimerHandle Delay;
 
@@ -1216,6 +1232,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 
 		//Hit reaction
 		HitReactionsMoveset = HitReaction;
+		staminaDrained = StaminaDrain;
 
 		//get section end length
 		//this->GetMesh()->GetAnimInstance()->Montage_JumpToSectionsEnd(SectionName, RPCMultiCastSkill);
@@ -1245,7 +1262,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 
 		if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 		{
-			UpdateDamage(DamageApplied);
+			UpdateDamage(DamageApplied, StaminaDrain);
 		}
 
 		//stop current played anim
@@ -1253,43 +1270,72 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 
 		//this->GetMesh()->GetAnimInstance()->StopAllMontages(3.0f);
 
-		if (GetWorld()->GetTimerManager().IsTimerActive(Delay) == false)
+		// duration to wait for montage finished playing
+		this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, durations, false);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));
+
+		if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false)
 		{
 			//GetMesh()->SetSimulatePhysics(false);
-
-			// duration to wait for montage finished playing
-			this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, durations, false);
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));
-			//float this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay);
 
 			if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 			{
 				//if this client has access
 				if (this->IsLocallyControlled())
 				{
+					ServerEnergySpent(StaminaUsed, 100.0f, durations);
 					this->BlockedHit = false;
 					//if still in blocked hit state
 					//Reduce player energy after action
-					EnergySpent(StaminaUsed, 100.0f);
-					OnRep_CurrentEnergy();
 					UE_LOG(LogTemp, Warning, TEXT("Energy: %f"), this->playerEnergy);
 
-					//Update stats after anim is played
-					if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
-					{
-						//Set timer for EnergyBar to regen after action
-						FTimerDelegate FunctionsNames;
-						FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
+					////Update stats after anim is played
+					//if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
+					//{
+					//	//Set timer for EnergyBar to regen after action
+					//	FTimerDelegate FunctionsNames;
+					//	FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
 
-						UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
-						GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
+					//	UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
+					//	GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
 
-						//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
-						//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
-					}
+					//	//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
+					//	//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+					//}
 				}
 			}
 
+			//// duration to wait for montage finished playing
+			//this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, durations, false);
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));
+			//float this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay);
+
+			//if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
+			//{
+			//	//if this client has access
+			//	if (this->IsLocallyControlled())
+			//	{
+			//		ServerEnergySpent(StaminaUsed, 100.0f);
+			//		this->BlockedHit = false;
+			//		//if still in blocked hit state
+			//		//Reduce player energy after action
+			//		UE_LOG(LogTemp, Warning, TEXT("Energy: %f"), this->playerEnergy);
+
+			//		////Update stats after anim is played
+			//		//if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
+			//		//{
+			//		//	//Set timer for EnergyBar to regen after action
+			//		//	FTimerDelegate FunctionsNames;
+			//		//	FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
+
+			//		//	UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
+			//		//	GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
+
+			//		//	//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
+			//		//	//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+			//		//}
+			//	}
+			//}
 		}
 	}
 	
@@ -1792,7 +1838,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 	}
 }
 
-bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, float DealDamage, float StaminaUsed, bool& CDSkill)
+bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, float DealDamage, float StaminaUsed, float StaminaDrain, bool& CDSkill)
 {
 	if (SkillTrigger == true)
 	{
@@ -1817,7 +1863,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate
 		//Server
 		if (this->IsLocallyControlled())
 		{
-			ServerSkillMoveset(SkillMoveset, HitMovesets, DealDamage, StaminaUsed, AnimRate, AnimStartTime, SkillTrigger);
+			ServerSkillMoveset(SkillMoveset, HitMovesets, DealDamage, StaminaUsed, StaminaDrain, AnimRate, AnimStartTime, SkillTrigger);
 		}
 		
 		if (this->BlockedHit == true)
@@ -2131,6 +2177,20 @@ void ATodakBattleArenaCharacter::ResetMovementMode()
 	this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	canMove = true;
 	SkillTriggered = false;
+
+	////Update stats after anim is played
+	//if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
+	//{
+	//	//Set timer for EnergyBar to regen after action
+	//	FTimerDelegate FunctionsNames;
+	//	FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
+
+	//	UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
+	//	GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
+
+	//	//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
+	//	//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+	//}
 }
 
 void ATodakBattleArenaCharacter::SimulatePhysicRagdoll(AActor* RagdolledActor)
@@ -2307,22 +2367,38 @@ void ATodakBattleArenaCharacter::DoDamage_Implementation(AActor* HitActor)
 {
 	if (this != HitActor)
 	{
-		//ApplyDa
+		//ApplyDamage
 		this->damage = UGameplayStatics::ApplyDamage(HitActor, this->damage, nullptr, this, nullptr);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Damage Applied: %f"), this->damage));
 		UE_LOG(LogTemp, Warning, TEXT("Damage Applied: %f"), this->damage);
 		//DrawDebugSphere(GetWorld(), Start, SphereKick.GetSphereRadius(), 2, FColor::Purple, false, 1, 0, 1);
 		//reset the bool so sweep trace can be executed again
 		//DoOnce = false;
-
 		//LeftKickColActivate = false;
 	}
 }
 
-void ATodakBattleArenaCharacter::EnergySpent(float ValDecrement, float PercentageLimit)
+bool ATodakBattleArenaCharacter::ServerEnergySpent_Validate(float ValDecrement, float PercentageLimit, float MontageDuration)
 {
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerEnergySpent_Implementation(float ValDecrement, float PercentageLimit, float MontageDuration)
+{
+	EnergySpent(ValDecrement, PercentageLimit, MontageDuration);
+}
+
+bool ATodakBattleArenaCharacter::EnergySpent_Validate(float ValDecrement, float PercentageLimit, float MontageDuration)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, float PercentageLimit, float MontageDuration)
+{
+	FTimerHandle Delay;
+
 	//Reduce energy from current energy
-	float tempEnergy = this->playerEnergy- ValDecrement;
+	float tempEnergy = this->playerEnergy - ValDecrement;
 
 	if (tempEnergy <= 0.0f)
 	{
@@ -2331,9 +2407,68 @@ void ATodakBattleArenaCharacter::EnergySpent(float ValDecrement, float Percentag
 	else
 		this->playerEnergy = tempEnergy;
 
+	// duration to wait for montage finished playing
+	/*this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, MontageDuration, false);
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));*/
+
+	if (MontageDuration > 0.0f)
+	{
+		this->GetWorld()->GetTimerManager().ClearTimer(Energystart);
+		this->GetWorld()->GetTimerManager().SetTimer(Energystart, this, &ATodakBattleArenaCharacter::EnergyStatusDelay, MontageDuration + 3.0f, false);
+	}
+	else if(MontageDuration <= 0.0f)
+	{
+		//Update stats after anim is played
+		if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
+		{
+			//Set timer for EnergyBar to regen after action
+			FTimerDelegate FunctionsNames;
+			FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
+
+			UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
+			GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
+
+			//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
+			//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+		}
+	}
+
+	////Update stats after anim is played
+	//if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
+	//{
+	//	//Set timer for EnergyBar to regen after action
+	//	FTimerDelegate FunctionsNames;
+	//	FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
+
+	//	UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
+	//	GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
+
+	//	//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
+	//	//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+	//}
+	OnRep_CurrentEnergy();
+
 	//Update energy after action on progress bar
-	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
+	/*this->WidgetHUD->ChangeProgressBarValue(this, this->playerEnergy, this->MaxEnergy, this->EnergyPercentage);
+	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);*/
+	/*UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
 	this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+	this->UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);*/
+
+	/*if (this->WidgetHUD->GetOwningPlayer() != this->GetPlayerControllers())
+	{
+		EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(WidgetHUD, "EnergyBar_1", "EnergyText_1", "Energy", "Energy", playerEnergy, MaxEnergy);
+	}*/
+	//EnemyElement->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar_1", "EnergyText_1", "Energy", "Energy", EnemyElement->playerEnergy, EnemyElement->MaxEnergy);
+
+	/*else if(this == EnemyElement)
+	{
+		this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar_1", "EnergyText_1", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+	}*/
+	
+	////Update energy after action on progress bar
+	//UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
+	//this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
 
 	/*if (WidgetHUD)
 	{
@@ -2484,9 +2619,9 @@ void ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar(EBarType Type,
 				}
 				else
 				{
-					float Increment = 5 + (5 * (this->MaxEnergy / 1000));
+					//float Increment = 5 + (5 * (this->MaxEnergy / 1000));
 
-					this->playerEnergy = this->playerEnergy + Increment;
+					this->playerEnergy = this->playerEnergy + 1.0f;
 
 					//Calculate percentage for current energy bar
 					EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
@@ -2581,8 +2716,17 @@ void ATodakBattleArenaCharacter::UpdateStatusValueTimer(FTimerHandle newHandle, 
 
 void ATodakBattleArenaCharacter::OnRep_CurrentEnergy()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Energyyyy"));
+	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
+	this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+	UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
 }
+
+//void ATodakBattleArenaCharacter::OnRep_CurrentEnergy()
+//{
+//	//Update energy after action on progress bar
+//	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
+//	this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+//}
 
 
 /***********************************************************************END_STATUS*******************************************************************************************************************/
@@ -2665,6 +2809,23 @@ void ATodakBattleArenaCharacter::ResetMyDoOnce()
 {
 	bDo = true;
 	return;
+}
+
+void ATodakBattleArenaCharacter::EnergyStatusDelay()
+{
+	//Update stats after anim is played
+	if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
+	{
+		//Set timer for EnergyBar to regen after action
+		FTimerDelegate FunctionsNames;
+		FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
+
+		UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
+		GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
+
+		//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
+		//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+	}
 }
 
 void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex, FVector2D Locations, float& StartPressTime, EBodyPart& SwipeParts)
