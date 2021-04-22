@@ -89,9 +89,9 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->SetRelativeLocationAndRotation(FVector(0.0f, 20.0f, 0.0f), FRotator(-10.0f, 0.0f, 0.0f));
+	FollowCamera->SetRelativeLocationAndRotation(FVector(0.0f, 60.0f, 0.0f), FRotator(-10.0f, 0.0f, 0.0f));
 	FollowCamera->ProjectionMode = ECameraProjectionMode::Perspective;
-	FollowCamera->SetFieldOfView(61.0f); // Set FOV to 60 degree
+	FollowCamera->SetFieldOfView(75.0f); // Set FOV to 60 degree
 
 	LeftKickCol = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LeftKickCol"));
 	LeftKickCol->SetupAttachment(GetMesh(), "calf_l");
@@ -555,7 +555,8 @@ void ATodakBattleArenaCharacter::BeginPlay()
 
 	playerController = Cast<APlayerController>(Controller);
 
-
+	FollowCamera->SetRelativeLocationAndRotation(FVector(0.0f, 60.0f, 0.0f), FRotator(-10.0f, 0.0f, 0.0f));
+	FollowCamera->SetFieldOfView(75.0f); // Set FOV to 60 degree
 	/*FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
 	if (UClass* locWidgetClass = locWidgetClassRef.TryLoadClass<UBaseCharacterWidget>())
 	{
@@ -1733,9 +1734,11 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 								if (CameraPerspective == 0)
 								{
 									//Sets player camera nearer TPP
+									this->FollowCamera->SetFieldOfView(90.0f);
 									FLatentActionInfo LatentInfo = FLatentActionInfo();
 									LatentInfo.CallbackTarget = this;
-									UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(200.0f, 195.0f, 0.0f), FRotator(-10.0f, -55.0f, 0.0f), true, true, 1.5f, true, EMoveComponentAction::Type::Move, LatentInfo);
+									UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(225.0f, 226.0f, -60.0f), FRotator(0.0f, -55.0f, 0.0f), true, true, 3.0f, true, EMoveComponentAction::Type::Move, LatentInfo);
+									
 								}
 
 								if (CameraPerspective == 2)
@@ -1786,7 +1789,8 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 								//Sets player camera further 
 								FLatentActionInfo LatentInfo = FLatentActionInfo();
 								LatentInfo.CallbackTarget = this;
-								UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(0.0f, 20.0f, 0.0f), FRotator(-10.0f, 0.0f, 0.0f), true, true, 1.5f, true, EMoveComponentAction::Type::Move, LatentInfo);
+								UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(0.0f, 60.0f, 0.0f), FRotator(-10.0f, 0.0f, 0.0f), true, true, 3.0f, true, EMoveComponentAction::Type::Move, LatentInfo);
+								this->FollowCamera->SetFieldOfView(75.0f);
 							}
 
 							if (CameraPerspective == 2)
