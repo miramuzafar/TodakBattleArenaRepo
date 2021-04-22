@@ -1039,7 +1039,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					//GetWorld()->GetFirstPlayerController()->PlayerCameraManager->PlayCameraShake(DamageCameraShake, 1.0f);
 					if (hitChar->InRagdoll == false)
 					{
-						UGameplayStatics::PlayWorldCameraShake(hitChar->GetWorld()->GetFirstPlayerController(), DamageCameraShake, hitChar->GetActorLocation(), 0.0f, 300.0f, 1.0f, true);
+						//UGameplayStatics::PlayWorldCameraShake(hitChar->GetWorld()->GetFirstPlayerController(), DamageCameraShake, hitChar->GetActorLocation(), 0.0f, 300.0f, 1.0f, true);
 					}
 				}
 			}
