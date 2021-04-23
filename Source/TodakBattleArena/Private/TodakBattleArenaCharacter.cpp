@@ -1485,12 +1485,12 @@ void ATodakBattleArenaCharacter::MulticastSkillStartMontage_Implementation(UAnim
 	UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
 }
 
-bool ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Validate(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
+bool ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Validate(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Implementation(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
+void ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Implementation(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
@@ -1499,12 +1499,12 @@ void ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Implementation(UAnim
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Validate(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
+bool ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Validate(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
+void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength)
 {
 	this->BlockedHit = IsBlocked;
 	if (IsBlocked == true && PauseAnimTime > 0.0f)

@@ -441,11 +441,11 @@ protected:
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
-	void ServerSkillBlockHitMontage(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
+	void ServerSkillBlockHitMontage(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength);
 
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
+	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
