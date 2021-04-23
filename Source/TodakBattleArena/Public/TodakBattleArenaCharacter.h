@@ -228,8 +228,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeGesture")
 	bool EnableMovement = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Block")
 	bool BlockedHit = false;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Block")
+	bool DoFaceBlock = false;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	int RepIdleAnimToPlay = 0;
@@ -413,6 +416,12 @@ protected:
 	//Initialize everything during begin play
 	UFUNCTION(BlueprintCallable, Category = "BeginPlay")
 	void InitializeCharAtt();
+
+	UFUNCTION(BlueprintCallable, Category = "Datatable")
+	void FindRowBlockAction(bool holdBlock, bool FaceBlock, bool RightBlock, FBlockActions& outValue);
+
+	UFUNCTION(BlueprintCallable, Category = "BlockAction")
+	void StartBlockHit(bool faceBlock, bool HoldBlock);
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
@@ -772,6 +781,10 @@ protected:
 	//Assign data table from bp 
 	UPROPERTY(EditAnywhere)
 	UDataTable* BodyDamageTable;
+
+	//Assign data table from bp 
+	UPROPERTY(EditAnywhere)
+	UDataTable* BlockActions;
 
 	//The amount of damage to reduce
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")

@@ -549,3 +549,15 @@ float UGestureMathLibrary::GetAngleOffsetFromForwardVector(AActor* A, AActor* B)
 
 	return totalacosd * signfloat;
 }
+
+bool UGestureMathLibrary::IsRightAngle(FVector SourceLoc, FVector HitLoc)
+{
+	float Degree = UKismetMathLibrary::DegAsin(UKismetMathLibrary::Dot_VectorVector(SourceLoc, HitLoc));
+	
+	if (Degree > -1.0f)
+	{
+		return true;
+	}
+	else
+		return false;
+}

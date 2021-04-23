@@ -173,6 +173,36 @@ struct FBodyDamage : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
+struct FBlockActions : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	//check if face block is active
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Block")
+		bool IsFaceBlock = false;
+
+	//Major damage dealt
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Block")
+		bool HoldBlock = false;
+
+	//check if face block is active
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Block")
+		bool IsRightBlock = false;
+
+	//What time does the block anim will start playing
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+		float StartAnimTime = 0.0f;
+
+	//What time does the block anim will pause of holdblock is true
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+		float PauseAnimTime = 0.0f;
+
+	//Anim to be played on block damage
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+		UAnimMontage* BlockMoveset;
+};
+
+USTRUCT(BlueprintType)
 struct FActionSkill : public FTableRowBase
 {
 	GENERATED_BODY()

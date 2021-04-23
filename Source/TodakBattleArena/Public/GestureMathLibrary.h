@@ -160,4 +160,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Rotation")
 	static float GetAngleOffsetFromForwardVector(AActor* A, AActor* B);
+
+	UFUNCTION(BlueprintPure, Category = "Rotation")
+	static bool IsRightAngle(FVector SourceLoc, FVector HitLoc);
 };

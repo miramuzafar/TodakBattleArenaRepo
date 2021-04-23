@@ -273,6 +273,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 
 	//**AnimMontage**//
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockHit);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, DoFaceBlock);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, IsEffectiveBlock);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillMoveset);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, HitReactionsMoveset)
@@ -1024,6 +1025,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					hitChar->BoneName = HitRes.BoneName;
 					hitChar->IsHit = true;
 					hitChar->staminaDrained = this->staminaDrained;
+					hitChar->HitReactionsMoveset = this->HitReactionsMoveset;
 					//DoDamage(hitChar);
 
 					//HitRes.GetComponent();
@@ -1505,7 +1507,7 @@ bool ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Validate(UAnimMon
 void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
 	this->BlockedHit = IsBlocked;
-	if (IsBlocked == true)
+	if (IsBlocked == true && PauseAnimTime > 0.0f)
 	{
 		//Play anim on touch press/hold
 		RPCMultiCastBlockHit = MulticastSkill;
@@ -1521,6 +1523,18 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UA
 		{
 			this->BlockedHit = true;
 		}*/
+	}
+	else if (IsBlocked == true)
+	{
+		RPCMultiCastBlockHit = MulticastSkill;
+		//SectionName = SectionNames;
+		SkillStopTime = PauseAnimTime;
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
+		//this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkillHold);
+
+		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
+		//UE_LOG(LogTemp, Warning, TEXT("SectionName : %s"), *SectionName.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
 	}
 	else
 	{
@@ -2067,6 +2081,39 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 		GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor();
 	}
+}
+
+void ATodakBattleArenaCharacter::FindRowBlockAction(bool holdBlock, bool FaceBlock, bool RightBlock, FBlockActions& outValue)
+{
+	FString Context;
+
+	//Search the skill available
+	for (auto& name : BlockActions->GetRowNames())
+	{
+		FBlockActions* row = BlockActions->FindRow<FBlockActions>(name, Context);
+		if (row)
+		{
+			if (row->HoldBlock == holdBlock && row->IsFaceBlock == FaceBlock && row->IsRightBlock == RightBlock && row->PauseAnimTime <= 0.0f)
+			{
+				outValue = *row;
+			}
+		}
+	}
+	return;
+}
+
+void ATodakBattleArenaCharacter::StartBlockHit(bool faceBlock, bool HoldBlock)
+{
+	FBlockActions outValue;
+
+	//check if the hit location on player body is on the right side
+	bool RightBlock = UGestureMathLibrary::IsRightAngle(this->GetCapsuleComponent()->GetComponentLocation(), this->HitLocation);
+
+	//get block montage from data table
+	FindRowBlockAction(HoldBlock, faceBlock, RightBlock, outValue);
+
+	//player block montage
+	ServerSkillBlockHitMontage(outValue.BlockMoveset, outValue.StartAnimTime, outValue.PauseAnimTime, outValue.HoldBlock);
 }
 
 void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets)
