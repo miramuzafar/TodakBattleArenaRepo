@@ -200,6 +200,10 @@ struct FBlockActions : public FTableRowBase
 	//Anim to be played on block damage
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 		UAnimMontage* BlockMoveset;
+
+	//Duration of montage
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+		float BlockMovesetLength;
 };
 
 USTRUCT(BlueprintType)

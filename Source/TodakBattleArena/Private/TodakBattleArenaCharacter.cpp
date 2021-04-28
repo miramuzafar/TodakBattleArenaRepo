@@ -45,6 +45,7 @@
 #include "TBAAnimInstance.h"
 #include "..\Public\TodakBattleArenaCharacter.h"
 #include "Item.h"
+#include "Animation/AnimMontage.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -606,7 +607,7 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 	//if hold montage is active, prepare for blocking hit
 	if (isAI == false && this->GetMesh()->GetAnimInstance()->Montage_IsActive(RPCMultiCastBlockHit) && this->GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastBlockHit) >= this->SkillStopTime && this->BlockedHit == true)// && EnableMovement == false
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Pause anim "));
+		//UE_LOG(LogTemp, Warning, TEXT("Pause anim "));
 		this->GetMesh()->GetAnimInstance()->Montage_Pause(RPCMultiCastBlockHit);
 		//UE_LOG(LogTemp, Warning, TEXT("Pause anim : %s "), *RPCMultiCastBlockHit);
 	}
@@ -894,9 +895,9 @@ void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart, bool IsRel
 			if (row)
 			{
 				//Get random index from section names
-				FName arr[3] = { "Attack1", "Attack2", "Attack3" };
+				/*FName arr[3] = { "Attack1", "Attack2", "Attack3" };
 				RandSection = rand() % 3;
-				SectionName = arr[RandSection];
+				SectionName = arr[RandSection];*/
 				//int random = rand() % 3;
 
 				//SkillHold = row->StartAnimMontage;
@@ -1035,6 +1036,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
+					UE_LOG(LogTemp, Warning, TEXT("FIRE TRACE IMPLEMENTATION"));
 					DoDamage(hitChar);
 					this->staminaDrained = 0.0f;
 					//Camera Shake
@@ -1485,68 +1487,94 @@ void ATodakBattleArenaCharacter::MulticastSkillStartMontage_Implementation(UAnim
 	UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
 }
 
-bool ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Validate(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength)
+bool ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Validate(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Implementation(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength)
+void ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Implementation(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		RPCServerBlockHit = ServerSkill;
 		MulticastSkillBlockHitMontage(RPCServerBlockHit, StartAnimTime, PauseAnimTime, IsBlocked);
+		
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Validate(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength)
+bool ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Validate(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked, float MontageLength)
+void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
+	
+	//this->BlockedHit = true;
 	this->BlockedHit = IsBlocked;
+	
+
 	if (IsBlocked == true && PauseAnimTime > 0.0f)
 	{
+		//FTimerHandle Delay;
+
 		//Play anim on touch press/hold
 		RPCMultiCastBlockHit = MulticastSkill;
-		//SectionName = SectionNames;
 		SkillStopTime = PauseAnimTime;
 		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
-		//this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkillHold);
-
+		UE_LOG(LogTemp, Warning, TEXT("BLOCK ACTION"));
 		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
-		//UE_LOG(LogTemp, Warning, TEXT("SectionName : %s"), *SectionName.ToString());
 		UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
-		/*if (this->IsLocallyControlled())
-		{
-			this->BlockedHit = true;
-		}*/
+		
+		//this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::EffectiveBlockTimer, 5.0f, false);
 	}
+
 	else if (IsBlocked == true)
 	{
 		RPCMultiCastBlockHit = MulticastSkill;
-		//SectionName = SectionNames;
 		SkillStopTime = PauseAnimTime;
 		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
-		//this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkillHold);
-
+		UE_LOG(LogTemp, Warning, TEXT("HIT BLOCK REACTION"));
 		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
-		//UE_LOG(LogTemp, Warning, TEXT("SectionName : %s"), *SectionName.ToString());
 		UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
 	}
+
+	//else if (IsBlocked == false)
+	//{
+	//	//FTimerHandle Delay;
+
+	//	//// Hit Block Reaction during Effective Blocking
+	//	//if (this->IsEffectiveBlock == true)
+	//	//{
+	//	//	RPCMultiCastBlockHit = MulticastSkill;
+	//	//	SkillStopTime = PauseAnimTime;
+	//	//	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
+	//	//	UE_LOG(LogTemp, Warning, TEXT("CPP EFFECTIVE BLOCK"));
+	//	//	UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
+	//	//}
+
+
+	//	
+
+	//	//// Hit Block Reaction
+	//	//if (this->IsEffectiveBlock == false)
+	//	//{
+	//	//	RPCMultiCastBlockHit = MulticastSkill;
+	//	//	SkillStopTime = PauseAnimTime;
+	//	//	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
+	//	//	UE_LOG(LogTemp, Warning, TEXT("HIT BLOCK REACTION"));
+	//	//	UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
+	//	//	UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
+	//	//}
+
+	//	
+	//}
+
 	else
 	{
+		UE_LOG(LogTemp, Warning, TEXT("IF ANIM IS NOT PLAYING"));
 		//If the anim is not currently playing
 		this->StopAnimMontage(RPCMultiCastBlockHit);
-
-		//this->BlockedHit = IsBlocked;
-		/*if (this->IsLocallyControlled())
-		{
-			this->BlockedHit = true;
-		}*/
-		//this->GetMesh()->GetAnimInstance()->StopAllMontages(3.0f);
 		//this->ResetMovementMode();
 	}
 
@@ -2102,9 +2130,10 @@ void ATodakBattleArenaCharacter::FindRowBlockAction(bool holdBlock, bool FaceBlo
 	return;
 }
 
-void ATodakBattleArenaCharacter::StartBlockHit(bool faceBlock, bool HoldBlock)
+void ATodakBattleArenaCharacter::StartBlockHit(bool faceBlock, bool HoldBlock, float& ReturnLength)
 {
 	FBlockActions outValue;
+	
 
 	//check if the hit location on player body is on the right side
 	bool RightBlock = UGestureMathLibrary::IsRightAngle(this->GetCapsuleComponent()->GetComponentLocation(), this->HitLocation);
@@ -2114,6 +2143,10 @@ void ATodakBattleArenaCharacter::StartBlockHit(bool faceBlock, bool HoldBlock)
 
 	//player block montage
 	ServerSkillBlockHitMontage(outValue.BlockMoveset, outValue.StartAnimTime, outValue.PauseAnimTime, outValue.HoldBlock);
+	//BlockMontageLength = outValue.BlockMoveset->GetPlayLength();
+	//ReturnLength = outValue.BlockMovesetLength;
+
+	//UE_LOG(LogTemp, Warning, TEXT("outValue : %s"), *outValue.BlockMoveset->GetFName().ToString());
 }
 
 void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets)
@@ -3331,4 +3364,19 @@ void ATodakBattleArenaCharacter::FarToTPPFloatReturn(float val)
 void ATodakBattleArenaCharacter::CameraShake()
 {
 	UGameplayStatics::PlayWorldCameraShake(this->GetWorld()->GetFirstPlayerController(), DamageCameraShake, this->GetActorLocation(), 0.0f, 300.0f, 1.0f, false);
+}
+
+void ATodakBattleArenaCharacter::EffectiveBlockTimer()
+{
+	UE_LOG(LogTemp, Warning, TEXT("EFFECTIVE BLOCK TIMER"));
+	this->IsEffectiveBlock = true;
+	
+	// Hit Block Reaction during Effective Blocking
+	if (this->IsEffectiveBlock == true)
+	{
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, 0.0f);
+		UE_LOG(LogTemp, Warning, TEXT("CPP EFFECTIVE BLOCK"));
+		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
+		this->IsEffectiveBlock = false;
+	}
 }
