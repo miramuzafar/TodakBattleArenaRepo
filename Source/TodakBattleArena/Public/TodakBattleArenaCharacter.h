@@ -100,7 +100,7 @@ public:
 	AController* SetNewControlRotation(FRotator& RotatorParam);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Output")
-	void UpdateProgressBarValue(AActor* currPlayer, float CurrVal, int MaxVal);
+	void UpdateProgressBarValue(float CurrVal, int MaxVal);
 
 	////////////////////////Called event for bp///////////////////////
 
@@ -595,7 +595,7 @@ protected:
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Energy")
 	void ServerEnergySpent(float ValDecrement, float PercentageLimit, float MontageDuration);
 
-	UFUNCTION(Reliable, NetMulticast, WithValidation, BlueprintCallable, Category = "Energy")
+	UFUNCTION(Reliable, Client, WithValidation, BlueprintCallable, Category = "Energy")
 	void EnergySpent(float ValDecrement, float PercentageLimit, float MontageDuration);
 
 	/**Function to update the damaged client's health**/
@@ -715,10 +715,11 @@ protected:
 	float Vitality = 0.0f;
 
 	//Current energy
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentEnergy, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	float playerEnergy;
+
 	UFUNCTION()
-		void OnRep_CurrentEnergy();
+	void OnRep_CurrentEnergy();
 
 	//Maximum energy
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")

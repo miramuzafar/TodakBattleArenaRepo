@@ -2522,6 +2522,9 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 	else
 		this->playerEnergy = tempEnergy;
 
+	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
+	this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+
 	// duration to wait for montage finished playing
 	/*this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, MontageDuration, false);
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));*/
@@ -2530,6 +2533,7 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 	{
 		this->GetWorld()->GetTimerManager().ClearTimer(Energystart);
 		this->GetWorld()->GetTimerManager().SetTimer(Energystart, this, &ATodakBattleArenaCharacter::EnergyStatusDelay, MontageDuration + 3.0f, false);
+		UpdateProgressBarValue(this->playerEnergy, this->MaxEnergy);
 	}
 	else if(MontageDuration <= 0.0f)
 	{
@@ -2542,6 +2546,7 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 
 			UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
 			GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
+			UpdateProgressBarValue(this->playerEnergy, this->MaxEnergy);
 
 			//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
 			//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
@@ -2561,7 +2566,7 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 	//	//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
 	//	//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
 	//}
-	OnRep_CurrentEnergy();
+	//OnRep_CurrentEnergy();
 
 	//Update energy after action on progress bar
 	/*this->WidgetHUD->ChangeProgressBarValue(this, this->playerEnergy, this->MaxEnergy, this->EnergyPercentage);
@@ -2833,7 +2838,7 @@ void ATodakBattleArenaCharacter::OnRep_CurrentEnergy()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
 	this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
-	UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
+	//UpdateProgressBarValue(this->playerEnergy, this->MaxEnergy);
 }
 
 //void ATodakBattleArenaCharacter::OnRep_CurrentEnergy()
