@@ -839,7 +839,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
 						//row->SkillTrigger = true;
 						//SkillTriggered = row->SkillTrigger;
-						row->SkillMoveSetRate = SkillPlayrate;
+						//row->SkillMoveSetRate = SkillPlayrate;
 						//RepLocoPlayrate = SkillPlayrate;
 						//AnimInstance->LocoPlayrate = SkillPlayrate;
 						//temp = SkillPlayrate;
@@ -848,6 +848,19 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						{
 							SkillTriggered = true;
 							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+							SkillPlayrate = row->SkillMoveSetRate;
+							/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Playrate is %f"), this->SkillPlayrate));
+							UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);
+						}*/
+
+						if (SkillTriggered == false && (this->playerEnergy < row->StaminaUsage))
+						{
+							SkillTriggered = true;
+							row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+							SkillPlayrate = row->FatigueMovesetRate;
+							
+							/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Damage is %f"), this->SkillPlayrate));
+							UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);*/
 						}
 						/*if (FingerIndex->SwipeActions == EInputType::Up)
 						{
@@ -1036,7 +1049,6 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("You are hitting: %s"), *UKismetSystemLibrary::GetDisplayName(hitChar)));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("hitchar exist")));
-					UE_LOG(LogTemp, Warning, TEXT("FIRE TRACE IMPLEMENTATION"));
 					DoDamage(hitChar);
 					this->staminaDrained = 0.0f;
 					//Camera Shake
@@ -1481,7 +1493,7 @@ void ATodakBattleArenaCharacter::MulticastSkillStartMontage_Implementation(UAnim
 	SkillStopTime = PauseAnimTime;
 	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkillHold, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
 	//this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkillHold);
-	canMove = false;
+	//canMove = false;
 	UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillHold : %s"), *RPCMultiCastSkillHold->GetFName().ToString());
 	//UE_LOG(LogTemp, Warning, TEXT("SectionName : %s"), *SectionName.ToString());
 	UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
@@ -2532,7 +2544,7 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 	if (MontageDuration > 0.0f)
 	{
 		this->GetWorld()->GetTimerManager().ClearTimer(Energystart);
-		this->GetWorld()->GetTimerManager().SetTimer(Energystart, this, &ATodakBattleArenaCharacter::EnergyStatusDelay, MontageDuration + 3.0f, false);
+		this->GetWorld()->GetTimerManager().SetTimer(Energystart, this, &ATodakBattleArenaCharacter::EnergyStatusDelay, MontageDuration + 1.0f, false);
 		UpdateProgressBarValue(this->playerEnergy, this->MaxEnergy);
 	}
 	else if(MontageDuration <= 0.0f)
@@ -3020,8 +3032,8 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 							}*/
 
 							//play animation on press
-							this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-							//canMove = false; causes delay input after actionskill montage is played
+							//this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+							//canMove = false; //causes delay input after actionskill montage is played
 							
 							//TouchIsHold = true;
 
@@ -3063,6 +3075,8 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 					//Update finger position every    
 					if (TouchIndex.bDo == false)
 					{
+						
+
 						//if the current finger position is more than 0 units from starting point
 						if (((TouchIndex.StartLocation - Locations).Size() > 50.0f) && ((TouchIndex.StartLocation - Locations).Size() < 1000.0f))
 						{
@@ -3140,28 +3154,28 @@ void ATodakBattleArenaCharacter::StopDetectTouch(ETouchIndex::Type FingerIndex, 
 				// && ((InputTouch[Index].StartLocation - NewIndex.StartLocation).Size() < 50.0f)
 				int32 Index = InputTouch.Find(NewIndex);
 				NewIndex.StartLocation = Locations;
-				if (stopTouch - startTouch < 0.2f)
-				{
-					if (InputStyle == EInputStyle::Default)
-					{
-						GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Magenta, FString::Printf(TEXT("Tap")));
-						UGestureInputsFunctions::CircleSwipeArea(this, &NewIndex, NewIndex.StartLocation);
-					}
-					else if (InputStyle == EInputStyle::LeftJoystick)
-					{
-						UGestureInputsFunctions::RightSwipeArea(this, &NewIndex, NewIndex.StartLocation);
-					}
-					NewIndex.SwipeActions = EInputType::Tap;
-					//SwipeDir = TouchIndex.SwipeActions;
-					if (EnableMovement == true)
-					{
-						EnableMovement = false;
-					}
-					//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Magenta, FString::Printf(TEXT("Touch bdo is true")));
+				//if (stopTouch - startTouch < 0.2f)
+				//{
+				//	if (InputStyle == EInputStyle::Default)
+				//	{
+				//		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Magenta, FString::Printf(TEXT("Tap")));
+				//		UGestureInputsFunctions::CircleSwipeArea(this, &NewIndex, NewIndex.StartLocation);
+				//	}
+				//	else if (InputStyle == EInputStyle::LeftJoystick)
+				//	{
+				//		UGestureInputsFunctions::RightSwipeArea(this, &NewIndex, NewIndex.StartLocation);
+				//	}
+				//	NewIndex.SwipeActions = EInputType::Tap;
+				//	//SwipeDir = TouchIndex.SwipeActions;
+				//	if (EnableMovement == true)
+				//	{
+				//		EnableMovement = false;
+				//	}
+				//	//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Magenta, FString::Printf(TEXT("Touch bdo is true")));
 
-					//Get skill combos
-					GetSkillAction(&NewIndex);
-				}
+				//	//Get skill combos
+				//	GetSkillAction(&NewIndex);
+				//}
 				if (BlockedHit == true)
 				{
 					BlockedHit = false;
@@ -3283,10 +3297,9 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 {
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::FString("Controlled and has loco has value"));
-		
 		if (canMove)
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::FString("Moving Forward"));
 			// find out which way is forward
 			const FRotator Rotation = Controller->GetControlRotation();
 			const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -3296,7 +3309,7 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 
 			// add movement in that direction
 			AddMovementInput(Direction, Value);
-			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::FString("Player is moving"));
+			
 		}
 		
 	}
@@ -3305,7 +3318,7 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 void ATodakBattleArenaCharacter::MoveRight(float Value)
 {
 	if ( (Controller != NULL) && (Value != 0.0f) )
-	{
+	{		
 		if (canMove)
 		{
 			// find out which way is right
