@@ -269,6 +269,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "AI")
 	bool AICanAttack = false;
 
+
 	//RagdollTimer
 	FTimerHandle FallTimerHandle;
 
@@ -421,7 +422,7 @@ protected:
 	void FindRowBlockAction(bool holdBlock, bool FaceBlock, bool RightBlock, FBlockActions& outValue);
 
 	UFUNCTION(BlueprintCallable, Category = "BlockAction")
-	void StartBlockHit(bool faceBlock, bool HoldBlock);
+	void StartBlockHit(bool faceBlock, bool HoldBlock, float& ReturnLength);
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
@@ -446,6 +447,9 @@ protected:
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
+
+	UFUNCTION()
+	void EffectiveBlockTimer();
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
@@ -485,6 +489,8 @@ protected:
 	//Multicast spawn wounds
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastSpawnWounds(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location);
+
+	
 
 	//When the touch is hold
 	void MoveOnHold();
@@ -613,6 +619,8 @@ protected:
 
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastTurnAnim(AActor* thisActor, float TurnLeft, float TurnRight);
+
+	
 
 	//***************************end update targetlock anim*******************************//
 
@@ -821,7 +829,7 @@ protected:
 	float PhysicsAlpha;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
-	FName SectionName;
+	FName SectionName = "Default";
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	int RandSection;

@@ -200,6 +200,10 @@ struct FBlockActions : public FTableRowBase
 	//Anim to be played on block damage
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 		UAnimMontage* BlockMoveset;
+
+	//Duration of montage
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+		float BlockMovesetLength;
 };
 
 USTRUCT(BlueprintType)
@@ -236,9 +240,23 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float SkillMoveSetRate;
 
+	//Playrate swipe anim when energy less than 0
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	float FatigueMovesetRate;
+
 	//Damage to be dealt from the action
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float Damage = 0.0f;
+
+	//Damage received when attacker is fatigue
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float FatigueDamage = 0.0f;
+
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float BlockedDamage = 0.0f; 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float FatigueBlockedDamage = 0.0f;*/
 
 	//Damage to be dealt from the action
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
