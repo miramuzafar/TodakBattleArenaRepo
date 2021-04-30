@@ -1,6 +1,7 @@
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "TodakBattleArenaGameMode.h"
+#include "TodakGameStateBase.h"
 #include "TodakBattleArenaCharacterHUD.h"
 #include "TodakBattleArenaCharacter.h"
 #include "EngineUtils.h"
@@ -47,6 +48,13 @@ void ATodakBattleArenaGameMode::BeginPlay()
 	}*/
 }
 
+void ATodakBattleArenaGameMode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATodakBattleArenaGameMode, PStart);
+}
+
 AActor* ATodakBattleArenaGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Player"));
@@ -56,6 +64,7 @@ AActor* ATodakBattleArenaGameMode::ChoosePlayerStart_Implementation(AController*
 		if (currentPlayerStart->PlayerStartTag != "Taken")
 		{
 			currentPlayerStart->PlayerStartTag = "Taken";
+			PStart = currentPlayerStart;
 			return currentPlayerStart;
 		}
 	}

@@ -2500,7 +2500,7 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 	{
 		this->GetWorld()->GetTimerManager().ClearTimer(Energystart);
 		this->GetWorld()->GetTimerManager().SetTimer(Energystart, this, &ATodakBattleArenaCharacter::EnergyStatusDelay, MontageDuration + 3.0f, false);
-		UpdateProgressBarValue(this->playerEnergy, this->MaxEnergy);
+		UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
 	}
 	else if(MontageDuration <= 0.0f)
 	{
@@ -2513,7 +2513,7 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 
 			UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
 			GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
-			UpdateProgressBarValue(this->playerEnergy, this->MaxEnergy);
+			UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
 
 			//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
 			//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);

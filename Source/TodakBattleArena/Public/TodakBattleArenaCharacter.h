@@ -100,7 +100,7 @@ public:
 	AController* SetNewControlRotation(FRotator& RotatorParam);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Output")
-	void UpdateProgressBarValue(float CurrVal, int MaxVal);
+	void UpdateProgressBarValue(AActor* currActor, float CurrVal, int MaxVal);
 
 	////////////////////////Called event for bp///////////////////////
 

@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Net/UnrealNetwork.h"
 #include "BaseCharacterWidget.generated.h"
 
+class ATodakBattleArenaCharacter;
 /**
  * 
  */
@@ -25,6 +27,13 @@ protected:
 	virtual void NativeConstruct() override;
 
 public:
+
+	//Replicated Network setup
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Player")
+	ATodakBattleArenaCharacter* Player;
+
 	UFUNCTION(BlueprintCallable)
-		void ChangeProgressBarValue(AActor* currPlayer, float currVal, int MaxVal, float& currPercentage);
+	void ChangeProgressBarValue(UBaseCharacterWidget* currWidget, float currVal, int MaxVal, float& currPercentage);
 };
