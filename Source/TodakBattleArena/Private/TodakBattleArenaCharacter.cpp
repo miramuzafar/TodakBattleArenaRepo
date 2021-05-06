@@ -639,7 +639,6 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 }
 
 //////////////////////////////////// Input //////////////////////////////////////// 
-
 void ATodakBattleArenaCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
@@ -823,7 +822,8 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 			FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
 			if (row)
 			{
-				if (row->SwipeActions.Contains(FingerIndex->SwipeActions) && row->BodyParts.Contains(FingerIndex->BodyParts))
+				UE_LOG(LogTemp, Log, TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions)));
+				if (row->SwipeActions==FingerIndex->SwipeActions)
 				{
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
@@ -847,40 +847,41 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						if (SkillTriggered == false && (this->playerEnergy >= row->StaminaUsage))
 						{
 							SkillTriggered = true;
-							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 							SkillPlayrate = row->SkillMoveSetRate;
 							/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Playrate is %f"), this->SkillPlayrate));
 							UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);
 						}*/
 
-						if (SkillTriggered == false && (this->playerEnergy < row->StaminaUsage))
-						{
-							SkillTriggered = true;
-							row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
-							SkillPlayrate = row->FatigueMovesetRate;
-							
-							/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Damage is %f"), this->SkillPlayrate));
-							UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);*/
+							if (SkillTriggered == false && (this->playerEnergy < row->StaminaUsage))
+							{
+								SkillTriggered = true;
+								row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+								SkillPlayrate = row->FatigueMovesetRate;
+
+								/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Damage is %f"), this->SkillPlayrate));
+								UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);*/
+							}
+							/*if (FingerIndex->SwipeActions == EInputType::Up)
+							{
+								row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillMoveset, row->Damage, row->CDSkill);
+							}
+							else if (FingerIndex->SwipeActions == EInputType::Tap)
+							{
+								row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillTap, row->Damage, row->CDSkill);
+							}*/
+							/*if (row->StartSwipeMontageTime.Num() > 0)
+							{
+								row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->Damage, row->CDSkill);
+							}*/
+							FingerIndex->bDo = true;
+							CheckForAction(name);
+							/*if (SkillTriggered == false)
+							{
+								row->SkillTrigger = false;
+							}*/
+							break;
 						}
-						/*if (FingerIndex->SwipeActions == EInputType::Up)
-						{
-							row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillMoveset, row->Damage, row->CDSkill);
-						}
-						else if (FingerIndex->SwipeActions == EInputType::Tap)
-						{
-							row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillTap, row->Damage, row->CDSkill);
-						}*/
-						/*if (row->StartSwipeMontageTime.Num() > 0)
-						{
-							row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->Damage, row->CDSkill);
-						}*/
-						FingerIndex->bDo = true;
-						CheckForAction(name);
-						/*if (SkillTriggered == false)
-						{
-							row->SkillTrigger = false;
-						}*/
-						break;
 					}
 				}
 			}
@@ -949,7 +950,7 @@ void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart, bool IsRel
 					//RepLocoPlayrate = SkillPlayrate;
 					//AnimInstance->LocoPlayrate = SkillPlayrate;
 					//temp = SkillPlayrate;
-					row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->HitReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+					row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 					/*if (row->StartSwipeMontageTime.Num() > 0)
 					{
 						row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->Damage, row->CDSkill);
@@ -1169,21 +1170,30 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 	//UProgressBar* healthBar_1 = (UProgressBar*)(this->WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar_1));
 
 	//Update both progress bar for pain meter
-	this->playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBar", "Health", "HP", "Pain Meter", this->Health, this->MaxHealth);
 
+	OnRep_Health();
+	/*this->playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBar", "Health", "HP", "Pain Meter", this->Health, this->MaxHealth);
+*/
 	//this->playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("Pain Meter", healthBar_1, nullptr, nullptr, this->SecondaryHealth, this->MaxHealth);
 
 	//Start Pain Meter degeneration
-	if (GetWorld()->GetTimerManager().IsTimerActive(this->StartHealthTimer) == false && (this->Health > 0.0f) && (this->Health < this->MaxHealth))
+	if (this->IsLocallyControlled())
 	{
-		//For first pain meter progress bar
-		FTimerDelegate FunctionsName;
-		//FunctionsName = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateHealthStatusBar, EBarType::PrimaryProgressBar);
-		FunctionsName = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::PainMeter, this->StartHealthTimer, this->StartSecondaryHealthTimer);
+		if (GetWorld()->GetTimerManager().IsTimerActive(this->StartHealthTimer) == false && (this->Health > 0.0f) && (this->Health < this->MaxHealth))
+		{
+			//Update healthbar using timer
+			ServerStartHealthTimer(this->MaxHealth, MajorHealthRate);
 
-		UE_LOG(LogTemp, Warning, TEXT("TimerHealth has started!"));
-		GetWorld()->GetTimerManager().SetTimer(this->StartHealthTimer, FunctionsName, MajorHealthRate, true);
+			////For first pain meter progress bar
+			//FTimerDelegate FunctionsName;
+			////FunctionsName = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateHealthStatusBar, EBarType::PrimaryProgressBar);
+			//FunctionsName = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::PainMeter, this->StartHealthTimer, this->StartSecondaryHealthTimer);
+
+			//UE_LOG(LogTemp, Warning, TEXT("TimerHealth has started!"));
+			//GetWorld()->GetTimerManager().SetTimer(this->StartHealthTimer, FunctionsName, MajorHealthRate, true);
+		}
 	}
+	
 	//For second pain meter progress bar
 	/*if (GetWorld()->GetTimerManager().IsTimerActive(this->StartSecondaryHealthTimer) == false && ((this->SecondaryHealth > this->Health) && (this->SecondaryHealth > 0.0f)))
 	{
@@ -1193,6 +1203,71 @@ void ATodakBattleArenaCharacter::UpdateHealth_Implementation(int playerIndex, fl
 		UE_LOG(LogTemp, Warning, TEXT("SecondaryHealth has started!"));
 		GetWorld()->GetTimerManager().SetTimer(this->StartSecondaryHealthTimer, FunctionsNames, MinorHealthRate, true);
 	}*/
+}
+
+bool ATodakBattleArenaCharacter::ServerUpdateHealth_Validate(int playerIndex, float HealthChange)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerUpdateHealth_Implementation(int playerIndex, float HealthChange)
+{
+	UpdateHealth(playerIndex, HealthChange);
+}
+
+bool ATodakBattleArenaCharacter::ServerStartHealthTimer_Validate(int MaxVal, float rate)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerStartHealthTimer_Implementation(int MaxVal, float rate)
+{
+	//start energy timer on the server
+	FTimerDelegate FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::ServerUpdateHealthBar, MaxVal);
+	this->GetWorld()->GetTimerManager().SetTimer(this->StartHealthTimer, FunctionsNames, rate, true);
+}
+
+bool ATodakBattleArenaCharacter::ServerUpdateHealthBar_Validate(int MaxVal)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerUpdateHealthBar_Implementation(int MaxVal)
+{
+	if (this->Health < MaxVal)
+	{
+		ClientUpdateHealthBar(MaxVal);
+	}
+	else
+	{
+		//stop timer on server
+		ServerTimerHandler(this->StartHealthTimer);
+	}
+}
+
+bool ATodakBattleArenaCharacter::ClientUpdateHealthBar_Validate(int MaxVal)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ClientUpdateHealthBar_Implementation(int MaxVal)
+{
+	float currHP = this->Health + 1.0f;
+
+	if (currHP >= MaxVal)
+	{
+		this->Health = MaxVal;
+		if (this->IsLocallyControlled())
+		{
+			//stop timer on server
+			ServerTimerHandler(this->StartHealthTimer);
+		}
+	}
+	else
+		this->Health = currHP;
+
+	OnRep_Health();
+	UE_LOG(LogTemp, Log, TEXT("HealthVal : %f"), this->Health);
 }
 
 void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue, float StaminaDrained)
@@ -1210,12 +1285,69 @@ void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue, float StaminaDr
 	}
 }
 
-bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::ClientUpdateEnergyBar_Validate(float currVal, int MaxVal)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::ClientUpdateEnergyBar_Implementation(float currVal, int MaxVal)
+{
+	//float val = currVal + 1.0f;
+	float currEnergy = this->playerEnergy + 1.0f;
+
+	if (currEnergy >= MaxVal)
+	{
+		this->playerEnergy = MaxVal;
+		if (this->IsLocallyControlled())
+		{
+			//stop timer on server
+			ServerTimerHandler(this->StartEnergyTimer);
+		}
+	}
+	else
+		this->playerEnergy = currEnergy;
+
+	OnRep_CurrentEnergy();
+	UE_LOG(LogTemp, Log, TEXT("Energyval : %f"), this->playerEnergy);
+}
+
+bool ATodakBattleArenaCharacter::ServerUpdateEnergyBar_Validate(float currVal, int MaxVal)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerUpdateEnergyBar_Implementation(float currVal, int MaxVal)
+{
+	if (this->playerEnergy < MaxVal)
+	{
+		ClientUpdateEnergyBar(this->playerEnergy, MaxVal);
+	}
+	else
+	{
+		//stop timer on server
+		ServerTimerHandler(this->StartEnergyTimer);
+	}
+}
+
+///////////////////////////////Timer to run on server/////////////////////////////////////////////////////////////////////////////////
+bool ATodakBattleArenaCharacter::ServerTimerHandler_Validate(FTimerHandle TimerHandler)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerTimerHandler_Implementation(FTimerHandle TimerHandler)
+{
+	UE_LOG(LogTemp, Log, TEXT("Timer has ended!"));
+	this->GetWorld()->GetTimerManager().ClearTimer(TimerHandler);
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
@@ -1229,19 +1361,20 @@ void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage*
 		SectionNames = arr[RandSection];
 		SectionName = SectionNames;*/
 
+		//OnRep_Blockhit(BlockMovesets);
 
 		//damage = DamageApplied;
-		MulticastSkillMoveset(RPCServerSkill, HitReaction, DamageApplied, StaminaUsed, StaminaDrain, PlayRate, StartTime, SkillFound);
+		MulticastSkillMoveset(RPCServerSkill, HitReaction, BlockMovesets, DamageApplied, StaminaUsed, StaminaDrain, PlayRate, StartTime, SkillFound);
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	return true;
 }
 
 //Play swipe action anim
-void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	if (SkillFound == true)
 	{
@@ -1255,6 +1388,10 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		HitReactionsMoveset = HitReaction;
 		staminaDrained = StaminaDrain;
 
+		if (!this->IsLocallyControlled())
+		{
+			ServerAssignBlockHit(this, BlockMovesets);
+		}
 		//get section end length
 		//this->GetMesh()->GetAnimInstance()->Montage_JumpToSectionsEnd(SectionName, RPCMultiCastSkill);
 		//float endSection = GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkill);
@@ -1301,6 +1438,8 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 
 			if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 			{
+				//EnergySpent(StaminaUsed, 100.0f, durations);
+				//ServerEnergySpent(StaminaUsed, 100.0f, durations);
 				//if this client has access
 				if (this->IsLocallyControlled())
 				{
@@ -1465,7 +1604,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		//if still in blocked hit state
 	}*/
 }
-//
+
 bool ATodakBattleArenaCharacter::ServerSkillStartMontage_Validate(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime)
 {
 	return true;
@@ -1927,7 +2066,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 	}
 }
 
-bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, float DealDamage, float StaminaUsed, float StaminaDrain, bool& CDSkill)
+bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, FBlockActions BlockMovesets, float DealDamage, float StaminaUsed, float StaminaDrain, bool& CDSkill)
 {
 	if (SkillTrigger == true)
 	{
@@ -1952,7 +2091,7 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate
 		//Server
 		if (this->IsLocallyControlled())
 		{
-			ServerSkillMoveset(SkillMoveset, HitMovesets, DealDamage, StaminaUsed, StaminaDrain, AnimRate, AnimStartTime, SkillTrigger);
+			ServerSkillMoveset(SkillMoveset, HitMovesets, BlockMovesets, DealDamage, StaminaUsed, StaminaDrain, AnimRate, AnimStartTime, SkillTrigger);
 		}
 		
 		if (this->BlockedHit == true)
@@ -2159,6 +2298,25 @@ void ATodakBattleArenaCharacter::StartBlockHit(bool faceBlock, bool HoldBlock, f
 	//ReturnLength = outValue.BlockMovesetLength;
 
 	//UE_LOG(LogTemp, Warning, TEXT("outValue : %s"), *outValue.BlockMoveset->GetFName().ToString());
+}
+
+bool ATodakBattleArenaCharacter::ClientAssignBlockhit_Validate(AActor* thisActor, FBlockActions BlockMovesets)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ClientAssignBlockhit_Implementation(AActor* thisActor, FBlockActions BlockMovesets)
+{
+}
+
+bool ATodakBattleArenaCharacter::ServerAssignBlockHit_Validate(AActor* thisActor, FBlockActions BlockMovesets)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerAssignBlockHit_Implementation(AActor* thisActor, FBlockActions BlockMovesets)
+{
+
 }
 
 void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets)
@@ -2534,37 +2692,59 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 	else
 		this->playerEnergy = tempEnergy;
 
-	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
-	this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+	OnRep_CurrentEnergy();
 
-	// duration to wait for montage finished playing
-	/*this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, MontageDuration, false);
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));*/
+	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
+
+	//this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
 
 	if (MontageDuration > 0.0f)
 	{
 		this->GetWorld()->GetTimerManager().ClearTimer(Energystart);
 
+		/*FTimerDelegate FunctionsNames;
+		FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::EnergyStatusDelay, this->playerEnergy, this->MaxEnergy);
+*/
 		this->GetWorld()->GetTimerManager().SetTimer(Energystart, this, &ATodakBattleArenaCharacter::EnergyStatusDelay, MontageDuration + 1.0f, false);
-		UpdateProgressBarValue(this->playerEnergy, this->MaxEnergy);
+
+		//UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
 	}
-	else if(MontageDuration <= 0.0f)
+	else if (MontageDuration <= 0.0f)
 	{
-		//Update stats after anim is played
-		if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
-		{
-			//Set timer for EnergyBar to regen after action
-			FTimerDelegate FunctionsNames;
-			FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
+		this->GetWorld()->GetTimerManager().ClearTimer(Energystart);
 
-			UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
-			GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
-			UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
-
-			//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
-			//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
-		}
+		/*FTimerDelegate FunctionsNames;
+		FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::EnergyStatusDelay, this->playerEnergy, this->MaxEnergy);
+*/
+		this->GetWorld()->GetTimerManager().SetTimer(Energystart, this, &ATodakBattleArenaCharacter::EnergyStatusDelay, MontageDuration + 1.0f, false);
+		//UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
 	}
+
+	//if current player is doing the action
+	if (this->IsLocallyControlled())
+	{
+		
+		//else if (MontageDuration <= 0.0f)
+		//{
+		//	//Update stats after anim is played
+		//	if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
+		//	{
+		//		//Set timer for EnergyBar to regen after action
+		//		/*FTimerDelegate FunctionsNames;
+		//		FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);*/
+		//		EnergyStatusDelay();
+		//		//UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
+		//		//GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
+		//		//UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
+
+		//		//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
+		//		//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+		//	}
+		//}
+	}
+	// duration to wait for montage finished playing
+	/*this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, MontageDuration, false);
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));*/
 
 	////Update stats after anim is played
 	//if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
@@ -2709,85 +2889,16 @@ void ATodakBattleArenaCharacter::DetectInputTouch(float CurrEnergyValue, ETouchI
 	}
 }
 
-void ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar(EBarType Type, EMainPlayerStats StatType, FTimerHandle FirstHandle, FTimerHandle SecondHandle)
+bool ATodakBattleArenaCharacter::ServerStartEnergyTimer_Validate(float currVal, int MaxVal, float rate)
 {
-	//if the widget is exist
-	if (this->WidgetHUD)
-	{
-		//if the primary and only one progressbar on each stats is exist
-		if (Type == EBarType::PrimaryProgressBar)
-		{
-			//if current progressbar is for pain meter
-			if (StatType == EMainPlayerStats::PainMeter)
-			{
-				//Decrease the current pain meter value
-				UpdateStatusValueTimer(FirstHandle, EOperation::Addition, true, 1.0f, this->Health, this->MaxHealth, 0.0f, this->Health);
+	return true;
+}
 
-				//Calculate percentage for current pain meter bar
-				this->playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBar", "Health", "HP", "Pain Meter", this->Health, this->MaxHealth);
-
-				//if secondary progressbar value is more than primary progressbar
-				//if (this->SecondaryHealth > this->Health && this->SecondaryHealth <= this->MaxHealth)
-				//{
-				//	//if secondary progressbar timer is not active
-				//	if (GetWorld()->GetTimerManager().IsTimerActive(this->StartSecondaryHealthTimer) == false)
-				//	{
-				//		FTimerDelegate FunctionsName_1;
-				//		FunctionsName_1 = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::SecondaryProgressBar, EMainPlayerStats::PainMeter, FirstHandle, this->StartSecondaryHealthTimer);
-
-				//		//Start the secondary progressbar regen timer
-				//		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, FString::Printf(TEXT("second timer is started")));
-				//		GetWorld()->GetTimerManager().SetTimer(this->StartSecondaryHealthTimer, FunctionsName_1, .1f, true);
-				//	}
-				//}
-			}
-			else if (StatType == EMainPlayerStats::Energy)
-			{
-				//Increase the current energy value
-				//UpdateStatusValueTimer(FirstHandle, EOperation::Addition, false, 10.0f, playerEnergy, MaxEnergy, 0.0f, playerEnergy);
-
-				if (this->playerEnergy >= this->MaxEnergy)
-				{
-					GetWorld()->GetTimerManager().ClearTimer(FirstHandle);
-				}
-				else
-				{
-					//float Increment = 5 + (5 * (this->MaxEnergy / 1000));
-
-					this->playerEnergy = this->playerEnergy + 1.0f;
-
-					//Calculate percentage for current energy bar
-					EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
-				}
-			}
-		}
-		//If secondary progressbar is exist
-		if (Type == EBarType::SecondaryProgressBar)
-		{
-			//if the current secondary timer is active
-			if (GetWorld()->GetTimerManager().IsTimerActive(this->StartSecondaryHealthTimer) == true)
-			{
-				//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Timer %s"), (GetWorld()->GetTimerManager().IsTimerActive(StartSecondaryHealthTimer)) ? TEXT("is Active") : TEXT("is not Active")));
-				if (StatType == EMainPlayerStats::PainMeter)
-				{
-					//Decrease the current pain meter value
-					UpdateStatusValueTimer(this->StartSecondaryHealthTimer, EOperation::Subtraction, false, 1.0f, this->SecondaryHealth, this->MaxHealth, this->Health, this->SecondaryHealth);
-
-					const FName locTextControlHealthBar_1 = FName(TEXT("HPBar_1"));
-					UProgressBar* healthBar_1 = (UProgressBar*)(this->WidgetHUD->WidgetTree->FindWidget(locTextControlHealthBar_1));
-
-					if (healthBar_1 != NULL)
-					{
-						if (healthBar_1->IsValidLowLevel())
-						{
-							this->playerHealth_1 = UGestureMathLibrary::SetProgressBarValue("", healthBar_1, nullptr, nullptr, this->SecondaryHealth, this->MaxHealth);
-						}
-					}
-					
-				}
-			}
-		}
-	}
+void ATodakBattleArenaCharacter::ServerStartEnergyTimer_Implementation(float currVal, int MaxVal, float rate)
+{
+	//start energy timer on the server
+	FTimerDelegate FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::ServerUpdateEnergyBar, this->playerEnergy, MaxVal);
+	this->GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, rate, true);
 }
 
 //Update current value based on the timer
@@ -2850,8 +2961,33 @@ void ATodakBattleArenaCharacter::UpdateStatusValueTimer(FTimerHandle newHandle, 
 void ATodakBattleArenaCharacter::OnRep_CurrentEnergy()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
-	this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+	if (this->IsLocallyControlled())
+	{
+		this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+	}
 	//UpdateProgressBarValue(this->playerEnergy, this->MaxEnergy);
+
+	if (!this->IsLocallyControlled())
+	{
+		float EnergyPercentage1 = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar_1", "EnergyText_1", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+
+		/*float EnergyPercentage1 = 0.0f;*/
+		//float EnergyPercentage1 = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar_1", "EnergyText_1", "Energy", "Energy", tempEnergy, this->MaxEnergy);
+		//UBaseCharacterWidget::ChangeProgressBarValue(this->WidgetHUD, tempEnergy, this->MaxEnergy, EnergyPercentage1);
+		//UpdateProgressBarValue(this, tempEnergy, this->MaxEnergy);
+	}
+}
+
+void ATodakBattleArenaCharacter::OnRep_Health()
+{
+	if (this->IsLocallyControlled())
+	{
+		this->playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBar", "Health", "HP", "Pain Meter", this->Health, this->MaxHealth);
+	}
+	if (!this->IsLocallyControlled())
+	{
+		float playerHealth1 = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBarMain_1", "Health_1", "HP", "Pain Meter", this->Health, this->MaxHealth);
+	}
 }
 
 //void ATodakBattleArenaCharacter::OnRep_CurrentEnergy()
@@ -2947,18 +3083,26 @@ void ATodakBattleArenaCharacter::ResetMyDoOnce()
 void ATodakBattleArenaCharacter::EnergyStatusDelay()
 {
 	//Update stats after anim is played
-	if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
+	if (this->IsLocallyControlled())
 	{
-		//Set timer for EnergyBar to regen after action
-		FTimerDelegate FunctionsNames;
-		FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
-
-		UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
-		GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
-
-		//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
-		//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
+		//if energy is lower than max, init server timer
+		if (this->playerEnergy < this->MaxEnergy)
+		{
+			//initialize timer on the server
+			ServerStartEnergyTimer(this->playerEnergy, this->MaxEnergy, this->EnergyRate);
+		}
 	}
+
+	//	//Set timer for EnergyBar to regen after action
+	//	/*FTimerDelegate FunctionsNames;
+	//	FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
+
+	//	UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
+	//	GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);*/
+
+	//	/*UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
+	//	GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);*/
+	//}
 }
 
 void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex, FVector2D Locations, float& StartPressTime, EBodyPart& SwipeParts)
@@ -2989,65 +3133,65 @@ void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex,
 			InputTouch.Add(NewIndex);
 
 			int Index = InputTouch.Find(NewIndex);
-			if (InputTouch[Index].IsPressed == true)
-			{
-				if (InputStyle == EInputStyle::Default)
-				{
-					//Checks for touch within the input area
-					UGestureInputsFunctions::CircleSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
-				}
-				else if (InputStyle == EInputStyle::LeftJoystick)
-				{
-					//Checks for touch within the input area
-					UGestureInputsFunctions::RightSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
-				}
-				//TArray<EBodyPart>& InputPart = BodyParts;
+			//if (InputTouch[Index].IsPressed == true)
+			//{
+			//	if (InputStyle == EInputStyle::Default)
+			//	{
+			//		//Checks for touch within the input area
+			//		UGestureInputsFunctions::CircleSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
+			//	}
+			//	else if (InputStyle == EInputStyle::LeftJoystick)
+			//	{
+			//		//Checks for touch within the input area
+			//		UGestureInputsFunctions::RightSwipeArea(this, &InputTouch[Index], InputTouch[Index].StartLocation);
+			//	}
+			//	//TArray<EBodyPart>& InputPart = BodyParts;
 
-				//Used in error reporting
-				FString Context;
+			//	//Used in error reporting
+			//	FString Context;
 
-				RowNames = ActionTable->GetRowNames();
+			//	RowNames = ActionTable->GetRowNames();
 
-				//iterate through datatable
-				for (auto& name : RowNames)
-				{
-					FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
-					if (row)
-					{
-						//Check if the input is same as the input needed to execute the skill
-						if (row->BodyParts.Contains(InputTouch[Index].BodyParts))
-						{
-							SwipeParts = InputTouch[Index].BodyParts;
-							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", InputTouch[Index].FingerIndex))));
-							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", InputTouch[Index].SwipeActions))));
-							GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch bdo is %s"), (InputTouch[Index].bDo) ? TEXT("True") : TEXT("False")));
-							//SkillHold = row->StartAnimMontage;
+			//	//iterate through datatable
+			//	for (auto& name : RowNames)
+			//	{
+			//		FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
+			//		if (row)
+			//		{
+			//			//Check if the input is same as the input needed to execute the skill
+			//			if (row->BodyParts.Contains(InputTouch[Index].BodyParts))
+			//			{
+			//				SwipeParts = InputTouch[Index].BodyParts;
+			//				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", InputTouch[Index].FingerIndex))));
+			//				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", InputTouch[Index].SwipeActions))));
+			//				GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch bdo is %s"), (InputTouch[Index].bDo) ? TEXT("True") : TEXT("False")));
+			//				//SkillHold = row->StartAnimMontage;
 
-							//if current row->StopHoldAnimTime is not empty
-							//SkillStopTime = row->StopHoldAnimTime;
-							//BlockHit = row->SkillBlockHit;
-							/*if (row->StopHoldAnimTime.Num() > 0)
-							{
-								SkillStopTime = row->StopHoldAnimTime;
-								BlockHit = row->SkillBlockHit;
-							}*/
+			//				//if current row->StopHoldAnimTime is not empty
+			//				//SkillStopTime = row->StopHoldAnimTime;
+			//				//BlockHit = row->SkillBlockHit;
+			//				/*if (row->StopHoldAnimTime.Num() > 0)
+			//				{
+			//					SkillStopTime = row->StopHoldAnimTime;
+			//					BlockHit = row->SkillBlockHit;
+			//				}*/
 
-							//play animation on press
-							//this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-							//canMove = false; //causes delay input after actionskill montage is played
-							
-							//TouchIsHold = true;
+			//				//play animation on press
+			//				//this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+			//				//canMove = false; //causes delay input after actionskill montage is played
+			//				
+			//				//TouchIsHold = true;
 
-							if (IsLocallyControlled())
-							{
-								//ServerSkillStartMontage(SkillHold, row->StartHoldMontageTime, SkillStopTime);
-							}
-							//ServerSkillBlockHitMontage(row->SkillBlockHit);
-							break;
-						}
-					}
-				}
-			}
+			//				if (IsLocallyControlled())
+			//				{
+			//					//ServerSkillStartMontage(SkillHold, row->StartHoldMontageTime, SkillStopTime);
+			//				}
+			//				//ServerSkillBlockHitMontage(row->SkillBlockHit);
+			//				break;
+			//			}
+			//		}
+			//	}
+			//}
 		}
 		else
 		{
@@ -3060,6 +3204,7 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 {
 	if (InputTouch.IsValidIndex(0) == true)
 	{
+		EInputType Branches = EInputType::Pressed;
 		//float currSwipeTime = FPlatformTime::Seconds();
 
 		//SwipeStartTime = FPlatformTime::Seconds();
@@ -3076,8 +3221,6 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 					//Update finger position every    
 					if (TouchIndex.bDo == false)
 					{
-						
-
 						//if the current finger position is more than 0 units from starting point
 						if (((TouchIndex.StartLocation - Locations).Size() > 50.0f) && ((TouchIndex.StartLocation - Locations).Size() < 1000.0f))
 						{
@@ -3104,11 +3247,36 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 								//Checks for touch within the input area
 								if (InputStyle == EInputStyle::Default)
 								{
-									UGestureInputsFunctions::CircleSwipeArea(this, &TouchIndex, Locations);
+									if (UGestureInputsFunctions::DetectLinearSwipe(TouchIndex.StartLocation, Locations, TouchIndex.SwipeActions, TouchIndex.bDo, TouchIndex.Points) == true)
+									{
+										GetSkillAction(&TouchIndex);
+										//FingerIndex->bDo = true;
+										TouchIndex.StartLocation = FVector2D(0, 0);
+										//PlayerChar->SwipeActions.Add(Branches);
+										//BodyParts.Add(EBodyPart::LeftHand);
+										//TouchIndex.SwipeActions = Branches;
+										//RemoveFromArray();
+										TouchIndex.Points.Empty();
+										return;
+										//if ((TouchIndex.StartLocation - Locations).Size() > 50.0f)
+										//{
+										//	GetSkillAction(&TouchIndex);
+										//	//FingerIndex->bDo = true;
+										//	TouchIndex.StartLocation = FVector2D(0, 0);
+										//	//PlayerChar->SwipeActions.Add(Branches);
+										//	//BodyParts.Add(EBodyPart::LeftHand);
+										//	//TouchIndex.SwipeActions = Branches;
+										//	//RemoveFromArray();
+										//	TouchIndex.Points.Empty();
+										//	return;
+										//}
+									}
+
+									//UGestureInputsFunctions::CircleSwipeArea(this, &TouchIndex, Locations);
 								}
 								else if (InputStyle == EInputStyle::LeftJoystick)
 								{
-									UGestureInputsFunctions::RightSwipeArea(this, &TouchIndex, Locations);
+									//UGestureInputsFunctions::RightSwipeArea(this, &TouchIndex, Locations);
 								}
 								//SwipeDir = TouchIndex.SwipeActions;
 								if (EnableMovement == true)
@@ -3118,7 +3286,7 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 								//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Magenta, FString::Printf(TEXT("Touch bdo is true")));
 
 								//Get skill combos
-								GetSkillAction(&TouchIndex);
+								//GetSkillAction(&TouchIndex);
 								//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", TouchIndex.FingerIndex))));
 								//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", TouchIndex.SwipeActions))));
 								//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Cyan, FString::Printf(TEXT("Current location is %s"), (*Locations.ToString())));

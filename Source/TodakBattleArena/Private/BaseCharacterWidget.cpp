@@ -3,6 +3,7 @@
 
 #include "BaseCharacterWidget.h"
 #include "TodakBattleArenaCharacter.h"
+#include "Components/Button.h"
 
 void UBaseCharacterWidget::SynchronizeProperties()
 {
@@ -16,8 +17,18 @@ void UBaseCharacterWidget::NativeConstruct()
 	Super::NativeConstruct();
 }
 
-void UBaseCharacterWidget::ChangeProgressBarValue(AActor* currPlayer, float currVal, int MaxVal, float& currPercentage)
+void UBaseCharacterWidget::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UBaseCharacterWidget, Player);
+}
+
+void UBaseCharacterWidget::ChangeProgressBarValue(UBaseCharacterWidget* currWidget, float currVal, int MaxVal, float& currPercentage)
+{
+	currPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(currWidget, "EnergyBar_1", "EnergyText_1", "Energy", "Energy", currVal, MaxVal);
+	UE_LOG(LogTemp, Warning, TEXT(".......Energy Remains: %f"), currPercentage);
+
 	//Update energy after action on progress bar
 	//UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), currPlayer->playerEnergy);
 
@@ -29,9 +40,28 @@ void UBaseCharacterWidget::ChangeProgressBarValue(AActor* currPlayer, float curr
 		UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), currPercentage);
 	}*/
 	
-	if (GetOwningPlayer() != currPlayer)
+	/*if (GetOwningPlayer() != currPlayer)
 	{
 		currPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this, "EnergyBar_1", "EnergyText_1", "Energy", "Energy", currVal, MaxVal);
 		UE_LOG(LogTemp, Warning, TEXT(".......Energy Remains: %f"), currPercentage);
+	}*/
+}
+
+void UBaseCharacterWidget::SetButtonVisibility(UButton* button, bool IsCurrentlyVisible, float& VisibilityDuration)
+{
+	if (!IsCurrentlyVisible)
+	{
+		button->SetVisibility(ESlateVisibility::Visible);
+		UE_LOG(LogTemp, Warning, TEXT("BaseCharacterWidget::Button is visible"));
+	}
+	else if (IsCurrentlyVisible)
+	{
+		if (button->IsPressed())
+		{
+			button->SetPressMethod(EButtonPressMethod::ButtonRelease);
+			this->CallReleasedButton();
+		}
+		button->SetVisibility(ESlateVisibility::Hidden);
+		UE_LOG(LogTemp, Warning, TEXT("BaseCharacterWidget::Button is hidden"));
 	}
 }
