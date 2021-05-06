@@ -128,6 +128,10 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GetUpTimer")
 	void CallEventTimerFunction();
 
+	//Block Caller
+	UFUNCTION(BlueprintImplementableEvent, Category = "BlockHit")
+	void CallOpenBlockFunction();
+
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void OnCombatColl(UCapsuleComponent* CombatColl);
 
@@ -424,11 +428,13 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "BlockAction")
 	void StartBlockHit(bool faceBlock, bool HoldBlock, float& ReturnLength);
 
-	UFUNCTION(Reliable, Server, WithValidation, Category = "BlockAction")
-	void ServerAssignBlockHit(AActor* thisActor, FBlockActions BlockMovesets);
+	//SkillPress replicate on server
+	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
+	void ServerSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain);
 
-	UFUNCTION(Reliable, Client, WithValidation, Category = "BlockAction")
-	void ClientAssignBlockhit(AActor* thisActor, FBlockActions BlockMovesets);
+	//SkillPress replicate on all client
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain);
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
@@ -1118,8 +1124,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMultiCastBlockHit;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Block, BlueprintReadWrite, Category = "Anim")
 	FBlockActions BlockHit;
+	UFUNCTION()
+	void OnRep_Block();
 	/////////////////////////////////////////////////////////////
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Misc")

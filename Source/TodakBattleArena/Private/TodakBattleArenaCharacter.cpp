@@ -638,6 +638,14 @@ void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 	//CheckTraces(HitActor, BoneNames, Location, bBlockingHits);
 }
 
+void ATodakBattleArenaCharacter::OnRep_Block()
+{
+	if (!this->IsLocallyControlled())
+	{
+		this->CallOpenBlockFunction();
+	}
+}
+
 //////////////////////////////////// Input //////////////////////////////////////// 
 void ATodakBattleArenaCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
@@ -849,6 +857,11 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 							SkillTriggered = true;
 							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 							SkillPlayrate = row->SkillMoveSetRate;
+
+							if (this->IsLocallyControlled())
+							{
+								ServerSetEnemyMontage(row->HitReactionMoveset, row->BlockReactionMoveset, row->StaminaDrain);
+							}
 							/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Playrate is %f"), this->SkillPlayrate));
 							UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);
 						}*/
@@ -858,7 +871,6 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 								SkillTriggered = true;
 								row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 								SkillPlayrate = row->FatigueMovesetRate;
-
 								/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Damage is %f"), this->SkillPlayrate));
 								UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);*/
 							}
@@ -1039,8 +1051,8 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					hitChar->HitLocation = HitRes.Location;
 					hitChar->BoneName = HitRes.BoneName;
 					hitChar->IsHit = true;
-					hitChar->staminaDrained = this->staminaDrained;
-					hitChar->HitReactionsMoveset = this->HitReactionsMoveset;
+					/*hitChar->staminaDrained = this->staminaDrained;
+					hitChar->HitReactionsMoveset = this->HitReactionsMoveset;*/
 					//DoDamage(hitChar);
 
 					//HitRes.GetComponent();
@@ -1383,15 +1395,9 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 		FTimerHandle Delay;
 
 		RPCMultiCastSkill = MulticastSkill;
+		/*HitReactionsMoveset = HitReaction;
+		staminaDrained = StaminaDrain;*/
 
-		//Hit reaction
-		HitReactionsMoveset = HitReaction;
-		staminaDrained = StaminaDrain;
-
-		if (!this->IsLocallyControlled())
-		{
-			ServerAssignBlockHit(this, BlockMovesets);
-		}
 		//get section end length
 		//this->GetMesh()->GetAnimInstance()->Montage_JumpToSectionsEnd(SectionName, RPCMultiCastSkill);
 		//float endSection = GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkill);
@@ -2300,23 +2306,35 @@ void ATodakBattleArenaCharacter::StartBlockHit(bool faceBlock, bool HoldBlock, f
 	//UE_LOG(LogTemp, Warning, TEXT("outValue : %s"), *outValue.BlockMoveset->GetFName().ToString());
 }
 
-bool ATodakBattleArenaCharacter::ClientAssignBlockhit_Validate(AActor* thisActor, FBlockActions BlockMovesets)
+bool ATodakBattleArenaCharacter::MulticastSetEnemyMontage_Validate(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ClientAssignBlockhit_Implementation(AActor* thisActor, FBlockActions BlockMovesets)
+void ATodakBattleArenaCharacter::MulticastSetEnemyMontage_Implementation(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain)
 {
+	if (this->EnemyElement != nullptr)
+	{
+		this->EnemyElement->BlockHit = BlockMovesets;
+		this->EnemyElement->HitReactionsMoveset = HitReaction;
+		this->EnemyElement->staminaDrained = StaminaDrain;
+
+		//SET BLOCK BUTTON VISIBLE
+		OnRep_Block();
+		//this->EnemyElement->WidgetHUD->CallShowButton();
+		////ServerAssignBlockHit(BlockMovesets, HitReaction, StaminaDrain);
+		//UE_LOG(LogTemp, Warning, TEXT("Name : %s"), *this->GetFName().ToString());
+	}
 }
 
-bool ATodakBattleArenaCharacter::ServerAssignBlockHit_Validate(AActor* thisActor, FBlockActions BlockMovesets)
+bool ATodakBattleArenaCharacter::ServerSetEnemyMontage_Validate(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerAssignBlockHit_Implementation(AActor* thisActor, FBlockActions BlockMovesets)
+void ATodakBattleArenaCharacter::ServerSetEnemyMontage_Implementation(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain)
 {
-
+	MulticastSetEnemyMontage(HitReaction, BlockMovesets, StaminaDrain);
 }
 
 void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets)
