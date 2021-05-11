@@ -1282,7 +1282,7 @@ void ATodakBattleArenaCharacter::ClientUpdateHealthBar_Implementation(int MaxVal
 	UE_LOG(LogTemp, Log, TEXT("HealthVal : %f"), this->Health);
 }
 
-void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue, float StaminaDrained)
+void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue)
 {
 	//damage = DamageValue;
 	// Increase (or decrease) current damage
@@ -1292,7 +1292,6 @@ void ATodakBattleArenaCharacter::UpdateDamage(float DamageValue, float StaminaDr
 
 		//Calculate total damage applied from current action with current instigator's maximum strength
 		this->damage = DamageValue;
-		this->staminaDrained = StaminaDrained;
 		UE_LOG(LogTemp, Warning, TEXT("Damage : %f"), this->damage);
 	}
 }
@@ -1426,7 +1425,7 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 
 		if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 		{
-			UpdateDamage(DamageApplied, StaminaDrain);
+			UpdateDamage(DamageApplied);
 		}
 
 		//stop current played anim

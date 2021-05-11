@@ -140,7 +140,6 @@ public:
 
 
 	// Timeline for Camera Transitions
-
 	UCurveFloat* fCurve;
 
 	UCurveFloat* fCurve2;
@@ -631,7 +630,7 @@ protected:
 
 	/**Function to update the client's damage*/
 	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable, Category = "Damage")
-	void UpdateDamage(float DamageValue, float StaminaDrained);
+	void UpdateDamage(float DamageValue);
 
 	//UpdateEnergy
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Timer")
