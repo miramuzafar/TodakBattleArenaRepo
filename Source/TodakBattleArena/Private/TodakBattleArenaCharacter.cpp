@@ -872,10 +872,6 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 							{
 								SkillTriggered = true;
 
-								row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
-								SkillPlayrate = row->FatigueMovesetRate;
-
-
 								row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 								SkillPlayrate = row->FatigueMovesetRate;
 
@@ -2772,14 +2768,10 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 	{
 		this->GetWorld()->GetTimerManager().ClearTimer(Energystart);
 
-
-			UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
-			GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
-			//UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
-
 		/*FTimerDelegate FunctionsNames;
 		FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::EnergyStatusDelay, this->playerEnergy, this->MaxEnergy);
-*/
+		*/
+
 		this->GetWorld()->GetTimerManager().SetTimer(Energystart, this, &ATodakBattleArenaCharacter::EnergyStatusDelay, MontageDuration + 1.0f, false);
 		//UpdateProgressBarValue(this, this->playerEnergy, this->MaxEnergy);
 	}
