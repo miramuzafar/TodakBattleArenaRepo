@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "..\Public\GestureInputsFunctions.h"
-#include "Components/TimelineComponent.h"
 #include "Components/BoxComponent.h"
 #include "TargetLockInterface.h"
 #include "Components/PrimitiveComponent.h"
@@ -15,6 +14,9 @@
 class UBaseCharacterWidget;
 struct FKAggregateGeom;
 class UPhysicsAsset;
+class UTodakBattleArenaSaveGame;
+class UCameraShake;
+
 
 FORCEINLINE uint32 GetTypeHash(const FFingerIndex& Key)
 {
@@ -27,7 +29,6 @@ UCLASS(config=Game)
 class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, public ITargetLockInterface
 {
 	GENERATED_BODY()
-	//class UTimelineComponent* RagdollTimeline;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -69,8 +70,9 @@ class TODAKBATTLEARENA_API ATodakBattleArenaCharacter : public ACharacter, publi
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	class UArrowComponent* RPunchArrow;
 
-	UPROPERTY(VisibleAnywhere, Category = "Timeline")
-	class UTimelineComponent* MyTimeline;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class USkeletalMeshComponent* Hair;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	//class UInventoryComponent* Inventory;
@@ -98,7 +100,7 @@ public:
 	AController* SetNewControlRotation(FRotator& RotatorParam);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Output")
-	void UpdateFitnessAfterAction();
+	void UpdateProgressBarValue(AActor* currActor, float CurrVal, int MaxVal);
 
 	////////////////////////Called event for bp///////////////////////
 
@@ -117,46 +119,75 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GameOver")
 	void GameOverFunc();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "GetUp")
+	void CallGetUpFunction(AActor* RagdolledActor, USkeletalMeshComponent* CurrMesh);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "GameOver")
+	void CallEventLoseFunction();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "GetUpTimer")
+	void CallEventTimerFunction();
+
+	//Block Caller
+	UFUNCTION(BlueprintImplementableEvent, Category = "BlockHit")
+	void CallOpenBlockFunction();
+
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void OnCombatColl(UCapsuleComponent* CombatColl);
+
+	UFUNCTION(BlueprintCallable, Category = "Collision")
+	void OffCombatColl(UCapsuleComponent* CombatColl);
+
+
+	// Timeline for Camera Transitions
+	UCurveFloat* fCurve;
+
+	UCurveFloat* fCurve2;
+
+	FOnTimelineFloat Interp_FPPToFar{};
+
+	FOnTimelineFloat Interp_FarToTPP{};
+
+	UFUNCTION()
+	void FPPToFarFloatReturn(float val);
+
+	UFUNCTION()
+	void FarToTPPFloatReturn(float val);
+
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void CameraShake();
+
 	//UFUNCTION(BlueprintCallable, Category = "Collision")
 	//void CheckLineTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
-
-	//Check Trace Upon Collision
-	UFUNCTION(BlueprintCallable, Category = "Collision")
-	void CheckHitTrace(UCapsuleComponent* currCapComp, AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHit);
 
 	///////////////////////////////////////////////////////////////
 	/////////////////////////Ragdoll on hit reaction///////////////////////////
 
-	UPROPERTY(EditAnywhere, Category = "Timeline")
-	class UCurveFloat* fCurve;
-
-	UPROPERTY(VisibleAnywhere, Category = "Timeline")
-	class UTimelineComponent* bwTimeline;
-
-	UPROPERTY(VisibleAnywhere, Replicated)
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Ragdoll")
 	bool DoneRagdoll = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, Category = "Ragdoll")
 	bool IsFacingUp = false;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
-		FVector CapsuleLocation;
+	FVector CapsuleLocation;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
-		FVector MeshLocation;
+	FVector MeshLocation;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		FVector TestMeshLoc;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Ragdoll")
+	FVector TestMeshLoc;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
-		FRotator MeshRotation;
-
-	//FTimeline RagdollTimeLine = FTimeline();
-	//UCurveFloat* RagdollCurve;
-	//void TimeLineFloat(float Value);
+	FRotator MeshRotation;
 
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	//float Montage_Play(UAnimMontage * MontageToPlay, float InPlayRate, EMontagePlayReturnType ReturnValueType, float InTimeToStartMontageAt, bool bStopAllMontages);
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimSequenceBase* FallFrontAnimChar;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimSequenceBase* FallBackAnimChar;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerGetUp;
@@ -173,25 +204,11 @@ public:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMulticastGetUp;
 
-	/*UFUNCTION()
-	virtual void AddImpulse(FVector Impulse, FName BoneName, bool bVelChange);*/
-
-	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
+	/*UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
 	void SvrOnHitRagdoll();
 
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastOnHitRagdoll();
-
-	UFUNCTION()
-	void TimelineFloatReturn(float value);
-
-	UFUNCTION()
-	void OnTimelineFinished();
-
-	FOnTimelineFloat InterpFunction{};
-
-	FOnTimelineEvent TimelineFinished{};
-
+	void MulticastOnHitRagdoll();*/
 
 	/////////////////////////End of hit reaction///////////////////////////
 
@@ -202,8 +219,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeGesture")
 	bool FromSmallCircle = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
-	bool isLocked = false;
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "TargetLock")
+	bool IsLocked = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SwipeGesture")
 	bool LeftFoot = false;
@@ -214,47 +231,64 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeGesture")
 	bool EnableMovement = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Block")
 	bool BlockedHit = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category ="SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Block")
+	bool DoFaceBlock = false;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	int RepIdleAnimToPlay = 0;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category ="Anim")
 	bool RepTurnRight = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool RepTurnLeft = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	bool RepSwitchSide = false;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	bool RepIsMoving = false;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "SwipeGesture")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float RepLocoPlayrate = 1.0f;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Camera")
 	float BaseTurnRate;
 
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	float BaseLookUpRate;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "DoOnce")
 	bool bDo = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLockOn")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLock")
 	bool isCollisionInScript = false;
 
-	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "BlockedHit")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "AI")
 	bool AICanAttack = false;
 
 
+	//RagdollTimer
+	FTimerHandle FallTimerHandle;
+
 	FTimerHandle IterateArray;
+
+	FTimerDelegate DelegateName;
 
 	/////////TargetLockTimer/////////////
 	FTimerHandle DistanceEnemTimer;
 	FTimerHandle ToggleTimer;
 
-	UPROPERTY(VisibleAnywhere, Replicated, Category = "SwipeGesture")
+	UPROPERTY(VisibleAnywhere, Replicated,  Category = "SwipeGesture")
 	FTimerHandle BlockHitTimer;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	bool IsEffectiveBlock = false;
 
 	////////////////Swipe pattern enums////////////////////////////////
 	TArray<FName> RowNames;
@@ -290,6 +324,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Bones")
 	TArray<FName> LegBone;
 	/**************EndBoneParts***************************/
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	TSubclassOf<UCameraShake> DamageCameraShake;
 
 	/*UPROPERTY(VisibleAnywhere, Category = "Trace")
 	AActor* HitActor;
@@ -342,6 +379,32 @@ protected:
 	//Timer to remove touch inputs from array
 	void RemoveElementFromArrayTimer();
 
+	//***************InputStyle****************//
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "InputStyle")
+	EInputStyle InputStyle = EInputStyle::Default;
+
+	UPROPERTY()
+	UTimelineComponent* FPPToFarTimeline;
+
+	UPROPERTY()
+	UTimelineComponent* FarToTPPTimeline;
+
+	UFUNCTION()
+	void OnLockedTPPFinished();
+	
+	UFUNCTION()
+	void OnFPPCameraFinished();
+	
+
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void ChangeCameraPerspective(int CamPers);
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "HitReaction")
+	void ServerSlowmo(float TimeDilation);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastSlowmo(float TimeDilation);
+
 	//*******************************************TargetLock************************************************************************************************//
 	/** called when something enters the sphere component */
 	UFUNCTION()
@@ -352,35 +415,52 @@ protected:
 	void OnEndOverlap(class UPrimitiveComponent* OverlappedActor, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	//Execute the skill
-	bool ExecuteAction(bool SkillTrigger, float HitTraceLengths, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float DealDamage, bool& CDSkill);
+	bool ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, FBlockActions BlockMovesets, float DealDamage, float StaminaUsed, float StaminaDrain, bool& CDSkill);
 
 	//Initialize everything during begin play
 	UFUNCTION(BlueprintCallable, Category = "BeginPlay")
 	void InitializeCharAtt();
 
-	//Skill replicate on server
-	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames);
+	UFUNCTION(BlueprintCallable, Category = "Datatable")
+	void FindRowBlockAction(bool holdBlock, bool FaceBlock, bool RightBlock, FBlockActions& outValue);
 
-	//Skill replicate on all client
-	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, float DamageApplied, float CurrStrength, float CurrStamina, float CurrAgility, float PlayRate, float StartTime, bool SkillFound, FName SectionNames);
+	UFUNCTION(BlueprintCallable, Category = "BlockAction")
+	void StartBlockHit(bool faceBlock, bool HoldBlock, float& ReturnLength);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
-	void ServerSkillStartMontage(UAnimMontage* ServerSkill, FName SectionNames, float PauseAnimTime);
+	void ServerSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain);
 
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillStartMontage(UAnimMontage* MulticastSkill, FName SectionNames, float PauseAnimTime);
+	void MulticastSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain);
+
+	//Skill replicate on server
+	UFUNCTION(Reliable, Server, WithValidation)
+	void ServerSkillMoveset(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
+
+	//Skill replicate on all client
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
+
+	//SkillPress replicate on server
+	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
+	void ServerSkillStartMontage(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime);
+
+	//SkillPress replicate on all client
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastSkillStartMontage(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
-	void ServerSkillBlockHitMontage(UAnimMontage* ServerSkill);
+	void ServerSkillBlockHitMontage(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
 
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill);
+	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
+
+	UFUNCTION()
+	void EffectiveBlockTimer();
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
@@ -391,7 +471,7 @@ protected:
 	void MulticastStopBlockHitMontage(UAnimMontage* MulticastSkill);
 
 	//Get montage to play from server
-	UFUNCTION(Unreliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
+	UFUNCTION(Unreliable, Server, WithValidation, BlueprintCallable, Category = "HitReaction")
 	void ServerPlayMontage(UAnimInstance* CurrMesh, UAnimMontage* MontageToPlay);
 
 	//Play and replicate montages on all client
@@ -406,20 +486,22 @@ protected:
 	void GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets);
 	
 	//HitLocation where wounds spawned
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "HitReaction")
 	FVector HitLocation;
 	
 	//Material used to spawn wound
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "HitReaction")
 	UMaterialInterface * DecalMat;
 
 	//Server spawn wounds
-	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "HitReaction")
 	void SvrSpawnWounds(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location);
 
 	//Multicast spawn wounds
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastSpawnWounds(class UMaterialInterface * DecalMaterial, class USceneComponent * AttachToComponent, FName AttachPointName, FVector Location);
+
+	
 
 	//When the touch is hold
 	void MoveOnHold();
@@ -427,16 +509,18 @@ protected:
 	//Reset movement after skill is executed
 	void ResetMovementMode();
 
+	void SimulatePhysicRagdoll(AActor* RagdolledActor);
+
 	//Preparing for ragdoll
-	UFUNCTION(BlueprintCallable)
-	void CallFallRagdoll();
+	UFUNCTION(BlueprintCallable, Category = "Ragdoll")
+	void CallFallRagdoll(AActor* RagdolledActor, bool IsLookingAtTarget);
 
 	//Execute ragdoll
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
-	void ServerFallRagdoll(AActor* RagdolledActor);
+	void ServerFallRagdoll(AActor* RagdolledActor, UAnimSequenceBase* FallAnims);
 
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastFallRagdoll(AActor* RagdolledActor);
+	void MulticastFallRagdoll(AActor* RagdolledActor, UAnimSequenceBase* FallAnims);
 
 	//increase maximum fitness status
 	UFUNCTION(BlueprintCallable)
@@ -471,64 +555,114 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ResetMyDoOnce();
 
+	void EnergyStatusDelay();
+
 	//OnRelease
 	UFUNCTION(BlueprintCallable)
-	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime);
+	void StopDetectTouch(ETouchIndex::Type FingerIndex, float StartPressTime, FVector2D Locations);
 
 	UFUNCTION(BlueprintCallable)
-		void CalculateMeshLocation(USceneComponent* Capsule, FVector& FinalLoc);
+	void CalculateMeshLocation(USceneComponent* Capsule, FVector& FinalLoc);
 
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
-		void ServerGetMeshLocation(FVector TempMeshLoc);
+	void ServerGetMeshLocation(FVector TempMeshLoc);
 
-	UFUNCTION(Reliable, Client, WithValidation, Category = "Ragdoll")
-		void MulticastGetMeshLocation(FVector TempMeshLoc);
-
-	UFUNCTION()
-		void OnRep_SetMeshLocation();
+	UFUNCTION(Reliable, Client, WithValidation)
+	void MulticastGetMeshLocation(FVector TempMeshLoc);
 
 	UFUNCTION()
-		void OnRep_SetMeshRotation();
+	void OnRep_SetMeshLocation();
+
+	UFUNCTION()
+	void OnRep_SetMeshRotation();
 
 	UFUNCTION(BlueprintPure)
-		bool CalculatingFacingLocation(class USkeletalMeshComponent* currMesh);
+	bool CalculatingFacingLocation(class USkeletalMeshComponent* currMesh);
 
 	UFUNCTION(BlueprintCallable)
-		void SetUpGetUpOrientation(USkeletalMeshComponent* currMesh);
+	void SetUpGetUpOrientation(USkeletalMeshComponent* currMesh);
 
 	UFUNCTION(BlueprintCallable)
-		void SetUpGetUpMontage(USkeletalMeshComponent* currMesh);
+	void SetUpGetUpMontage(USkeletalMeshComponent* currMesh, bool FacingUp);
 
 	//Get skills from input touch combo
 	void GetSkillAction(FFingerIndex* FingerIndex);
+
+	//Get skills from input touch combo
+	UFUNCTION(BlueprintCallable)
+	void GetButtonSkillAction(FName BodyPart, bool IsReleased);
 
 	//Fire hit trace on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
 	void FireTrace(FVector StartPoint, FVector EndPoint);
 
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
+	void HitEnemyPlayer(ATodakBattleArenaCharacter* Player, ATodakBattleArenaCharacter* Enemy);
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
 	void DoDamage(AActor* HitActor);
 
 	//Calculate energy spent
-	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable, Category = "Energy")
-	void EnergySpent(float ValDecrement, float PercentageLimit = 1.0f);
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Energy")
+	void ServerEnergySpent(float ValDecrement, float PercentageLimit, float MontageDuration);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation, BlueprintCallable, Category = "Energy")
+	void EnergySpent(float ValDecrement, float PercentageLimit, float MontageDuration);
 
 	/**Function to update the damaged client's health**/
-	UFUNCTION(Reliable, Client, WithValidation, BlueprintCallable, Category = "Damage")
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
+	void ServerUpdateHealth(int playerIndex, float HealthChange);
+
+	/**Function to update the damaged client's health**/
+	UFUNCTION(Reliable, NetMulticast, WithValidation, BlueprintCallable, Category = "Damage")
 	void UpdateHealth(int playerIndex, float HealthChange);
+
+	//UpdateEnergy
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Timer")
+	void ServerUpdateHealthBar(int MaxVal);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation, BlueprintCallable, Category = "Timer")
+	void ClientUpdateHealthBar(int MaxVal);
+
+	//Start timer for health regen on server
+	UFUNCTION(Reliable, Server, WithValidation, Category = "Timer")
+	void ServerStartHealthTimer(int MaxVal, float rate);
 
 	/**Function to update the client's damage*/
 	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable, Category = "Damage")
-	void UpdateDamage(float DamageValue, float CurrStrength, float CurrStamina, float CurrAgility);
+	void UpdateDamage(float DamageValue);
 
-	//Function to update progressbar over time
-	void UpdateCurrentPlayerMainStatusBar(EBarType Type, EMainPlayerStats StatType, FTimerHandle FirstHandle, FTimerHandle SecondHandle);
+	//UpdateEnergy
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Timer")
+	void ServerUpdateEnergyBar(float currVal, int MaxVal);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation, BlueprintCallable, Category = "Timer")
+	void ClientUpdateEnergyBar(float currVal, int MaxVal);
+	
+	//Clear and invalidate custom timer using its timerhandler
+	UFUNCTION(Reliable, Server, WithValidation, Category = "Timer")
+	void ServerTimerHandler(FTimerHandle TimerHandler);
+
+	//Start timer for energy regen on server
+	UFUNCTION(Reliable, Server, WithValidation, Category = "Timer")
+	void ServerStartEnergyTimer(float currVal, int MaxVal, float rate);
 
 	//Update value when the timer is active
 	void UpdateStatusValueTimer(FTimerHandle newHandle, EOperation Operation, bool StopOnFull, float ChangeVal, float Value, int MaxVal, float MinVal, float& totalVal);
 
+	//***************************update targetlock anim*******************************//
+	//Loco Anim replicate on server
+	UFUNCTION(Reliable, Server, WithValidation)
+	void ServerTurnAnim(AActor* thisActor, float TurnLeft, float TurnRight);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastTurnAnim(AActor* thisActor, float TurnLeft, float TurnRight);
+
 	
 
+	//***************************end update targetlock anim*******************************//
+
+	
 
 	//***********************************Variables********************************************//
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeDirection")
@@ -538,6 +672,16 @@ protected:
 	TArray<FName> SkillNames;
 
 protected:
+
+	APlayerController* playerController;
+	//get start touch time
+	double startTouch;
+
+	//is current touch is on hold mode?
+	bool TouchIsHold = false;
+
+	FFingerIndex* CurrFingerIndex;
+
 	/**************************************START STATS******************************************/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLock")
 	bool isAI = false;
@@ -552,7 +696,7 @@ protected:
 
 	//Energy regen time rate
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
-	float EnergyRate = 1.0f;
+	float EnergyRate = .01f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	FTimerHandle StartHealthTimer;
@@ -562,6 +706,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	FTimerHandle StartEnergyTimer;
+
+	FTimerHandle Energystart;
 
 	//Current Stamina value
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
@@ -607,8 +753,11 @@ protected:
 	float Vitality = 0.0f;
 
 	//Current energy
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentEnergy, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	float playerEnergy;
+
+	UFUNCTION()
+	void OnRep_CurrentEnergy();
 
 	//Maximum energy
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
@@ -617,7 +766,9 @@ protected:
 	//current energy in percentage
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	float EnergyPercentage;
-
+	/*UFUNCTION()
+		void OnRep_CurrentEnergy();
+*/
 	//The amount of fatigue resistance the character currently has
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	float PlayerFatigue;
@@ -631,8 +782,11 @@ protected:
 	int MaxFatigue;
 
 	//Current major pain value
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Health")
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, BlueprintReadWrite, Category = "Health")
 	float Health;
+
+	UFUNCTION()
+		void OnRep_Health();
 
 	//Current minor pain value
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Health")
@@ -663,8 +817,8 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere,  BlueprintReadWrite, Category = "Anim")
 	float SkillPlayrate = 1.0f;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
-	UAnimMontage* PickedActionSkill;
+	
+
 
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	//UAnim
@@ -677,6 +831,10 @@ protected:
 	//Assign data table from bp 
 	UPROPERTY(EditAnywhere)
 	UDataTable* BodyDamageTable;
+
+	//Assign data table from bp 
+	UPROPERTY(EditAnywhere)
+	UDataTable* BlockActions;
 
 	//The amount of damage to reduce
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
@@ -693,7 +851,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
 	float damageAfterReduction;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "HitReaction")
 	FName BoneName = "pelvis";
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
@@ -712,7 +870,7 @@ protected:
 	float PhysicsAlpha;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
-	FName SectionName;
+	FName SectionName = "Default";
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	int RandSection;
@@ -862,6 +1020,15 @@ protected:
 
 	//********************TargetOnLock**************************************//
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Targetlock")
+	float RightVal = 0.0f;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Targetlock")
+	bool IsRotating = false;
+
+	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Targetlock")
+	float Radius = 50.0f;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Targetlock")
 	float PlayerToEnemyDistance;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Targetlock")
@@ -887,7 +1054,11 @@ protected:
 
 	//*********************************************************************//
 
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera")
+	int CameraPerspective = 0;
+
+	UPROPERTY(VisibleAnywhere, Category = "Camera")
+	float ChangingCamera = 0.0f;
 
 	///////////////For swipe gesture//////////////////////////////
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
@@ -899,12 +1070,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Status")
 	bool SkillTriggered = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	float SkillStopTime;
 
 	//The amount of damage to apply
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
 	float damage;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
+	float staminaDrained;
 
 	//The amount of damage to apply
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
@@ -925,28 +1099,34 @@ protected:
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* SkillMoveset;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* HitReactionsMoveset;
+
 	/////////////////////////////////////////////////////////////
 
 	/////////////////For touch start/hold/////////////////////////
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerSkillHold;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMultiCastSkillHold;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* SkillHold;
 	/////////////////////////////////////////////////////////////
 
 	////////////////////For BlockHit/////////////////////////////
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerBlockHit;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMultiCastBlockHit;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
-	UAnimMontage* BlockHit;
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Block, BlueprintReadWrite, Category = "Anim")
+	FBlockActions BlockHit;
+	UFUNCTION()
+	void OnRep_Block();
 	/////////////////////////////////////////////////////////////
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Misc")
@@ -964,7 +1144,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	bool BurstActivate;
 
+	UPROPERTY(VisibleAnywhere, Category = "Latent")
+	int32 NextUUID = 0;
 	
+	
+	int32 GetNextUUID()
+	{
+		return NextUUID++;
+	}
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	//FVector ;
@@ -981,10 +1168,10 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget), Category = "Stats")
-	class UBaseCharacterWidget* WidgetHUD;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget), Category = "Stats")
+	UBaseCharacterWidget* WidgetHUD = nullptr;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Stats")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	TSubclassOf<UBaseCharacterWidget> CharacterHUD;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skills")

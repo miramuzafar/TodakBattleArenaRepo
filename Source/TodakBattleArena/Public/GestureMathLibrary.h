@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "ReferenceSkeleton.h"
@@ -59,6 +60,11 @@ public:
 	//Get radius of the circle
 	UFUNCTION(BlueprintPure, Category = "Math|Gesture Utils")
 	static float RadiusCircle(float FirstVectorX, float SecondVectorX, float FirstVectorY, float SecondVectorY);
+
+	//bottom-left and top-right 
+	//corners of rectangle 
+	UFUNCTION(BlueprintPure, Category = "Math|Gesture Utils")
+	static bool IsInsideRect(float x1, float y1, float x2, float y2, float x, float y);
 
 	//Checks if the point is inside a circle
 	UFUNCTION(BlueprintPure, Category = "Math|Gesture Utils")
@@ -147,4 +153,14 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Rate")
 	static float CalculateTotalMaxVal(float Percentage, float MaxVal, float& ValFromPercentage);
+
+	//Rotations
+	UFUNCTION(BlueprintPure, Category = "Rotation")
+	static bool IsLooking(FVector Start, FVector Target, float ZVal);
+
+	UFUNCTION(BlueprintPure, Category = "Rotation")
+	static float GetAngleOffsetFromForwardVector(AActor* A, AActor* B);
+
+	UFUNCTION(BlueprintPure, Category = "Rotation")
+	static bool IsRightAngle(FVector SourceLoc, FVector HitLoc);
 };

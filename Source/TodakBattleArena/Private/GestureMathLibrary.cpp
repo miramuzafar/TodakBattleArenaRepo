@@ -80,6 +80,18 @@ float UGestureMathLibrary::RadiusCircle(float FirstVectorX, float SecondVectorX,
 	return sqrt((pow((FirstVectorX - (SecondVectorX)), 2)) + (pow((FirstVectorY - (SecondVectorY)), 2)));
 }
 
+bool UGestureMathLibrary::IsInsideRect(float x1, float y1, float x2, float y2, float x, float y)
+{
+	//function to find if given point lies inside a given rectangle or not. 
+	if (x > x1 && x < x2 && y > y1 && y < y2)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Is Inside"));
+		return true;
+	}
+		
+	return false;
+}
+
 bool UGestureMathLibrary::IsInsideCircle(float circle_x, float circle_y, float rad, float x, float y)
 {
 	// Compare radius of circle with distance  
@@ -492,4 +504,60 @@ float UGestureMathLibrary::CalculateTotalMaxVal(float Percentage, float MaxVal, 
 	//Get current value from percentage
 	ValFromPercentage = CalculateValueFromPercentage(Percentage, MaxVal, 100.0f);
 	return (MaxVal+ValFromPercentage);
+}
+
+bool UGestureMathLibrary::IsLooking(FVector Start, FVector Target, float ZVal)
+{
+	//Get look at rotation value
+	FRotator RotatorVal = UKismetMathLibrary::FindLookAtRotation(Start, Target);
+
+	bool InView = UKismetMathLibrary::InRange_FloatFloat(ZVal, RotatorVal.Yaw + (-90.0), RotatorVal.Yaw + 90.0);
+
+	//If object is facing the target
+	if (InView)
+	{
+		return true;
+	}
+	return false;
+}
+
+float UGestureMathLibrary::GetAngleOffsetFromForwardVector(AActor* A, AActor* B)
+{
+	FRotator actorRot = A->GetActorRotation();
+
+	FVector FWVector = UKismetMathLibrary::GetForwardVector(actorRot);
+
+	//Normalize
+	FWVector.Normalize();
+
+	//Opponet loc
+	FVector OpCurrVect = FVector(B->GetActorLocation().X, B->GetActorLocation().Y, 0.0f);
+
+	//Player loc
+	FVector PlayerCurrVect = FVector(A->GetActorLocation().X, A->GetActorLocation().Y, 0.0f);
+
+	FVector SubVal = OpCurrVect - PlayerCurrVect;
+
+	//Normalize both
+	SubVal.Normalize();
+
+	//get degree acos
+	float totalacosd = UKismetMathLibrary::DegAcos(UKismetMathLibrary::Dot_VectorVector(FWVector, SubVal));
+
+	//sign of float
+	float signfloat = UKismetMathLibrary::SignOfFloat(UKismetMathLibrary::Cross_VectorVector(FWVector, SubVal).Z);
+
+	return totalacosd * signfloat;
+}
+
+bool UGestureMathLibrary::IsRightAngle(FVector SourceLoc, FVector HitLoc)
+{
+	float Degree = UKismetMathLibrary::DegAsin(UKismetMathLibrary::Dot_VectorVector(SourceLoc, HitLoc));
+	
+	if (Degree > -1.0f)
+	{
+		return true;
+	}
+	else
+		return false;
 }

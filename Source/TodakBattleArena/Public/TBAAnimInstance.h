@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Net/UnrealNetwork.h"
 #include "TBAAnimInstance.generated.h"
 
 /**
@@ -16,26 +17,37 @@ class TODAKBATTLEARENA_API UTBAAnimInstance : public UAnimInstance
 
 public:
 
-	
+	//Replicated Network setup
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_TurnRight, BlueprintReadWrite)
 	bool TurnRight = false;
+	UFUNCTION()
+		void OnRep_TurnRight();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_TurnLeft, BlueprintReadWrite)
 	bool TurnLeft = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool IsMoving = false;
+	UFUNCTION()
+		void OnRep_TurnLeft();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float LocoPlayrate;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+	UAnimSequenceBase* FallAnim;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+	bool RagdollMode = false;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Ragdoll")
+	bool IsStopped = false;
 
 	
 protected:
 	//variables
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsInAir = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool IsMoving = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Speed = 0.0f;
@@ -44,7 +56,13 @@ protected:
 	float Direction = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int IdleAnimToPlay = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Switcher = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool SwitchSide = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool DefendMode = false;
@@ -81,12 +99,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float IKMultiplier = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ragdoll")
-	bool RagdollMode = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ragdoll")
-	bool IsStopped = false;
 
 	//Functions
 

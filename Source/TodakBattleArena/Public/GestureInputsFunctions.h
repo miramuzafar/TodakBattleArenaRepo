@@ -36,7 +36,9 @@ enum class EInputType : uint8
 	UpwardLeftCurve,
 	UpwardRightCurve,
 	DownwardLeftCurve,
-	DownwardRightCurve
+	DownwardRightCurve, 
+	Tap,
+	Hold
 };
 
 //Bodypart
@@ -47,6 +49,14 @@ enum class EBodyPart : uint8
 	RightHand,
 	LeftFoot,
 	RightFoot
+};
+
+UENUM(BlueprintType)
+enum class EInputStyle : uint8
+{
+	Default,//The center swipe
+	LeftJoystick,//The Left analog stick with right area swipe
+	Button //Button
 };
 
 //PlayerStats
@@ -85,9 +95,9 @@ struct FFingerIndex : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	EInputType SwipeActions;
 
-	//Which body parts the swipe occurs
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	EBodyPart BodyParts;
+	////Which body parts the swipe occurs
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	//EBodyPart BodyParts;
 
 	//Start touch location
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
@@ -101,12 +111,15 @@ struct FFingerIndex : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	bool IsPressed = false;
 
-	//--vector points for curved swipes--//
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DoOnce")
-	TArray<FVector2D> LeftPoints;
+	////--vector points for curved swipes--//
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DoOnce")
+	//TArray<FVector2D> LeftPoints;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DoOnce")
-	TArray<FVector2D> RightPoints;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DoOnce")
+	//TArray<FVector2D> RightPoints;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PointArray")
+	TArray<FVector2D> Points;
 	//---------------------------------//
 
 	//Is swipe action is complete
@@ -163,6 +176,40 @@ struct FBodyDamage : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
+struct FBlockActions : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	//check if face block is active
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Block")
+		bool IsFaceBlock = false;
+
+	//Major damage dealt
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Block")
+		bool HoldBlock = false;
+
+	//check if face block is active
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Block")
+		bool IsRightBlock = false;
+
+	//What time does the block anim will start playing
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+		float StartAnimTime = 0.0f;
+
+	//What time does the block anim will pause of holdblock is true
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+		float PauseAnimTime = 0.0f;
+
+	//Anim to be played on block damage
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+		UAnimMontage* BlockMoveset;
+
+	//Duration of montage
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+		float BlockMovesetLength;
+};
+
+USTRUCT(BlueprintType)
 struct FActionSkill : public FTableRowBase
 {
 	GENERATED_BODY()
@@ -175,53 +222,66 @@ struct FActionSkill : public FTableRowBase
 
 	//Which swipe action will execute the anim
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	TArray<EInputType> SwipeActions;
+	EInputType SwipeActions;
+	/*TArray<EInputType> SwipeActions;*/
 
-	//Which body part will execute the anim
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	TArray<EBodyPart> BodyParts;
+	////Which body part will execute the anim
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	//TArray<EBodyPart> BodyParts;
 
-	//How far the collision detection will be registered
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	float HitTraceLength;
-
-	//Anim to be played on hold
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	UAnimMontage* StartAnimMontage;
-
-	//Anim to be played on swipe
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	//Anim to be played on swipe when switch right
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillSwipe")
 	UAnimMontage* SkillMoveset;
 
-	//Anim to be played on swipe
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	UAnimMontage* SkillBlockHit;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitReaction")
+	UAnimMontage* HitReactionMoveset;
 
-	///*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	//TArray<EMontageSection> Sections;*/
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlockReaction")
+	FBlockActions BlockReactionMoveset;
+
 	//What time does the swipe anim will start
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeAnimTime")
-	TArray<float> StartSwipeMontageTime;
+	float SkillMovesetTime;
 
 	//Playrate swipe anim
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float SkillMoveSetRate;
 
-	//Time to stop current touch anim
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AnimHold")
-	TArray<float> StopHoldAnimTime;
+	//Playrate swipe anim when energy less than 0
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	float FatigueMovesetRate;
 
 	//Damage to be dealt from the action
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float Damage = 0.0f;
+
+	//Damage received when attacker is fatigue
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float FatigueDamage = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	float MontageDelay = 0.0f;
+
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float BlockedDamage = 0.0f; 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float FatigueBlockedDamage = 0.0f;*/
+
+	//Damage to be dealt from the action
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float StaminaUsage = 0.0f;
+
+	//Damage to be dealt from the action
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	float StaminaDrain = 0.0f;
 
 	
 
 	//For array comparison
 	bool operator ==(const FActionSkill &other) const
 	{
-		if ((SwipeActions == other.SwipeActions) && (BodyParts == other.BodyParts))
+		if ((SwipeActions == other.SwipeActions)/* && (BodyParts == other.BodyParts)*/)
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("Key %s is %s and %s type is %s and DetectInputOnPressed is %s"), *KeyInput.ToString(), (KeyInput == other.KeyInput)? TEXT("True"): TEXT("False"), *GETENUMSTRING("EInputType", InputType), (InputType == other.InputType) ? TEXT("True") : TEXT("False"), (DetectInputOnPressed == other.DetectInputOnPressed) ? TEXT("True") : TEXT("False"));
 			//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, FString::Printf(TEXT("Key input is %s and Input type is %s and DetectInputOnPressed is %s"), (KeyInput == other.KeyInput) ? TEXT("True") : TEXT("False"), (InputType == other.InputType) ? TEXT("True") : TEXT("False"), (DetectInputOnPressed == other.DetectInputOnPressed) ? TEXT("True") : TEXT("False")));
@@ -343,6 +403,9 @@ class TODAKBATTLEARENA_API UGestureInputsFunctions : public UBlueprintFunctionLi
 	GENERATED_BODY()
 
 public:
+
+	//UFUNCTION(BlueprintCallable, Category = "GestureInput")
+	static void RightSwipeArea(ATodakBattleArenaCharacter* PlayerCharacter, FFingerIndex* FingerIndex, FVector2D Line1End);
 
 	//Detect swipe areas
 	static void CircleSwipeArea(ATodakBattleArenaCharacter* PlayerCharacter, struct FFingerIndex* FingerIndex, FVector2D Line1End);

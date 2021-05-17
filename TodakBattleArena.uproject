@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{67FB6CCB-437C-3FB5-0234-D39C81B86DAB}",
+	"EngineAssociation": "{54D28315-4F44-136B-B4B1-49A5F537710A}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -10,8 +10,7 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"UMG",
-				"CoreUObject"
+				"UMG"
 			]
 		}
 	],
@@ -36,10 +35,6 @@
 		},
 		{
 			"Name": "LocationServicesIOSImpl",
-			"Enabled": true
-		},
-		{
-			"Name": "Niagara",
 			"Enabled": true
 		}
 	],
