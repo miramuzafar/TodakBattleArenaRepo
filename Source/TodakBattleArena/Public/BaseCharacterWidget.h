@@ -46,4 +46,5 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetButtonVisibility(UButton* button, bool IsCurrentlyVisible, float& VisibilityDuration);
+
 };

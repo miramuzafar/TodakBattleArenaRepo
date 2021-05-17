@@ -33,6 +33,13 @@ public:
 		FPlatformMisc::RequestExit(bForce);
 	};
 
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void ToggleOnInput();
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void ToggleOffInput();
+
+
 protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputManagement")
