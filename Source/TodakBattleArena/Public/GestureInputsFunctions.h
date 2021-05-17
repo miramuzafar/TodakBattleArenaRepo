@@ -95,9 +95,9 @@ struct FFingerIndex : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	EInputType SwipeActions;
 
-	//Which body parts the swipe occurs
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	EBodyPart BodyParts;
+	////Which body parts the swipe occurs
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	//EBodyPart BodyParts;
 
 	//Start touch location
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
@@ -111,12 +111,15 @@ struct FFingerIndex : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	bool IsPressed = false;
 
-	//--vector points for curved swipes--//
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DoOnce")
-	TArray<FVector2D> LeftPoints;
+	////--vector points for curved swipes--//
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DoOnce")
+	//TArray<FVector2D> LeftPoints;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DoOnce")
-	TArray<FVector2D> RightPoints;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DoOnce")
+	//TArray<FVector2D> RightPoints;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PointArray")
+	TArray<FVector2D> Points;
 	//---------------------------------//
 
 	//Is swipe action is complete
@@ -219,11 +222,12 @@ struct FActionSkill : public FTableRowBase
 
 	//Which swipe action will execute the anim
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	TArray<EInputType> SwipeActions;
+	EInputType SwipeActions;
+	/*TArray<EInputType> SwipeActions;*/
 
-	//Which body part will execute the anim
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	TArray<EBodyPart> BodyParts;
+	////Which body part will execute the anim
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	//TArray<EBodyPart> BodyParts;
 
 	//Anim to be played on swipe when switch right
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillSwipe")
@@ -231,6 +235,9 @@ struct FActionSkill : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitReaction")
 	UAnimMontage* HitReactionMoveset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlockReaction")
+	FBlockActions BlockReactionMoveset;
 
 	//What time does the swipe anim will start
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeAnimTime")
@@ -252,6 +259,9 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float FatigueDamage = 0.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	float MontageDelay = 0.0f;
+
 	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float BlockedDamage = 0.0f; 
 
@@ -271,7 +281,7 @@ struct FActionSkill : public FTableRowBase
 	//For array comparison
 	bool operator ==(const FActionSkill &other) const
 	{
-		if ((SwipeActions == other.SwipeActions) && (BodyParts == other.BodyParts))
+		if ((SwipeActions == other.SwipeActions)/* && (BodyParts == other.BodyParts)*/)
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("Key %s is %s and %s type is %s and DetectInputOnPressed is %s"), *KeyInput.ToString(), (KeyInput == other.KeyInput)? TEXT("True"): TEXT("False"), *GETENUMSTRING("EInputType", InputType), (InputType == other.InputType) ? TEXT("True") : TEXT("False"), (DetectInputOnPressed == other.DetectInputOnPressed) ? TEXT("True") : TEXT("False"));
 			//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, FString::Printf(TEXT("Key input is %s and Input type is %s and DetectInputOnPressed is %s"), (KeyInput == other.KeyInput) ? TEXT("True") : TEXT("False"), (InputType == other.InputType) ? TEXT("True") : TEXT("False"), (DetectInputOnPressed == other.DetectInputOnPressed) ? TEXT("True") : TEXT("False")));

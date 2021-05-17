@@ -8,6 +8,7 @@
 #include "BaseCharacterWidget.generated.h"
 
 class ATodakBattleArenaCharacter;
+class UButton;
 /**
  * 
  */
@@ -34,6 +35,20 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Player")
 	ATodakBattleArenaCharacter* Player;
 
+
 	/*UFUNCTION(BlueprintCallable)
 	void ChangeProgressBarValue(UBaseCharacterWidget* currWidget, float currVal, int MaxVal, float& currPercentage);*/
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "BlockHit")
+	void CallReleasedButton();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "BlockHit")
+	void CallShowButton();
+
+	UFUNCTION(BlueprintCallable)
+	void ChangeProgressBarValue(UBaseCharacterWidget* currWidget, float currVal, int MaxVal, float& currPercentage);
+
+	UFUNCTION(BlueprintCallable)
+	void SetButtonVisibility(UButton* button, bool IsCurrentlyVisible, float& VisibilityDuration);
+
 };

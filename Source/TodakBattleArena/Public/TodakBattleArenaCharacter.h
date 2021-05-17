@@ -128,6 +128,10 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GetUpTimer")
 	void CallEventTimerFunction();
 
+	//Block Caller
+	UFUNCTION(BlueprintImplementableEvent, Category = "BlockHit")
+	void CallOpenBlockFunction();
+
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void OnCombatColl(UCapsuleComponent* CombatColl);
 
@@ -136,7 +140,6 @@ public:
 
 
 	// Timeline for Camera Transitions
-
 	UCurveFloat* fCurve;
 
 	UCurveFloat* fCurve2;
@@ -278,6 +281,8 @@ public:
 
 	FTimerHandle IterateArray;
 
+	FTimerDelegate DelegateName;
+
 	/////////TargetLockTimer/////////////
 	FTimerHandle DistanceEnemTimer;
 	FTimerHandle ToggleTimer;
@@ -403,8 +408,6 @@ protected:
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
 	void MulticastSlowmo(float TimeDilation);
 
-	
-
 	//*******************************************TargetLock************************************************************************************************//
 	/** called when something enters the sphere component */
 	UFUNCTION()
@@ -415,7 +418,7 @@ protected:
 	void OnEndOverlap(class UPrimitiveComponent* OverlappedActor, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	//Execute the skill
-	bool ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, float DealDamage, float StaminaUsed, float StaminaDrain, bool& CDSkill);
+	bool ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, FBlockActions BlockMovesets, float DealDamage, float StaminaUsed, float StaminaDrain, bool& CDSkill);
 
 	//Initialize everything during begin play
 	UFUNCTION(BlueprintCallable, Category = "BeginPlay")
@@ -427,13 +430,21 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "BlockAction")
 	void StartBlockHit(bool faceBlock, bool HoldBlock, float& ReturnLength);
 
+	//SkillPress replicate on server
+	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
+	void ServerSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain);
+
+	//SkillPress replicate on all client
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain);
+
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerSkillMoveset(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
+	void ServerSkillMoveset(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
 
 	//Skill replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
+	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
@@ -609,19 +620,46 @@ protected:
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Energy")
 	void ServerEnergySpent(float ValDecrement, float PercentageLimit, float MontageDuration);
 
-	UFUNCTION(Reliable, Client, WithValidation, BlueprintCallable, Category = "Energy")
+	UFUNCTION(Reliable, NetMulticast, WithValidation, BlueprintCallable, Category = "Energy")
 	void EnergySpent(float ValDecrement, float PercentageLimit, float MontageDuration);
 
 	/**Function to update the damaged client's health**/
-	UFUNCTION(Reliable, Client, WithValidation, BlueprintCallable, Category = "Damage")
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Damage")
+	void ServerUpdateHealth(int playerIndex, float HealthChange);
+
+	/**Function to update the damaged client's health**/
+	UFUNCTION(Reliable, NetMulticast, WithValidation, BlueprintCallable, Category = "Damage")
 	void UpdateHealth(int playerIndex, float HealthChange);
+
+	//UpdateEnergy
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Timer")
+	void ServerUpdateHealthBar(int MaxVal);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation, BlueprintCallable, Category = "Timer")
+	void ClientUpdateHealthBar(int MaxVal);
+
+	//Start timer for health regen on server
+	UFUNCTION(Reliable, Server, WithValidation, Category = "Timer")
+	void ServerStartHealthTimer(int MaxVal, float rate);
 
 	/**Function to update the client's damage*/
 	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable, Category = "Damage")
-	void UpdateDamage(float DamageValue, float StaminaDrained);
+	void UpdateDamage(float DamageValue);
 
-	//Function to update progressbar over time
-	void UpdateCurrentPlayerMainStatusBar(EBarType Type, EMainPlayerStats StatType, FTimerHandle FirstHandle, FTimerHandle SecondHandle);
+	//UpdateEnergy
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Timer")
+	void ServerUpdateEnergyBar(float currVal, int MaxVal);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation, BlueprintCallable, Category = "Timer")
+	void ClientUpdateEnergyBar(float currVal, int MaxVal);
+	
+	//Clear and invalidate custom timer using its timerhandler
+	UFUNCTION(Reliable, Server, WithValidation, Category = "Timer")
+	void ServerTimerHandler(FTimerHandle TimerHandler);
+
+	//Start timer for energy regen on server
+	UFUNCTION(Reliable, Server, WithValidation, Category = "Timer")
+	void ServerStartEnergyTimer(float currVal, int MaxVal, float rate);
 
 	//Update value when the timer is active
 	void UpdateStatusValueTimer(FTimerHandle newHandle, EOperation Operation, bool StopOnFull, float ChangeVal, float Value, int MaxVal, float MinVal, float& totalVal);
@@ -729,7 +767,7 @@ protected:
 	float Vitality = 0.0f;
 
 	//Current energy
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentEnergy, VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	float playerEnergy;
 
 	UFUNCTION()
@@ -758,8 +796,11 @@ protected:
 	int MaxFatigue;
 
 	//Current major pain value
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Health")
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, BlueprintReadWrite, Category = "Health")
 	float Health;
+
+	UFUNCTION()
+		void OnRep_Health();
 
 	//Current minor pain value
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Health")
@@ -1080,25 +1121,27 @@ protected:
 	/////////////////////////////////////////////////////////////
 
 	/////////////////For touch start/hold/////////////////////////
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerSkillHold;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMultiCastSkillHold;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* SkillHold;
 	/////////////////////////////////////////////////////////////
 
 	////////////////////For BlockHit/////////////////////////////
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCServerBlockHit;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMultiCastBlockHit;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
-	UAnimMontage* BlockHit;
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Block, BlueprintReadWrite, Category = "Anim")
+	FBlockActions BlockHit;
+	UFUNCTION()
+	void OnRep_Block();
 	/////////////////////////////////////////////////////////////
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Misc")
