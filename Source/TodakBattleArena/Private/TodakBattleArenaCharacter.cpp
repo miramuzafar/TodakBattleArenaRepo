@@ -1227,7 +1227,7 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 				}
 			}
 		}
-		if (this->WidgetHUD)
+		/*if (this->WidgetHUD)
 		{
 			if (WidgetHUD->IsVisible())
 			{
@@ -1298,7 +1298,7 @@ void ATodakBattleArenaCharacter::InitializeCharAtt()
 				//GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 				GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("InitIsLoad.")));
 			}
-		}
+		}*/
 		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 		GetWorld()->GetFirstPlayerController()->ShouldShowMouseCursor();
 	}
