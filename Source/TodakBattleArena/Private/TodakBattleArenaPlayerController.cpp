@@ -21,3 +21,14 @@ void ATodakBattleArenaPlayerController::BeginPlay()
 		thisGI->LoadJoystick(this, UGameplayStatics::GetCurrentLevelName(this, true) == LevelName);
 	}
 }
+
+void ATodakBattleArenaPlayerController::ToggleOnInput()
+{
+	EnableInput(Cast<APlayerController>(this));
+}
+
+void ATodakBattleArenaPlayerController::ToggleOffInput()
+{
+	DisableInput(Cast<APlayerController>(this));
+	UE_LOG(LogTemp, Warning, TEXT("Player Input OFF"));
+}

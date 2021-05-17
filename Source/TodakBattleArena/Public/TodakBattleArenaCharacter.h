@@ -228,6 +228,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeGesture")
 	bool EnableMovement = false;
 
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
+	bool CanSwipeAction = true;
+
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Block")
 	bool BlockedHit = false;
 
@@ -442,14 +445,25 @@ protected:
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
-	void ServerSkillBlockHitMontage(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
+	void ServerSkillBlockHitMontage(AActor* HitActor, UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
 
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
+	void MulticastSkillBlockHitMontage(AActor* HitActor, UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
 
-	UFUNCTION()
-	void EffectiveBlockTimer();
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
+	void ServerEffectiveBlockTimer();
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation, Category = "BlockHit")
+	void MulticastEffectiveBlockTimer();
+
+	UFUNCTION(Reliable, Server, WithValidation, Category = "BlockHit")
+	void ServerToggleEffectiveBlock();
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation, Category = "BlockHit")
+	void MulticastToggleEffectiveBlock();
+
+	void EndingEffectiveBlock();
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
@@ -776,7 +790,8 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere,  BlueprintReadWrite, Category = "Anim")
 	float SkillPlayrate = 1.0f;
 
-	
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "BlockHit")
+	ATodakBattleArenaCharacter* EffectiveBlockAttacker;
 
 
 	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
