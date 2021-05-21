@@ -76,6 +76,7 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
+	GetCharacterMovement()->MaxWalkSpeed = 50.0f;
 	
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -273,6 +274,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepSwitchSide);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, CanSwipeAction);
 
+
 	//**AnimMontage**//
 	DOREPLIFETIME(ATodakBattleArenaCharacter, BlockHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, DoFaceBlock);
@@ -294,6 +296,8 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastSkillHold);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, EffectiveBlockAttacker);
 
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RepWalkSpeed);
+
 	//FallDown
 	DOREPLIFETIME(ATodakBattleArenaCharacter, FallBackAnimChar);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, FallFrontAnimChar);
@@ -312,7 +316,6 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MeshRotation);
 
 	//**EndAnimMontage**//
-
 	DOREPLIFETIME(ATodakBattleArenaCharacter, InRagdoll);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, Recovering);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, StopRagdoll);
@@ -572,6 +575,8 @@ void ATodakBattleArenaCharacter::BeginPlay()
 	}*/
 	FollowCamera->SetRelativeLocationAndRotation(FVector(0.0f, 60.0f, 0.0f), FRotator(-10.0f, 0.0f, 0.0f));
 	FollowCamera->SetFieldOfView(75.0f); // Set FOV to 60 degree
+
+	this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 	/*FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
 	if (UClass* locWidgetClass = locWidgetClassRef.TryLoadClass<UBaseCharacterWidget>())
 	{
@@ -652,9 +657,10 @@ void ATodakBattleArenaCharacter::OnRep_Block()
 void ATodakBattleArenaCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
-	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	//check(PlayerInputComponent);
+	/*PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);*/
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATodakBattleArenaCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ATodakBattleArenaCharacter::MoveRight);
@@ -662,17 +668,17 @@ void ATodakBattleArenaCharacter::SetupPlayerInputComponent(class UInputComponent
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	/*PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("TurnRate", this, &ATodakBattleArenaCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &ATodakBattleArenaCharacter::LookUpAtRate);
+	PlayerInputComponent->BindAxis("LookUpRate", this, &ATodakBattleArenaCharacter::LookUpAtRate);*/
 
 	// handle touch devices
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &ATodakBattleArenaCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &ATodakBattleArenaCharacter::TouchStopped);
 
 	// VR headset functionality
-	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ATodakBattleArenaCharacter::OnResetVR);
+	/*PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ATodakBattleArenaCharacter::OnResetVR);*/
 }
 
 void ATodakBattleArenaCharacter::CalculateMeshLocation(USceneComponent* Capsule, FVector& FinalLoc)
@@ -857,27 +863,33 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						if (SkillTriggered == false && (this->playerEnergy >= row->StaminaUsage))
 						{
 							SkillTriggered = true;
-							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
-							SkillPlayrate = row->SkillMoveSetRate;
 
-							if (this->IsLocallyControlled())
+							if (this->IsEffectiveBlock == true)
 							{
-								ServerSetEnemyMontage(row->HitReactionMoveset, row->BlockReactionMoveset, row->StaminaDrain);
+								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+								SkillPlayrate = row->SkillMoveSetRate;
+
+								if (this->IsLocallyControlled())
+								{
+									ServerSetEnemyMontage(row->CriticalReactionMoveset, row->BlockReactionMoveset, row->StaminaDrain);
+								}
 							}
+							else
+							{
+								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+								SkillPlayrate = row->SkillMoveSetRate;
+
+								if (this->IsLocallyControlled())
+								{
+									ServerSetEnemyMontage(row->CriticalReactionMoveset, row ->BlockReactionMoveset, row->StaminaDrain);
+								}
+							}
+							
 							/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Playrate is %f"), this->SkillPlayrate));
 							UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);
 						}*/
 
-							if (SkillTriggered == false && (this->playerEnergy < row->StaminaUsage))
-							{
-								SkillTriggered = true;
-
-								row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
-								SkillPlayrate = row->FatigueMovesetRate;
-
-								/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Damage is %f"), this->SkillPlayrate));
-								UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);*/
-							}
+							
 							/*if (FingerIndex->SwipeActions == EInputType::Up)
 							{
 								row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillMoveset, row->Damage, row->CDSkill);
@@ -897,6 +909,36 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 								row->SkillTrigger = false;
 							}*/
 							break;
+						}
+
+						else if (SkillTriggered == false && (this->playerEnergy < row->StaminaUsage))
+						{
+							SkillTriggered = true;
+
+							if (this->IsEffectiveBlock == true)
+							{
+								row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->CriticalReactionMoveset, row->BlockReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+								SkillPlayrate = row->SkillMoveSetRate;
+
+								if (this->IsLocallyControlled())
+								{
+									ServerSetEnemyMontage(row->CriticalReactionMoveset, row->BlockReactionMoveset, row->StaminaDrain);
+								}
+							}
+							else
+							{
+								row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+								SkillPlayrate = row->FatigueMovesetRate;
+
+
+								if (this->IsLocallyControlled())
+								{
+									ServerSetEnemyMontage(row->HitReactionMoveset, row->BlockReactionMoveset, row->StaminaDrain);
+								}
+							}
+							
+							/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Damage is %f"), this->SkillPlayrate));
+							UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);*/
 						}
 					}
 				}
@@ -1018,7 +1060,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 	//Hit result storage
 	FHitResult HitRes;
 
-	DrawDebugSphere(this->GetWorld(), StartPoint, 20.0f, 5, FColor::Purple, false , 1, 0, 1);
+	//DrawDebugSphere(this->GetWorld(), StartPoint, 20.0f, 5, FColor::Purple, false , 1, 0, 1);
 
 	//Ignore self upon colliding
 	FCollisionQueryParams CP_LKick;
@@ -1682,26 +1724,29 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(AA
 		ATodakBattleArenaCharacter* HitChar = Cast<ATodakBattleArenaCharacter>(HitActor);
 		if (IsBlocked == true && HitChar->IsEffectiveBlock == true)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("CPP EFFECTIVE BLOCK"));
 			FTimerHandle Delay;
 			RPCMultiCastBlockHit = MulticastSkill;
 
+			//if (!this->IsLocallyControlled())
+			//{
+			//	//APlayerController* const PlayerController = Cast<APlayerController>(GEngine->GetFirstLocalPlayerController(GetWorld()));
+			//	/*ATodakBattleArenaPlayerController* AttControl = Cast<ATodakBattleArenaPlayerController>(Controller);
+			//	AttControl->DisableInput(GetWorld()->GetFirstPlayerController());*/
+			//	//Controller->DisableInput(GetPlayerControllers());
+			//	//Cast<ATodakBattleArenaPlayerController>(GetController())->ToggleOffInput();
+			//	this->EnemyElement->CanSwipeAction = false;
+			//	UE_LOG(LogTemp, Warning, TEXT("DISABLE INPUT"));
+			//}
+
+			//Disable input for the other so we can counter attack
+			this->EnemyElement->CanSwipeAction = false;
+			UE_LOG(LogTemp, Warning, TEXT("DISABLE INPUT"));
 			ServerSlowmo(0.2f);
 			CameraShake();
 			//this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
-			float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::MontageLength, StartAnimTime, true);
-			UE_LOG(LogTemp, Warning, TEXT("CPP EFFECTIVE BLOCK"));
+			float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::MontageLength, StartAnimTime, true);	
 			this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::EndingEffectiveBlock, Duration, false);
-
-			if (!IsLocallyControlled())
-			{
-				//APlayerController* const PlayerController = Cast<APlayerController>(GEngine->GetFirstLocalPlayerController(GetWorld()));
-				/*ATodakBattleArenaPlayerController* AttControl = Cast<ATodakBattleArenaPlayerController>(Controller);
-				AttControl->DisableInput(GetWorld()->GetFirstPlayerController());*/
-				//Controller->DisableInput(GetPlayerControllers());
-				//Cast<ATodakBattleArenaPlayerController>(GetController())->ToggleOffInput();
-				this->CanSwipeAction = false; // replicate this................
-				UE_LOG(LogTemp, Warning, TEXT("DISABLE INPUT"));
-			}
 
 		}
 
@@ -1717,45 +1762,45 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(AA
 		}
 	}
 
-	else if (HitActor != this)
-	{
-		if (IsBlocked == true && PauseAnimTime > 0.0f)
-		{
-			//Play anim on touch press/hold
-			RPCMultiCastBlockHit = MulticastSkill;
-			SkillStopTime = PauseAnimTime;
-			this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
-			UE_LOG(LogTemp, Warning, TEXT("BLOCK ACTION"));
-			UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
-			UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
+	//else if (HitActor != this)
+	//{
+	//	if (IsBlocked == true && PauseAnimTime > 0.0f)
+	//	{
+	//		//Play anim on touch press/hold
+	//		RPCMultiCastBlockHit = MulticastSkill;
+	//		SkillStopTime = PauseAnimTime;
+	//		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
+	//		UE_LOG(LogTemp, Warning, TEXT("BLOCK ACTION"));
+	//		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
+	//		UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
 
-			/*if (HitChar != nullptr)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("HITCHAR EXISTS"));
-				if (HitChar->IsEffectiveBlock == true)
-				{
-					DisableInput(GetWorld()->GetFirstPlayerController());
-					UE_LOG(LogTemp, Warning, TEXT("HITCHAR IS EFFECTIVE BLOCKING"));
-				}
-			}*/
+	//		/*if (HitChar != nullptr)
+	//		{
+	//			UE_LOG(LogTemp, Warning, TEXT("HITCHAR EXISTS"));
+	//			if (HitChar->IsEffectiveBlock == true)
+	//			{
+	//				DisableInput(GetWorld()->GetFirstPlayerController());
+	//				UE_LOG(LogTemp, Warning, TEXT("HITCHAR IS EFFECTIVE BLOCKING"));
+	//			}
+	//		}*/
 
-			if (IsEffectiveBlock)
-			{
-				DisableInput(GetWorld()->GetFirstPlayerController());
-			}
+	//		if (IsEffectiveBlock)
+	//		{
+	//			DisableInput(GetWorld()->GetFirstPlayerController());
+	//		}
 
 
-		}
+	//	}
 
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("STOP PLAYING ANIM"));
-			//If the anim is not currently playing
-			this->StopAnimMontage(RPCMultiCastBlockHit);
-			//this->ResetMovementMode();
+	//	else
+	//	{
+	//		UE_LOG(LogTemp, Warning, TEXT("STOP PLAYING ANIM"));
+	//		//If the anim is not currently playing
+	//		this->StopAnimMontage(RPCMultiCastBlockHit);
+	//		//this->ResetMovementMode();
 
-		}
-	}
+	//	}
+	//}
 
 
 
@@ -1984,6 +2029,7 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 	{
 		if (OtherActor != this)
 		{
+
 			ATodakBattleArenaCharacter* EnemyChar = Cast<ATodakBattleArenaCharacter>(OtherActor);
 			if (EnemyChar && isAI == false)
 			{
@@ -2000,8 +2046,9 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 						{
 							//Start target lock timer
 							GetWorld()->GetTimerManager().SetTimer(ToggleTimer, this, &ATodakBattleArenaCharacter::TriggerToggleLockOn, 0.001f, true);
-							//
 							TargetLocked = true;
+							RepWalkSpeed = 25.0f;
+							this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 
 							if (TargetLocked == true)
 							{
@@ -2060,6 +2107,8 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 						{
 							ClosestTargetDistance = 0.0f;
 							TargetLocked = false;
+							RepWalkSpeed = 50.0f;
+							this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 							EnemyElement->IsLocked = false;
 
 							if (CameraPerspective == 0)
@@ -3525,18 +3574,20 @@ void ATodakBattleArenaCharacter::MoveForward(float Value)
 	{
 		if (canMove)
 		{
-			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::FString("Moving Forward"));
+			//// find out which way is forward
+			//const FRotator Rotation = Controller->GetControlRotation();
+			//const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-			// find out which way is forward
+			//// get forward vector
+			//const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+			//// add movement in that direction
+			//AddMovementInput(Direction, Value);
+
 			const FRotator Rotation = Controller->GetControlRotation();
-			const FRotator YawRotation(0, Rotation.Yaw, 0);
+			const FVector Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::X);
 
-			// get forward vector
-			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-			// add movement in that direction
 			AddMovementInput(Direction, Value);
-			
 		}
 		
 	}
@@ -3548,14 +3599,19 @@ void ATodakBattleArenaCharacter::MoveRight(float Value)
 	{		
 		if (canMove)
 		{
-			// find out which way is right
+			//// find out which way is right
+			//const FRotator Rotation = Controller->GetControlRotation();
+			//const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+			//// get right vector 
+			//const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+			//// add movement in that direction
+			//AddMovementInput(Direction, Value);
+
 			const FRotator Rotation = Controller->GetControlRotation();
-			const FRotator YawRotation(0, Rotation.Yaw, 0);
+			const FVector Direction = FRotationMatrix(Rotation).GetScaledAxis(EAxis::Y);
 
-			// get right vector 
-			const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-			// add movement in that direction
 			AddMovementInput(Direction, Value);
 		}
 	}
@@ -3636,7 +3692,7 @@ void ATodakBattleArenaCharacter::MulticastEffectiveBlockTimer_Implementation()
 	this->IsEffectiveBlock = true;
 
 	// Delay 0.5 seconds then run EffectiveBlockTimer()
-	//this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ServerToggleEffectiveBlock, 0.5f, false);
+	this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ServerToggleEffectiveBlock, 0.5f, false);
 	UE_LOG(LogTemp, Warning, TEXT("EFFECTIVE BLOCK TIMER"));
 }
 
@@ -3678,4 +3734,6 @@ void ATodakBattleArenaCharacter::EndingEffectiveBlock()
 		//Cast<ATodakBattleArenaPlayerController>(GetController())->ToggleOffInput();
 		//DisableInput(GetWorld()->GetFirstPlayerController());
 	}
+
+	this->EnemyElement->CanSwipeAction = false;
 }

@@ -231,6 +231,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeGesture")
 	bool EnableMovement = false;
 
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	float RepWalkSpeed = 50.0f;
+
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
 	bool CanSwipeAction = true;
 

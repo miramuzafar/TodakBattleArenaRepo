@@ -239,6 +239,9 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlockReaction")
 	FBlockActions BlockReactionMoveset;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlockReaction")
+	UAnimMontage* CriticalReactionMoveset;
+
 	//What time does the swipe anim will start
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeAnimTime")
 	float SkillMovesetTime;
@@ -258,6 +261,10 @@ struct FActionSkill : public FTableRowBase
 	//Damage received when attacker is fatigue
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float FatigueDamage = 0.0f;
+
+	//Damage received when attacker critical hit
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float CriticalDamage = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float MontageDelay = 0.0f;
@@ -302,8 +309,8 @@ struct FPlayerStatus : public FTableRowBase
 {
 	GENERATED_BODY()
 
-		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
-		float Stamina = 0.0f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	float Stamina = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 		float Strength = 0.0f;

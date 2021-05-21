@@ -55,6 +55,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Direction = 0.0f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool IsLockedWalk = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int IdleAnimToPlay = 0;
 
