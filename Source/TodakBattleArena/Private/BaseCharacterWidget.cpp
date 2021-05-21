@@ -3,7 +3,7 @@
 
 #include "BaseCharacterWidget.h"
 #include "TodakBattleArenaCharacter.h"
-#include "Components/Button.h"
+#include "Components/Border.h"
 
 void UBaseCharacterWidget::SynchronizeProperties()
 {
@@ -68,7 +68,7 @@ void UBaseCharacterWidget::ChangeProgressBarValue(UBaseCharacterWidget* currWidg
 	}*/
 }
 
-void UBaseCharacterWidget::SetButtonVisibility(UButton* button, bool IsCurrentlyVisible, float& VisibilityDuration)
+void UBaseCharacterWidget::SetButtonVisibility(UBorder* button, bool IsCurrentlyVisible, float& VisibilityDuration)
 {
 	if (!IsCurrentlyVisible)
 	{
@@ -77,9 +77,10 @@ void UBaseCharacterWidget::SetButtonVisibility(UButton* button, bool IsCurrently
 	}
 	else if (IsCurrentlyVisible)
 	{
-		if (button->IsPressed())
+		if (IsPressed)
 		{
-			button->SetPressMethod(EButtonPressMethod::ButtonRelease);
+			//button->SetPressMethod(EButtonPressMethod::ButtonRelease);
+			IsPressed = false;
 			this->CallReleasedButton();
 		}
 		button->SetVisibility(ESlateVisibility::Hidden);

@@ -8,7 +8,7 @@
 #include "BaseCharacterWidget.generated.h"
 
 class ATodakBattleArenaCharacter;
-class UButton;
+class UBorder;
 /**
  * 
  */
@@ -26,6 +26,9 @@ protected:
 
 	// Optionally override the Blueprint "Event Construct" event
 	virtual void NativeConstruct() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Player")
+	bool IsPressed = false;
 
 public:
 
@@ -45,6 +48,6 @@ public:
 	void ChangeProgressBarValue(UBaseCharacterWidget* currWidget, float currVal, int MaxVal, float& currPercentage);
 
 	UFUNCTION(BlueprintCallable)
-	void SetButtonVisibility(UButton* button, bool IsCurrentlyVisible, float& VisibilityDuration);
+	void SetButtonVisibility(UBorder* button, bool IsCurrentlyVisible, float& VisibilityDuration);
 
 };
