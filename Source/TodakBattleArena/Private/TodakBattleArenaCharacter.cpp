@@ -238,6 +238,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MaxEnergy);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, EnergyPercentage);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, canMove);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, ReactionStartTime);
 
 	//Timers
 	DOREPLIFETIME(ATodakBattleArenaCharacter, MajorHealthRate);
@@ -273,6 +274,7 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepIdleAnimToPlay);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepSwitchSide);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, CanSwipeAction);
+	//DOREPLIFETIME(ATodakBattleArenaCharacter, JabCounts);
 
 
 	//**AnimMontage**//
@@ -283,18 +285,21 @@ void ATodakBattleArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(ATodakBattleArenaCharacter, HitReactionsMoveset)
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillHold);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, SkillPlayrate);
-	DOREPLIFETIME(ATodakBattleArenaCharacter, SectionName);
+	//DOREPLIFETIME(ATodakBattleArenaCharacter, SectionName);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RandSection)
+	DOREPLIFETIME(ATodakBattleArenaCharacter, SectionLength);
 
 
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerBlockHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerSkill);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerSkillHold);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCServerBlockReaction);
 
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastBlockHit);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastSkill);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastSkillHold);
 	DOREPLIFETIME(ATodakBattleArenaCharacter, EffectiveBlockAttacker);
+	DOREPLIFETIME(ATodakBattleArenaCharacter, RPCMultiCastBlockReaction);
 
 	DOREPLIFETIME(ATodakBattleArenaCharacter, RepWalkSpeed);
 
@@ -383,6 +388,7 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 	if (this->RightVal == 0.0f || this->GetCharacterMovement()->Velocity.Size() == 0.0f)
 	{
 		UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
+
 		//enemy forward vector
 		FVector FWEnem = UKismetMathLibrary::GetRightVector(this->EnemyElement->GetActorRotation());
 
@@ -573,8 +579,20 @@ void ATodakBattleArenaCharacter::BeginPlay()
 			InitializeCharAtt();
 		}
 	}*/
+
 	FollowCamera->SetRelativeLocationAndRotation(FVector(0.0f, 60.0f, 0.0f), FRotator(-10.0f, 0.0f, 0.0f));
-	FollowCamera->SetFieldOfView(75.0f); // Set FOV to 60 degree
+	FollowCamera->SetFieldOfView(75.0f); // Set FOV to 75 degree
+
+	/*
+	if (CameraPerspective == 0)
+	{
+		//Sets player camera nearer TPP
+		this->FollowCamera->SetFieldOfView(90.0f);
+		FLatentActionInfo LatentInfo = FLatentActionInfo();
+		LatentInfo.CallbackTarget = this;
+		UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(225.0f, 226.0f, -60.0f), FRotator(0.0f, -55.0f, 0.0f), true, true, 3.0f, true, EMoveComponentAction::Type::Move, LatentInfo);
+
+	}*/
 
 	this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 	/*FStringClassReference locWidgetClassRef(TEXT("/Game/Blueprints/CharacterHUD.CharacterHUD_C"));
@@ -836,8 +854,10 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 		for (auto& name : ActionTable->GetRowNames())
 		{
 			FActionSkill* row = ActionTable->FindRow<FActionSkill>(name, Context);
+
 			if (row)
 			{
+				
 				UE_LOG(LogTemp, Log, TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions)));
 				if (row->SwipeActions==FingerIndex->SwipeActions)
 				{
@@ -860,87 +880,126 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						//AnimInstance->LocoPlayrate = SkillPlayrate;
 						//temp = SkillPlayrate;
 
+						
+
+						//checks if there is skill triggering and player has enough energy
 						if (SkillTriggered == false && (this->playerEnergy >= row->StaminaUsage))
 						{
 							SkillTriggered = true;
 
-							if (this->IsEffectiveBlock == true)
+							//checks if there is a player in target lock radius
+							if (EnemyElement != nullptr)
 							{
-								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
-								SkillPlayrate = row->SkillMoveSetRate;
-
-								if (this->IsLocallyControlled())
+								// checks if enemy is blocking the hit
+								if (this->EnemyElement->BlockedHit == true)
 								{
-									ServerSetEnemyMontage(row->CriticalReactionMoveset, row->BlockReactionMoveset, row->StaminaDrain);
+									if (this->EnemyElement->IsEffectiveBlock == true)
+									{
+										row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+										SkillPlayrate = row->SkillMoveSetRate;
+
+										if (this->IsLocallyControlled())
+										{
+											ServerSetEnemyMontage(row->CriticalReactionMoveset, row->BlockActionMoveset, row->StaminaDrain, row->StartCritical, row->BlockButtonLength);
+										}
+									}
+									else
+									{
+										row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->BlockReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+										SkillPlayrate = row->SkillMoveSetRate;
+
+										if (this->IsLocallyControlled())
+										{
+											ServerSetEnemyMontage(row->BlockReactionMoveset, row->BlockActionMoveset, row->StaminaDrain, row->StartBlock, row->BlockButtonLength);
+										}
+									}
+								}
+
+								// check if enemy is not blocking
+								else
+								{
+									row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+									SkillPlayrate = row->SkillMoveSetRate;
+
+									if (this->IsLocallyControlled())
+									{
+										ServerSetEnemyMontage(row->HitReactionMoveset, row->BlockActionMoveset, row->StaminaDrain, row->StartHit, row->BlockButtonLength);
+									}
 								}
 							}
+
+							// checks if there is no player in target lock radius
 							else
 							{
-								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 								SkillPlayrate = row->SkillMoveSetRate;
-
-								if (this->IsLocallyControlled())
-								{
-									ServerSetEnemyMontage(row->CriticalReactionMoveset, row ->BlockReactionMoveset, row->StaminaDrain);
-								}
 							}
-							
-							/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Playrate is %f"), this->SkillPlayrate));
-							UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);
-						}*/
-
-							
-							/*if (FingerIndex->SwipeActions == EInputType::Up)
-							{
-								row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillMoveset, row->Damage, row->CDSkill);
-							}
-							else if (FingerIndex->SwipeActions == EInputType::Tap)
-							{
-								row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, row->StartSwipeMontageTime, row->SkillTap, row->Damage, row->CDSkill);
-							}*/
-							/*if (row->StartSwipeMontageTime.Num() > 0)
-							{
-								row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->Damage, row->CDSkill);
-							}*/
-							FingerIndex->bDo = true;
-							CheckForAction(name);
-							/*if (SkillTriggered == false)
-							{
-								row->SkillTrigger = false;
-							}*/
-							break;
 						}
-
-						else if (SkillTriggered == false && (this->playerEnergy < row->StaminaUsage))
-						{
-							SkillTriggered = true;
-
-							if (this->IsEffectiveBlock == true)
-							{
-								row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->CriticalReactionMoveset, row->BlockReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
-								SkillPlayrate = row->SkillMoveSetRate;
-
-								if (this->IsLocallyControlled())
-								{
-									ServerSetEnemyMontage(row->CriticalReactionMoveset, row->BlockReactionMoveset, row->StaminaDrain);
-								}
-							}
-							else
-							{
-								row->CDSkill = ExecuteAction(SkillTriggered, row->FatigueMovesetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
-								SkillPlayrate = row->FatigueMovesetRate;
-
-
-								if (this->IsLocallyControlled())
-								{
-									ServerSetEnemyMontage(row->HitReactionMoveset, row->BlockReactionMoveset, row->StaminaDrain);
-								}
-							}
-							
-							/*GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, FString::Printf(TEXT("Damage is %f"), this->SkillPlayrate));
-							UE_LOG(LogTemp, Warning, TEXT("SkillPlayrate is %f"), this->SkillPlayrate);*/
-						}
+					
+						FingerIndex->bDo = true;
+						CheckForAction(name);
+						break;
 					}
+
+
+					// if player doesn't have enough stamina to execute an action
+					else if (SkillTriggered == false && (this->playerEnergy < row->StaminaUsage))
+					{
+						SkillTriggered = true;
+
+						//checks if there is a player in target lock radius
+						if (EnemyElement != nullptr)
+						{
+							// checks if enemy is blocking the hit
+							if (this->EnemyElement->BlockedHit == true)
+							{
+								if (this->EnemyElement->IsEffectiveBlock == true)
+								{
+									row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+									SkillPlayrate = row->SkillMoveSetRate;
+
+									if (this->IsLocallyControlled())
+									{
+										ServerSetEnemyMontage(row->CriticalReactionMoveset, row->BlockActionMoveset, row->StaminaDrain, row->StartCritical, row->BlockButtonLength);
+									}
+								}
+								else
+								{
+									row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+									SkillPlayrate = row->SkillMoveSetRate;
+
+									if (this->IsLocallyControlled())
+									{
+										ServerSetEnemyMontage(row->BlockReactionMoveset, row->BlockActionMoveset, row->StaminaDrain, row->StartBlock, row->BlockButtonLength);
+									}
+								}
+							}
+
+							// checks if enemy is not blocking
+							else
+							{
+								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+								SkillPlayrate = row->SkillMoveSetRate;
+
+								if (this->IsLocallyControlled())
+								{
+									ServerSetEnemyMontage(row->HitReactionMoveset, row->BlockActionMoveset, row->StaminaDrain, row->StartHit, row->BlockButtonLength);
+								}
+							}
+						}
+
+						//checks if there is no player in target lock radius
+						else
+						{
+							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+							SkillPlayrate = row->SkillMoveSetRate;
+						}
+							
+						FingerIndex->bDo = true;
+						CheckForAction(name);
+						break;
+					}
+
 				}
 			}
 		}
@@ -1009,7 +1068,7 @@ void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart, bool IsRel
 					//RepLocoPlayrate = SkillPlayrate;
 					//AnimInstance->LocoPlayrate = SkillPlayrate;
 					//temp = SkillPlayrate;
-					row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->HitReactionMoveset, row->BlockReactionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+					row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 					/*if (row->StartSwipeMontageTime.Num() > 0)
 					{
 						row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->Damage, row->CDSkill);
@@ -1047,6 +1106,8 @@ void ATodakBattleArenaCharacter::HitEnemyPlayer_Implementation(ATodakBattleArena
 			}
 		}
 	}
+
+	
 }
 
 bool ATodakBattleArenaCharacter::FireTrace_Validate(FVector StartPoint, FVector EndPoint)
@@ -1071,10 +1132,10 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 
 	if (DetectHit)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("Sweep channel")));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, FString::Printf(TEXT("Sweep channel")));
 		if (HitRes.Actor != this)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Is not self")));
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Is not self")));
 			ATodakBattleArenaCharacter* hitChar = Cast<ATodakBattleArenaCharacter>(HitRes.Actor);
 			if (hitChar && hitChar->InRagdoll == false)
 			{
@@ -1082,7 +1143,7 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 				{
 					//Apply damage
 					DoOnce = true;
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Do once false")));
+					//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, FString::Printf(TEXT("Do once false")));
 					//hitChar->IsHit = true;
 					//hitChar = HitRes.Actor.Get();
 					/*if (HitRes.BoneName == "Pelvis" || HitRes.BoneName == "spine_03" || HitRes.BoneName == "spine_01")
@@ -1098,12 +1159,26 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					hitChar->HitLocation = HitRes.Location;
 					hitChar->BoneName = HitRes.BoneName;
 					hitChar->IsHit = true;
+
+
+					// check bone name / hit location == head / body then we apply damage & camera shake
+
+
+
+
+
+
+
+
+
 					/*hitChar->staminaDrained = this->staminaDrained;
 					hitChar->HitReactionsMoveset = this->HitReactionsMoveset;*/
 					//DoDamage(hitChar);
 
 					//HitRes.GetComponent();
 
+					//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Mage)
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *hitChar->BoneName.ToString()));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *HitRes.GetComponent()->GetName()));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *hitChar->HitLocation.ToString()));
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
@@ -1368,7 +1443,7 @@ void ATodakBattleArenaCharacter::ClientUpdateEnergyBar_Implementation(float curr
 		this->playerEnergy = currEnergy;
 
 	OnRep_CurrentEnergy();
-	UE_LOG(LogTemp, Log, TEXT("Energyval : %f"), this->playerEnergy);
+	//UE_LOG(LogTemp, Log, TEXT("Energyval : %f"), this->playerEnergy);
 }
 
 bool ATodakBattleArenaCharacter::ServerUpdateEnergyBar_Validate(float currVal, int MaxVal)
@@ -1413,17 +1488,11 @@ void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage*
 	{
 		RPCServerSkill = ServerSkill;
 		SkillExecuted = SkillFound;
-		
-		//Get random index from section names
-		/*FName arr[3] = { "Attack1", "Attack2", "Attack3" };
-		RandSection = rand() % 3;
-		//int random = rand() % 3;
-		SectionNames = arr[RandSection];
-		SectionName = SectionNames;*/
-
+		//SectionName = MontageSection;
 		//OnRep_Blockhit(BlockMovesets);
-
+		
 		//damage = DamageApplied;
+
 		MulticastSkillMoveset(RPCServerSkill, HitReaction, BlockMovesets, DamageApplied, StaminaUsed, StaminaDrain, PlayRate, StartTime, SkillFound);
 	}
 }
@@ -1439,53 +1508,37 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 	if (SkillFound == true)
 	{
 		this->GetWorld()->GetTimerManager().ClearTimer(StartEnergyTimer);
-		//If the anim is not currently playing
 		FTimerHandle Delay;
 
 		RPCMultiCastSkill = MulticastSkill;
-		/*HitReactionsMoveset = HitReaction;
-		staminaDrained = StaminaDrain;*/
+		//SectionName = MontageSectiom;
 
-		//get section end length
-		//this->GetMesh()->GetAnimInstance()->Montage_JumpToSectionsEnd(SectionName, RPCMultiCastSkill);
-		//float endSection = GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkill);
-
-		//float StartSect = 0.0f;
-		//float EndSect = 0.0f;
-
-		//RPCMultiCastSkill->GetSectionStartAndEndTime(RPCMultiCastSkill->GetSectionIndex(SectionName), StartSect, EndSect);
-
-		//Play new anim on client
-		float durations = this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::Duration, StartTime, true);
-		//this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName, RPCMultiCastSkill);
+		//Disable movement on Montage Play
 		canMove = false;
-
-		//get current section length
-		//float startSection = this->GetMesh()->GetAnimInstance()->Montage_GetPosition(RPCMultiCastSkill);
-
-		//get section length
-		//float SectionLength = endSection - startSection;
-
-		//float SectionLength = EndSect - StartTime;
-
+		
+		float MovesetDuration = this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
 		UE_LOG(LogTemp, Warning, TEXT("Montage Name: %s"), *RPCMultiCastSkill->GetFName().ToString());
 
-		//this->PlayAnimMontage(RPCMultiCastSkill);
+		this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, MovesetDuration, false);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));
+
+		/* Play montage by section
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkill, PlayRate, EMontagePlayReturnType::MontageLength, StartTime, true);
+		this->GetMesh()->GetAnimInstance()->Montage_JumpToSection(MontageSection, RPCMultiCastSkill);
+
+		//Get the section length
+		SectionLength = RPCMultiCastSkill->GetSectionLength(SectionUUID);
+		
+		//Wait until Montage finished playing based on Section, then execute ResetMovementMode function
+		this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, SectionLength, false);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));*/
 
 		if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
 		{
 			UpdateDamage(DamageApplied);
 		}
 
-		//stop current played anim
-		//this->GetMesh()->GetAnimInstance()->Montage_Stop(3.0f, RPCMultiCastSkillHold);
-
 		//this->GetMesh()->GetAnimInstance()->StopAllMontages(3.0f);
-
-		// duration to wait for montage finished playing
-		this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, durations, false);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));
-
 		if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false)
 		{
 			//GetMesh()->SetSimulatePhysics(false);
@@ -1497,59 +1550,11 @@ void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMonta
 				//if this client has access
 				if (this->IsLocallyControlled())
 				{
-					ServerEnergySpent(StaminaUsed, 100.0f, durations);
+					ServerEnergySpent(StaminaUsed, 100.0f, MovesetDuration);
 					this->BlockedHit = false;
-					//if still in blocked hit state
-					//Reduce player energy after action
 					UE_LOG(LogTemp, Warning, TEXT("Energy: %f"), this->playerEnergy);
-
-					////Update stats after anim is played
-					//if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
-					//{
-					//	//Set timer for EnergyBar to regen after action
-					//	FTimerDelegate FunctionsNames;
-					//	FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
-
-					//	UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
-					//	GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
-
-					//	//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
-					//	//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
-					//}
 				}
 			}
-
-			//// duration to wait for montage finished playing
-			//this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ResetMovementMode, durations, false);
-			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Timer remaining: %f"), this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay)));
-			//float this->GetWorld()->GetTimerManager().GetTimerRemaining(Delay);
-
-			//if (LevelName != UGameplayStatics::GetCurrentLevelName(this, true))
-			//{
-			//	//if this client has access
-			//	if (this->IsLocallyControlled())
-			//	{
-			//		ServerEnergySpent(StaminaUsed, 100.0f);
-			//		this->BlockedHit = false;
-			//		//if still in blocked hit state
-			//		//Reduce player energy after action
-			//		UE_LOG(LogTemp, Warning, TEXT("Energy: %f"), this->playerEnergy);
-
-			//		////Update stats after anim is played
-			//		//if (GetWorld()->GetTimerManager().IsTimerActive(StartEnergyTimer) == false && (this->playerEnergy <= this->MaxEnergy))
-			//		//{
-			//		//	//Set timer for EnergyBar to regen after action
-			//		//	FTimerDelegate FunctionsNames;
-			//		//	FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::UpdateCurrentPlayerMainStatusBar, EBarType::PrimaryProgressBar, EMainPlayerStats::Energy, this->StartEnergyTimer, this->StartEnergyTimer);
-
-			//		//	UE_LOG(LogTemp, Warning, TEXT("EnergyTimer has started!"));
-			//		//	GetWorld()->GetTimerManager().SetTimer(this->StartEnergyTimer, FunctionsNames, EnergyRate, true);
-
-			//		//	//UE_LOG(LogTemp, Warning, TEXT("Timer has started!"));
-			//		//	//GetWorld()->GetTimerManager().SetTimer(StartEnergyTimer, this, &ATodakBattleArenaCharacter::UpdateEnergyStatusBar, 1.5f, true, 2.0f);
-			//		//}
-			//	}
-			//}
 		}
 	}
 	
@@ -1692,76 +1697,94 @@ void ATodakBattleArenaCharacter::MulticastSkillStartMontage_Implementation(UAnim
 	UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
 }
 
-bool ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Validate(AActor* HitActor, UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
+bool ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Validate(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Implementation(AActor* HitActor, UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
+void ATodakBattleArenaCharacter::ServerSkillBlockHitMontage_Implementation(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		RPCServerBlockHit = ServerSkill;
-		MulticastSkillBlockHitMontage(HitActor, RPCServerBlockHit, StartAnimTime, PauseAnimTime, IsBlocked);
+		MulticastSkillBlockHitMontage(RPCServerBlockHit, StartAnimTime, PauseAnimTime, IsBlocked);
 		
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Validate(AActor* HitActor, UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
+bool ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Validate(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(AActor* HitActor, UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
+void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked)
 {
-
-	//this->BlockedHit = true;
+	//play block action montage when player presses the block button
 	this->BlockedHit = IsBlocked;
-
-
-	if (HitActor == this)
+	if (IsBlocked == true)
 	{
-		ATodakBattleArenaCharacter* HitChar = Cast<ATodakBattleArenaCharacter>(HitActor);
-		if (IsBlocked == true && HitChar->IsEffectiveBlock == true)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("CPP EFFECTIVE BLOCK"));
-			FTimerHandle Delay;
-			RPCMultiCastBlockHit = MulticastSkill;
+		//Play anim on touch press/hold
+		RPCMultiCastBlockHit = MulticastSkill;
+		SkillStopTime = PauseAnimTime;
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
 
-			//if (!this->IsLocallyControlled())
-			//{
-			//	//APlayerController* const PlayerController = Cast<APlayerController>(GEngine->GetFirstLocalPlayerController(GetWorld()));
-			//	/*ATodakBattleArenaPlayerController* AttControl = Cast<ATodakBattleArenaPlayerController>(Controller);
-			//	AttControl->DisableInput(GetWorld()->GetFirstPlayerController());*/
-			//	//Controller->DisableInput(GetPlayerControllers());
-			//	//Cast<ATodakBattleArenaPlayerController>(GetController())->ToggleOffInput();
-			//	this->EnemyElement->CanSwipeAction = false;
-			//	UE_LOG(LogTemp, Warning, TEXT("DISABLE INPUT"));
-			//}
-
-			//Disable input for the other so we can counter attack
-			this->EnemyElement->CanSwipeAction = false;
-			UE_LOG(LogTemp, Warning, TEXT("DISABLE INPUT"));
-			ServerSlowmo(0.2f);
-			CameraShake();
-			//this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
-			float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::MontageLength, StartAnimTime, true);	
-			this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::EndingEffectiveBlock, Duration, false);
-
-		}
-
-		else
-		{
-			RPCMultiCastBlockHit = MulticastSkill;
-			//SkillStopTime = PauseAnimTime;
-			this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
-			UE_LOG(LogTemp, Warning, TEXT("HIT BLOCK REACTION"));
-			UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
-			UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
-
-		}
+		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
+		UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
+	}
+	else
+	{
+		//If the anim is not currently playing
+		this->StopAnimMontage(RPCMultiCastBlockHit);
 	}
 
+	// ***Blocked hit montage assigned follows the block action***
+	//this->BlockedHit = IsBlocked;
+
+	////checks who is getting hit
+	//if (HitActor == this)
+	//{
+	//	ATodakBattleArenaCharacter* HitChar = Cast<ATodakBattleArenaCharacter>(HitActor);
+	//	if (IsBlocked == true && HitChar->IsEffectiveBlock == true)
+	//	{
+	//		UE_LOG(LogTemp, Warning, TEXT("CPP EFFECTIVE BLOCK"));
+	//		FTimerHandle Delay;
+	//		RPCMultiCastBlockHit = MulticastSkill;
+
+	//		//if (!this->IsLocallyControlled())
+	//		//{
+	//		//	//APlayerController* const PlayerController = Cast<APlayerController>(GEngine->GetFirstLocalPlayerController(GetWorld()));
+	//		//	/*ATodakBattleArenaPlayerController* AttControl = Cast<ATodakBattleArenaPlayerController>(Controller);
+	//		//	AttControl->DisableInput(GetWorld()->GetFirstPlayerController());*/
+	//		//	//Controller->DisableInput(GetPlayerControllers());
+	//		//	//Cast<ATodakBattleArenaPlayerController>(GetController())->ToggleOffInput();
+	//		//	this->EnemyElement->CanSwipeAction = false;
+	//		//	UE_LOG(LogTemp, Warning, TEXT("DISABLE INPUT"));
+	//		//}
+
+	//		//Disable input for the other so we can counter attack
+	//		this->EnemyElement->CanSwipeAction = false;
+	//		UE_LOG(LogTemp, Warning, TEXT("DISABLE INPUT"));
+	//		ServerSlowmo(0.2f);
+	//		CameraShake();
+	//		//this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
+	//		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::MontageLength, StartAnimTime, true);	
+	//		this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::EndingEffectiveBlock, Duration, false);
+
+	//	}
+
+	//	else
+	//	{
+	//		RPCMultiCastBlockHit = MulticastSkill;
+	//		//SkillStopTime = PauseAnimTime;
+	//		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockHit, 1.0f, EMontagePlayReturnType::Duration, StartAnimTime);
+	//		UE_LOG(LogTemp, Warning, TEXT("HIT BLOCK REACTION"));
+	//		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
+	//		UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
+
+	//	}
+	//}
+
+	////checks who is pressing the block button
 	//else if (HitActor != this)
 	//{
 	//	if (IsBlocked == true && PauseAnimTime > 0.0f)
@@ -1774,21 +1797,6 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(AA
 	//		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastSkillBlock : %s"), *RPCMultiCastBlockHit->GetFName().ToString());
 	//		UE_LOG(LogTemp, Warning, TEXT("SkillStopTime : %f"), SkillStopTime);
 
-	//		/*if (HitChar != nullptr)
-	//		{
-	//			UE_LOG(LogTemp, Warning, TEXT("HITCHAR EXISTS"));
-	//			if (HitChar->IsEffectiveBlock == true)
-	//			{
-	//				DisableInput(GetWorld()->GetFirstPlayerController());
-	//				UE_LOG(LogTemp, Warning, TEXT("HITCHAR IS EFFECTIVE BLOCKING"));
-	//			}
-	//		}*/
-
-	//		if (IsEffectiveBlock)
-	//		{
-	//			DisableInput(GetWorld()->GetFirstPlayerController());
-	//		}
-
 
 	//	}
 
@@ -1800,17 +1808,6 @@ void ATodakBattleArenaCharacter::MulticastSkillBlockHitMontage_Implementation(AA
 	//		//this->ResetMovementMode();
 
 	//	}
-	//}
-
-
-
-
-	//else
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("IF ANIM IS NOT PLAYING"));
-	//	//If the anim is not currently playing
-	//	this->StopAnimMontage(RPCMultiCastBlockHit);
-	//	//this->ResetMovementMode();
 	//}
 
 	//Play anim on block incoming hit
@@ -1861,8 +1858,8 @@ void ATodakBattleArenaCharacter::MulticastStopBlockHitMontage_Implementation(UAn
 		//stops local timer
 		GetWorld()->GetTimerManager().ClearTimer(BlockHitTimer);
 	}
-		//reset back to montage during blocked hit
-	//this
+
+	//reset back to montage during blocked hit
 	this->GetMesh()->GetAnimInstance()->Montage_Stop(3.0f, MulticastSkill);
 	this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastSkillHold, 2.0f, EMontagePlayReturnType::MontageLength, SkillStopTime, false);
 	UE_LOG(LogTemp, Warning, TEXT("Stop block timer!"));	
@@ -1943,7 +1940,7 @@ void ATodakBattleArenaCharacter::ChangeCameraPerspective(int CamPers)
 		}
 	}
 
-	if (CamPers == 1)
+	else if (CamPers == 1)
 	{
 		FLatentActionInfo LatentInfo = FLatentActionInfo();
 		LatentInfo.CallbackTarget = this;
@@ -1957,7 +1954,7 @@ void ATodakBattleArenaCharacter::ChangeCameraPerspective(int CamPers)
 		
 	}
 
-	if (CamPers == 2)
+	else if (CamPers == 2)
 	{
 		if (IsLocked)
 		{
@@ -2047,14 +2044,15 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 							//Start target lock timer
 							GetWorld()->GetTimerManager().SetTimer(ToggleTimer, this, &ATodakBattleArenaCharacter::TriggerToggleLockOn, 0.001f, true);
 							TargetLocked = true;
-							RepWalkSpeed = 25.0f;
-							this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 
 							if (TargetLocked == true)
 							{
 								//Forces player to enter ready stance
+								this->IsLocked = true;
 								EnemyElement->IsLocked = true;
-								//EnemyElement->RepIsMoving = true;
+								EnemyElement->RepIsMoving = true;
+								RepWalkSpeed = 25.0f;
+								this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 
 								if (CameraPerspective == 0)
 								{
@@ -2082,6 +2080,27 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 			else if (EnemyChar && isAI == true)
 			{
 				AICanAttack = true;
+
+				EnemyElement = EnemyChar;
+				EnemyElement->CanBeTargeted = true;
+				if (EnemyElement->CanBeTargeted == true)
+				{
+					if (EnemyElement != nullptr)
+					{
+						//Set target as nearest target available
+						NearestTarget = EnemyElement;
+						if (NearestTarget != nullptr)
+						{
+							TargetLocked = true;
+
+							if (TargetLocked == true)
+							{
+								//Forces player to enter ready stance
+								EnemyElement->IsLocked = true;
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -2107,9 +2126,11 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 						{
 							ClosestTargetDistance = 0.0f;
 							TargetLocked = false;
+							this->IsLocked = false;
+							EnemyElement->IsLocked = false;
+							//EnemyElement->RepIsMoving = false;
 							RepWalkSpeed = 50.0f;
 							this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
-							EnemyElement->IsLocked = false;
 
 							if (CameraPerspective == 0)
 							{
@@ -2129,7 +2150,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 							}
 						}
 
-						//Stop target lock timer
+						//Stop target lock timer	
 						GetWorld()->GetTimerManager().ClearTimer(ToggleTimer);
 						if (this->RightVal == 0.0f && this->GetCharacterMovement()->Velocity.Size() == 0.0f)
 						{
@@ -2143,12 +2164,19 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 							AnimEnemInst->TurnRight = false;
 							AnimEnemInst->TurnLeft = false;
 						}
+						
 					}
 				}
 			}
 			else if (EnemyChar && isAI == true)
 			{
 				AICanAttack = false;
+
+				if (TargetLocked == true)
+				{
+					//Forces player to enter ready stance
+					EnemyElement->IsLocked = true;
+				}
 			}
 		}
 	}
@@ -2176,11 +2204,28 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate
 		//Get the Montage to be play
 		SkillMoveset = SkillMovesets;
 
+		//// Set Montage Section Name on Jab Spam
+		//if (JabCounts > 1)
+		//{
+		//	SectionName = "Spam";
+		//	SectionUUID = 1;
+		//	AnimStartTime = 0.5f;
+
+		//}
+
+		//else if (JabCounts <= 1)
+		//{
+		//	SectionName = "Default";
+		//	SectionUUID = 0;
+	
+		//}
+
 		//Server
 		if (this->IsLocallyControlled())
 		{
 			ServerSkillMoveset(SkillMoveset, HitMovesets, BlockMovesets, DealDamage, StaminaUsed, StaminaDrain, AnimRate, AnimStartTime, SkillTrigger);
 		}
+		
 		
 		if (this->BlockedHit == true)
 		{
@@ -2381,25 +2426,37 @@ void ATodakBattleArenaCharacter::StartBlockHit(bool faceBlock, bool HoldBlock, f
 	FindRowBlockAction(HoldBlock, faceBlock, RightBlock, outValue);
 
 	//player block montage
-	ServerSkillBlockHitMontage(this, outValue.BlockMoveset, outValue.StartAnimTime, outValue.PauseAnimTime, outValue.HoldBlock);
+	ServerSkillBlockHitMontage(outValue.BlockMoveset, outValue.StartAnimTime, outValue.PauseAnimTime, outValue.HoldBlock);
 	//BlockMontageLength = outValue.BlockMoveset->GetPlayLength();
 	//ReturnLength = outValue.BlockMovesetLength;
 
 	//UE_LOG(LogTemp, Warning, TEXT("outValue : %s"), *outValue.BlockMoveset->GetFName().ToString());
 }
 
-bool ATodakBattleArenaCharacter::MulticastSetEnemyMontage_Validate(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain)
+bool ATodakBattleArenaCharacter::ServerSetEnemyMontage_Validate(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain, float StartPlay, float BlockVisibility)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::MulticastSetEnemyMontage_Implementation(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain)
+void ATodakBattleArenaCharacter::ServerSetEnemyMontage_Implementation(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain, float StartPlay, float BlockVisibility)
+{
+	MulticastSetEnemyMontage(HitReaction, BlockMovesets, StaminaDrain, StartPlay, BlockVisibility);
+}
+
+bool ATodakBattleArenaCharacter::MulticastSetEnemyMontage_Validate(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain, float StartPlay, float BlockVisibility)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::MulticastSetEnemyMontage_Implementation(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain, float StartPlay, float BlockVisibility)
 {
 	if (this->EnemyElement != nullptr)
 	{
 		this->EnemyElement->BlockHit = BlockMovesets;
 		this->EnemyElement->HitReactionsMoveset = HitReaction;
 		this->EnemyElement->staminaDrained = StaminaDrain;
+		this->EnemyElement->ReactionStartTime = StartPlay;
+		this->EnemyElement->BlockButtonLength = BlockVisibility; //how long the block button will be visible
 
 		//SET BLOCK BUTTON VISIBLE
 		OnRep_Block();
@@ -2407,16 +2464,6 @@ void ATodakBattleArenaCharacter::MulticastSetEnemyMontage_Implementation(UAnimMo
 		////ServerAssignBlockHit(BlockMovesets, HitReaction, StaminaDrain);
 		//UE_LOG(LogTemp, Warning, TEXT("Name : %s"), *this->GetFName().ToString());
 	}
-}
-
-bool ATodakBattleArenaCharacter::ServerSetEnemyMontage_Validate(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain)
-{
-	return true;
-}
-
-void ATodakBattleArenaCharacter::ServerSetEnemyMontage_Implementation(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain)
-{
-	MulticastSetEnemyMontage(HitReaction, BlockMovesets, StaminaDrain);
 }
 
 void ATodakBattleArenaCharacter::GetDamageFromPhysicsAssetShapeName(FName ShapeName, float& MajorDamageDealt, float& MinorDamageDealt, bool& IsUpperBody, UAnimMontage* DamageMovesets)
@@ -2794,7 +2841,7 @@ void ATodakBattleArenaCharacter::EnergySpent_Implementation(float ValDecrement, 
 
 	OnRep_CurrentEnergy();
 
-	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
+	//UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
 
 	//this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
 
@@ -3066,7 +3113,7 @@ void ATodakBattleArenaCharacter::UpdateStatusValueTimer(FTimerHandle newHandle, 
 
 void ATodakBattleArenaCharacter::OnRep_CurrentEnergy()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
+	//UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
 	if (this->IsLocallyControlled())
 	{
 		this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
@@ -3322,7 +3369,7 @@ void ATodakBattleArenaCharacter::DetectTouchMovement(ETouchIndex::Type FingerInd
 			{
 				if (TouchIndex.IsPressed == true)
 				{
-					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::White, FString::Printf(TEXT("Touch bdo is %s"), (TouchIndex.bDo) ? TEXT("True") : TEXT("False")));
+					//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::White, FString::Printf(TEXT("Touch bdo is %s"), (TouchIndex.bDo) ? TEXT("True") : TEXT("False")));
 
 					//Update finger position every    
 					if (TouchIndex.bDo == false)
@@ -3692,7 +3739,7 @@ void ATodakBattleArenaCharacter::MulticastEffectiveBlockTimer_Implementation()
 	this->IsEffectiveBlock = true;
 
 	// Delay 0.5 seconds then run EffectiveBlockTimer()
-	this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ServerToggleEffectiveBlock, 0.5f, false);
+	this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::ServerToggleEffectiveBlock, 0.1f, false);
 	UE_LOG(LogTemp, Warning, TEXT("EFFECTIVE BLOCK TIMER"));
 }
 
@@ -3735,5 +3782,69 @@ void ATodakBattleArenaCharacter::EndingEffectiveBlock()
 		//DisableInput(GetWorld()->GetFirstPlayerController());
 	}
 
-	this->EnemyElement->CanSwipeAction = false;
+	this->CanSwipeAction = true;
+}
+
+bool ATodakBattleArenaCharacter::ServerBlockReaction_Validate(UAnimMontage * ServerSkill, bool bEffBlock)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerBlockReaction_Implementation(UAnimMontage * ServerSkill, bool bEffBlock)
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		RPCServerBlockReaction = ServerSkill;
+		MulticastBlockReaction(RPCServerBlockReaction, bEffBlock);
+
+	}
+}
+
+bool ATodakBattleArenaCharacter::MulticastBlockReaction_Validate(UAnimMontage * MulticastSkill, bool bEffBlock)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::MulticastBlockReaction_Implementation(UAnimMontage * MulticastSkill, bool bEffBlock)
+{
+	this->IsEffectiveBlock = bEffBlock;
+
+	//checks player is in effective block or not
+	if (IsEffectiveBlock == true)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CPP EFFECTIVE BLOCK"));
+
+		FTimerHandle Delay;
+		RPCMultiCastBlockReaction = MulticastSkill;
+
+		//Disable input for the other so we can counter attack
+		this->EnemyElement->CanSwipeAction = false;
+		UE_LOG(LogTemp, Warning, TEXT("DISABLE ATTACKER INPUT"));
+
+		// Enter slow motion effect
+		ServerSlowmo(0.2f);
+		//CameraShake();
+
+		//Play Block Reaction Montage and get the return duration for TimerHandler
+		float Duration = GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockReaction, 1.0f, EMontagePlayReturnType::MontageLength, ReactionStartTime, true);
+		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastBlockReaction : %s"), *RPCMultiCastBlockReaction->GetFName().ToString());
+		UE_LOG(LogTemp, Warning, TEXT("Duration in Slowmo: %f"), Duration);
+
+		// Return montage length to execute EndingEffectBlock function
+		this->GetWorld()->GetTimerManager().SetTimer(Delay, this, &ATodakBattleArenaCharacter::EndingEffectiveBlock, Duration, false);
+
+	}
+
+	//checks player is not on effective block
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HIT BLOCK REACTION"));
+
+		RPCMultiCastBlockReaction = MulticastSkill;
+
+		//Play Block Reaction Montage
+		this->GetMesh()->GetAnimInstance()->Montage_Play(RPCMultiCastBlockReaction, 1.0f, EMontagePlayReturnType::Duration, ReactionStartTime);
+		UE_LOG(LogTemp, Warning, TEXT("RPCMultiCastBlockReaction : %s"), *RPCMultiCastBlockReaction->GetFName().ToString());
+
+	}
 }

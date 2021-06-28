@@ -240,6 +240,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Block")
 	bool BlockedHit = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Block")
+	float BlockButtonLength = 1.0f;
+
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Block")
 	bool DoFaceBlock = false;
 
@@ -421,6 +424,7 @@ protected:
 	void OnEndOverlap(class UPrimitiveComponent* OverlappedActor, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	//Execute the skill
+	UFUNCTION(BlueprintCallable)
 	bool ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, FBlockActions BlockMovesets, float DealDamage, float StaminaUsed, float StaminaDrain, bool& CDSkill);
 
 	//Initialize everything during begin play
@@ -435,14 +439,14 @@ protected:
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)
-	void ServerSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain);
+	void ServerSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain, float StartPlay, float BlockVisibility);
 
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain);
+	void MulticastSetEnemyMontage(UAnimMontage* HitReaction, FBlockActions BlockMovesets, float StaminaDrain, float StartPlay, float BlockVisibility);
 
 	//Skill replicate on server
-	UFUNCTION(Reliable, Server, WithValidation)
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
 	void ServerSkillMoveset(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
 
 	//Skill replicate on all client
@@ -459,11 +463,17 @@ protected:
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
-	void ServerSkillBlockHitMontage(AActor* HitActor, UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
+	void ServerSkillBlockHitMontage(UAnimMontage* ServerSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
 
 	//SkillPress replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillBlockHitMontage(AActor* HitActor, UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
+	void MulticastSkillBlockHitMontage(UAnimMontage* MulticastSkill, float StartAnimTime, float PauseAnimTime, bool IsBlocked);
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
+	void ServerBlockReaction(UAnimMontage* ServerSkill, bool bEffBlock);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void MulticastBlockReaction(UAnimMontage* MulticastSkill, bool bEffBlock);
 
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "BlockHit")
 	void ServerEffectiveBlockTimer();
@@ -833,6 +843,9 @@ protected:
 
 	UPROPERTY(Replicated, EditAnywhere,  BlueprintReadWrite, Category = "Anim")
 	float SkillPlayrate = 1.0f;
+	
+	/*UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	int JabCounts = 0;*/
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "BlockHit")
 	ATodakBattleArenaCharacter* EffectiveBlockAttacker;
@@ -887,11 +900,17 @@ protected:
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	float PhysicsAlpha;
 
+	/*UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	FName SectionName = "Default";*/
+
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
-	FName SectionName = "Default";
+	float SectionLength = 2.0f;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	int RandSection;
+
+	UPROPERTY(VisibleAnywhere, Category = "Anim")
+	int32 SectionUUID = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
 	float IKOffsetRightfoot;
@@ -1091,6 +1110,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	float SkillStopTime;
 
+	//The timeframe to start play reaction montage
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	float ReactionStartTime;
+
 	//The amount of damage to apply
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
 	float damage;
@@ -1141,9 +1164,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* RPCMultiCastBlockHit;
 
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* RPCServerBlockReaction;
+
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
+	UAnimMontage* RPCMultiCastBlockReaction;
+
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_Block, BlueprintReadWrite, Category = "Anim")
 	FBlockActions BlockHit;
-	UFUNCTION()
+
+	UFUNCTION(BlueprintCallable)
 	void OnRep_Block();
 	/////////////////////////////////////////////////////////////
 

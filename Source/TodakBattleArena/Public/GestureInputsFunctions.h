@@ -204,9 +204,7 @@ struct FBlockActions : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 		UAnimMontage* BlockMoveset;
 
-	//Duration of montage
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
-		float BlockMovesetLength;
+	
 };
 
 USTRUCT(BlueprintType)
@@ -233,14 +231,33 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkillSwipe")
 	UAnimMontage* SkillMoveset;
 
+	//Duration of SkillMoveset Montage = Block Button Visibility
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	float BlockButtonLength;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitReaction")
 	UAnimMontage* HitReactionMoveset;
 
+	//The timeframe to start playing Hit Reaction Moveset
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitReaction")
+	float StartHit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlockAction")
+	FBlockActions BlockActionMoveset;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlockReaction")
-	FBlockActions BlockReactionMoveset;
+	UAnimMontage* BlockReactionMoveset;
+
+	//The timeframe to start playing Block Reaction Moveset
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlockReaction")
+	float StartBlock;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlockReaction")
 	UAnimMontage* CriticalReactionMoveset;
+
+	//The timeframe to start playing Critical Hit Reaction Moveset
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BlockReaction")
+	float StartCritical;
 
 	//What time does the swipe anim will start
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SwipeAnimTime")
@@ -266,10 +283,10 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float CriticalDamage = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	float MontageDelay = 0.0f;
 
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float BlockedDamage = 0.0f; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
