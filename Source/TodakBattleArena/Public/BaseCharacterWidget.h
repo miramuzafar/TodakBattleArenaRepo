@@ -9,6 +9,7 @@
 
 class ATodakBattleArenaCharacter;
 class UBorder;
+class UProgressBar;
 /**
  * 
  */
@@ -50,4 +51,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetButtonVisibility(UBorder* button, bool IsCurrentlyVisible, float& VisibilityDuration);
 
+	//Variables//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina")
+	TSubclassOf<UProgressBar> energyBarr;
 };

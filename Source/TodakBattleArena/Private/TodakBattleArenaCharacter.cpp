@@ -26,6 +26,7 @@
 #include "Components/TextBlock.h"
 #include "Blueprint/WidgetTree.h"
 #include "BaseCharacterWidget.h"
+#include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "TargetLockInterface.h"
 #include "Misc/DateTime.h"
@@ -163,6 +164,17 @@ ATodakBattleArenaCharacter::ATodakBattleArenaCharacter()
 	LockOnCollision = CreateDefaultSubobject<USphereComponent>(TEXT("LockOnCollision"));
 	LockOnCollision->SetupAttachment(RootComponent);
 	LockOnCollision->InitSphereRadius(400.0f);
+
+	//WidgetComponent
+	W_DamageOutput = CreateDefaultSubobject<UWidgetComponent>(TEXT("W_DamageOutput"));
+	W_DamageOutput->SetupAttachment(RootComponent);
+	W_DamageOutput->SetRelativeLocation(FVector(0.000000f, 20.000000f, 90.0f));
+	W_DamageOutput->InitWidget();
+
+	W_DamageOutput->SetWidgetSpace(EWidgetSpace::Screen);
+	W_DamageOutput->SetDrawAtDesiredSize(true);
+	W_DamageOutput->SetVisibility(false);
+	W_DamageOutput->SetGenerateOverlapEvents(false);
 
 	LockOnCollision->OnComponentBeginOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnBeginOverlap);
 	LockOnCollision->OnComponentEndOverlap.AddDynamic(this, &ATodakBattleArenaCharacter::OnEndOverlap);
@@ -2192,7 +2204,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 			else if (EnemyChar && isAI == true)
 			{
 				AICanAttack = false;
-
+				CanBeTargeted = false;
 				if (TargetLocked == true)
 				{
 					if (this->EnemyElement != nullptr)
