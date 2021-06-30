@@ -357,151 +357,162 @@ void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 
 	if (NewController != nullptr)
 	{
-		//Restrict movement within target lock area and avoid players from overlapping
+		if (EnemyElement != nullptr)
+		{
+			//Restrict movement within target lock area and avoid players from overlapping
 
 		//Determine the target position
-		const FVector targetPos = EnemyElement->GetMesh()->GetComponentLocation();
-		float Dist = this->GetDistanceTo(EnemyElement);
-		
-		//if distance between players are smaller than the accepted radius
-		if (Dist < Radius)
-		{
-			//UE_LOG(LogTemp, Warning, TEXT("You are within the effective range"));
+			const FVector targetPos = EnemyElement->GetMesh()->GetComponentLocation();
+			float Dist = this->GetDistanceTo(EnemyElement);
 
-			//Get Vector from player minus target
-			FVector FromOriginToTarget = this->GetActorLocation() - this->EnemyElement->GetActorLocation();
-
-			//Multiply by Radius and divided by distance
-			FromOriginToTarget *= Radius / Dist;
-
-			//Locate player position based of the radius size
-			this->SetActorLocation(this->EnemyElement->GetActorLocation() + FromOriginToTarget);
-			// Set camera to fight
-
-			//EnemyElement->CameraBoom->SetRelativeLocation(FVector((198.000000f, 194.000000f, 50.000000f)));
-			//EnemyElement->CameraBoom->RelativeRotation += (FRotator((0.000000f, -50.000000f, 0.000000f)));
-			//this->FollowCamera->SetRelativeRotation(FRotator(((0.000000f, -50.000069f, 0.000000f))));
-		}
-		
-		NewController->SetControlRotation(NewRotator);
-	}
-	if (this->RightVal == 0.0f || this->GetCharacterMovement()->Velocity.Size() == 0.0f)
-	{
-		UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
-
-		//enemy forward vector
-		FVector FWEnem = UKismetMathLibrary::GetRightVector(this->EnemyElement->GetActorRotation());
-
-		//velocity of Enemy
-		FVector VEnem = this->EnemyElement->GetCharacterMovement()->Velocity;
-		VEnem.Normalize();
-
-		//get dot product
-		UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem);
-
-		if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) > 0.0f)
-		{
-			if(AnimInst->TurnRight == true)
-				AnimInst->TurnRight = false;
-			if(AnimInst->TurnLeft == false)
-				AnimInst->TurnLeft = true;
-			/*if (this->IsLocallyControlled())
+			//if distance between players are smaller than the accepted radius
+			if (Dist < Radius)
 			{
-				ServerTurnAnim(this, true, false);
-				AnimInst->TurnRight = false;
-				AnimInst->TurnLeft = true;
-				UE_LOG(LogTemp, Warning, TEXT("left"));
-			}*/
+				//UE_LOG(LogTemp, Warning, TEXT("You are within the effective range"));
+
+				//Get Vector from player minus target
+				FVector FromOriginToTarget = this->GetActorLocation() - this->EnemyElement->GetActorLocation();
+
+				//Multiply by Radius and divided by distance
+				FromOriginToTarget *= Radius / Dist;
+
+				//Locate player position based of the radius size
+				this->SetActorLocation(this->EnemyElement->GetActorLocation() + FromOriginToTarget);
+				// Set camera to fight
+
+				//EnemyElement->CameraBoom->SetRelativeLocation(FVector((198.000000f, 194.000000f, 50.000000f)));
+				//EnemyElement->CameraBoom->RelativeRotation += (FRotator((0.000000f, -50.000000f, 0.000000f)));
+				//this->FollowCamera->SetRelativeRotation(FRotator(((0.000000f, -50.000069f, 0.000000f))));
+			}
+			NewController->SetControlRotation(NewRotator);
 		}
-		else if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) < 0.0f)
+	}
+
+	if (this->EnemyElement != nullptr)
+	{
+		if (this->RightVal == 0.0f || this->GetCharacterMovement()->Velocity.Size() == 0.0f)
 		{
-			if (AnimInst->TurnLeft == true)
+			UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
+
+			//enemy forward vector
+			FVector FWEnem = UKismetMathLibrary::GetRightVector(this->EnemyElement->GetActorRotation());
+
+			//velocity of Enemy
+			FVector VEnem = this->EnemyElement->GetCharacterMovement()->Velocity;
+			VEnem.Normalize();
+
+			//get dot product
+			UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem);
+
+			if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) > 0.0f)
+			{
+				if (AnimInst->TurnRight == true)
+				{
+					AnimInst->TurnRight = false;
+				}
+
+				if (AnimInst->TurnLeft == false)
+				{
+					AnimInst->TurnLeft = true;
+				}
+
+			}
+			else if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) < 0.0f)
+			{
+				if (AnimInst->TurnLeft == true)
+				{
+					AnimInst->TurnLeft = false;
+				}
+
+				if (AnimInst->TurnRight == false)
+				{
+					AnimInst->TurnRight = true;
+				}
+
+			}
+			else
+			{
+				AnimInst->TurnRight = false;
 				AnimInst->TurnLeft = false;
-			if (AnimInst->TurnRight == false)
-				AnimInst->TurnRight = true;
-			//if (this->IsLocallyControlled())
-			//{
-			//	ServerTurnAnim(this, false, true);
-			//	//AnimInst->TurnLeft = false;
-			//	//AnimInst->TurnRight = true;
-			//	UE_LOG(LogTemp, Warning, TEXT("right"));
-			//}
+
+			}
+		}
+		if (this->EnemyElement->RightVal == 0.0f || this->EnemyElement->GetCharacterMovement()->Velocity.Size() == 0.0f)
+		{
+			UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(this->EnemyElement->GetMesh()->GetAnimInstance());
+			//enemy forward vector
+			FVector FWEnem = UKismetMathLibrary::GetRightVector(this->GetActorRotation());
+
+			//velocity of Enemy
+			FVector VEnem = this->GetCharacterMovement()->Velocity;
+			VEnem.Normalize();
+			//get dot product`
+			UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem);
+
+			if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) > 0.0f)
+			{
+				if (AnimInst->TurnRight == true)
+				{
+					AnimInst->TurnRight = false;
+				}
+
+				if (AnimInst->TurnLeft == false)
+				{
+					AnimInst->TurnLeft = true;
+				}
+
+				/*if (this->IsLocallyControlled())
+				{
+					ServerTurnAnim(this, true, false);
+					AnimInst->TurnRight = false;
+					AnimInst->TurnLeft = true;
+					UE_LOG(LogTemp, Warning, TEXT("left"));
+				}*/
+			}
+			else if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) < 0.0f)
+			{
+				if (AnimInst->TurnLeft == true)
+				{
+					AnimInst->TurnLeft = false;
+				}
+
+				if (AnimInst->TurnRight == false)
+				{
+					AnimInst->TurnRight = true;
+				}
+
+				//if (this->IsLocallyControlled())
+				//{
+				//	ServerTurnAnim(this, false, true);
+				//	//AnimInst->TurnLeft = false;
+				//	//AnimInst->TurnRight = true;
+				//	UE_LOG(LogTemp, Warning, TEXT("right"));
+				//}
+			}
+			else
+			{
+				AnimInst->TurnRight = false;
+				AnimInst->TurnLeft = false;
+				/*if (this->IsLocallyControlled())
+				{
+					ServerTurnAnim(this, false, false);
+					AnimInst->TurnRight = false;
+					AnimInst->TurnLeft = false;
+					UE_LOG(LogTemp, Warning, TEXT("out"));
+				}*/
+			}
 		}
 		else
 		{
+			/*UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
 			AnimInst->TurnRight = false;
 			AnimInst->TurnLeft = false;
-			/*if (this->IsLocallyControlled())
-			{
-				ServerTurnAnim(this, false, false);
-				AnimInst->TurnRight = false;
-				AnimInst->TurnLeft = false;
-				UE_LOG(LogTemp, Warning, TEXT("out"));
-			}*/
+			UTBAAnimInstance* AnimEnemInst = Cast<UTBAAnimInstance>(EnemyElement->GetMesh()->GetAnimInstance());
+			AnimEnemInst->TurnRight = false;
+			AnimEnemInst->TurnLeft = false;*/
 		}
 	}
-	if (EnemyElement->RightVal == 0.0f || EnemyElement->GetCharacterMovement()->Velocity.Size() == 0.0f)
-	{
-		UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(EnemyElement->GetMesh()->GetAnimInstance());
-		//enemy forward vector
-		FVector FWEnem = UKismetMathLibrary::GetRightVector(this->GetActorRotation());
-
-		//velocity of Enemy
-		FVector VEnem = this->GetCharacterMovement()->Velocity;
-		VEnem.Normalize();
-		//get dot product`
-		UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem);
-
-		if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) > 0.0f)
-		{
-			if (AnimInst->TurnRight == true)
-				AnimInst->TurnRight = false;
-			if (AnimInst->TurnLeft == false)
-				AnimInst->TurnLeft = true;
-			/*if (this->IsLocallyControlled())
-			{
-				ServerTurnAnim(this, true, false);
-				AnimInst->TurnRight = false;
-				AnimInst->TurnLeft = true;
-				UE_LOG(LogTemp, Warning, TEXT("left"));
-			}*/
-		}
-		else if (UKismetMathLibrary::Dot_VectorVector(FWEnem, VEnem) < 0.0f)
-		{
-			if (AnimInst->TurnLeft == true)
-				AnimInst->TurnLeft = false;
-			if (AnimInst->TurnRight == false)
-				AnimInst->TurnRight = true;
-			//if (this->IsLocallyControlled())
-			//{
-			//	ServerTurnAnim(this, false, true);
-			//	//AnimInst->TurnLeft = false;
-			//	//AnimInst->TurnRight = true;
-			//	UE_LOG(LogTemp, Warning, TEXT("right"));
-			//}
-		}
-		else
-		{
-			AnimInst->TurnRight = false;
-			AnimInst->TurnLeft = false;
-			/*if (this->IsLocallyControlled())
-			{
-				ServerTurnAnim(this, false, false);
-				AnimInst->TurnRight = false;
-				AnimInst->TurnLeft = false;
-				UE_LOG(LogTemp, Warning, TEXT("out"));
-			}*/
-		}
-	}
-	else
-	{
-		/*UTBAAnimInstance* AnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
-		AnimInst->TurnRight = false;
-		AnimInst->TurnLeft = false;
-		UTBAAnimInstance* AnimEnemInst = Cast<UTBAAnimInstance>(EnemyElement->GetMesh()->GetAnimInstance());
-		AnimEnemInst->TurnRight = false;
-		AnimEnemInst->TurnLeft = false;*/
-	}
+	
 }
 
 bool ATodakBattleArenaCharacter::ServerTurnAnim_Validate(AActor* thisActor, float TurnLeft, float TurnRight)
@@ -2051,7 +2062,7 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 								this->IsLocked = true;
 								EnemyElement->IsLocked = true;
 								EnemyElement->RepIsMoving = true;
-								RepWalkSpeed = 25.0f;
+								RepWalkSpeed = 20.0f;
 								this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 
 								if (CameraPerspective == 0)
@@ -2127,9 +2138,14 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 							ClosestTargetDistance = 0.0f;
 							TargetLocked = false;
 							this->IsLocked = false;
-							EnemyElement->IsLocked = false;
+
+							if (this->EnemyElement != nullptr)
+							{
+								this->EnemyElement->IsLocked = false;
+							}
+							
 							//EnemyElement->RepIsMoving = false;
-							RepWalkSpeed = 50.0f;
+							RepWalkSpeed = 40.0f;
 							this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 
 							if (CameraPerspective == 0)
@@ -2150,7 +2166,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 							}
 						}
 
-						//Stop target lock timer	
+						//Stop target lock timer	//buat untuk ai juga
 						GetWorld()->GetTimerManager().ClearTimer(ToggleTimer);
 						if (this->RightVal == 0.0f && this->GetCharacterMovement()->Velocity.Size() == 0.0f)
 						{
@@ -2158,12 +2174,17 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 							AnimInst->TurnRight = false;
 							AnimInst->TurnLeft = false;
 						}
-						if (EnemyElement->RightVal == 0.0f && EnemyElement->GetCharacterMovement()->Velocity.Size() == 0.0f)
+
+						if (this->EnemyElement != nullptr)
 						{
-							UTBAAnimInstance* AnimEnemInst = Cast<UTBAAnimInstance>(EnemyElement->GetMesh()->GetAnimInstance());
-							AnimEnemInst->TurnRight = false;
-							AnimEnemInst->TurnLeft = false;
+							if (this->EnemyElement->RightVal == 0.0f && this->EnemyElement->GetCharacterMovement()->Velocity.Size() == 0.0f)
+							{
+								UTBAAnimInstance* AnimEnemInst = Cast<UTBAAnimInstance>(this->EnemyElement->GetMesh()->GetAnimInstance());
+								AnimEnemInst->TurnRight = false;
+								AnimEnemInst->TurnLeft = false;
+							}
 						}
+						
 						
 					}
 				}
@@ -2174,11 +2195,16 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 
 				if (TargetLocked == true)
 				{
-					//Forces player to enter ready stance
-					EnemyElement->IsLocked = true;
+					if (this->EnemyElement != nullptr)
+					{
+						//Allows Idle Timer
+						this->EnemyElement->IsLocked = false;
+					}
+					
 				}
 			}
 		}
+		EnemyElement = nullptr;
 	}
 }
 
@@ -3783,6 +3809,11 @@ void ATodakBattleArenaCharacter::EndingEffectiveBlock()
 	}
 
 	this->CanSwipeAction = true;
+
+	if (this->EnemyElement != nullptr)
+	{
+		this->EnemyElement->CanSwipeAction = true;
+	}
 }
 
 bool ATodakBattleArenaCharacter::ServerBlockReaction_Validate(UAnimMontage * ServerSkill, bool bEffBlock)
@@ -3818,9 +3849,12 @@ void ATodakBattleArenaCharacter::MulticastBlockReaction_Implementation(UAnimMont
 		RPCMultiCastBlockReaction = MulticastSkill;
 
 		//Disable input for the other so we can counter attack
-		this->EnemyElement->CanSwipeAction = false;
-		UE_LOG(LogTemp, Warning, TEXT("DISABLE ATTACKER INPUT"));
-
+		if (EnemyElement != nullptr)
+		{
+			this->EnemyElement->CanSwipeAction = false;
+			UE_LOG(LogTemp, Warning, TEXT("DISABLE ATTACKER INPUT"));
+		}
+		
 		// Enter slow motion effect
 		ServerSlowmo(0.2f);
 		//CameraShake();

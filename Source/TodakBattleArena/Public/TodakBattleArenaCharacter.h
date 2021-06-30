@@ -232,7 +232,7 @@ public:
 	bool EnableMovement = false;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "Anim")
-	float RepWalkSpeed = 50.0f;
+	float RepWalkSpeed = 40.0f;
 
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadWrite, Category = "SwipeGesture")
 	bool CanSwipeAction = true;
