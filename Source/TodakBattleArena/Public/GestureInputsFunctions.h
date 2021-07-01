@@ -19,6 +19,14 @@ class UBaseCharacterWidget;
  * 
  */
 
+UENUM(BlueprintType)
+enum class ETouchInputType : uint8
+{
+	Pressed,
+	Released,
+	Moved
+};
+
  //Input Touch Type
 UENUM(BlueprintType)
 enum class EInputType : uint8

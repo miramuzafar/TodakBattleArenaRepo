@@ -575,12 +575,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void TotalVitalityFromFitness(float StaminaPercent, float StrengthPercent, float AgilityPercent);
 
-	UFUNCTION(BlueprintCallable, meta = (ExpandEnumAsExecs = "Type"))
-	void DetectInputTouch(float CurrEnergyValue, ETouchIndex::Type FingerIndex, FVector2D Location, ETouchType::Type Type);
+	UFUNCTION(BlueprintCallable, meta = (ExpandEnumAsExecs = Branches))
+	void DetectInputTouch(ETouchIndex::Type FingerIndex, FVector Location, ETouchInputType Branches, ETouchIndex::Type IsTouchIndex = ETouchIndex::Touch1);
 
 	//Detect swipe input on pressed
 	UFUNCTION(BlueprintCallable)
-	void StartDetectSwipe(ETouchIndex::Type FingerIndex, FVector2D Locations, float& StartPressTime, EBodyPart& SwipeParts);
+	void StartDetectSwipe(ETouchIndex::Type FingerIndex, FVector2D Locations, float& StartPressTime);
 
 	UFUNCTION(BlueprintCallable)
 	void DetectTouchMovement(ETouchIndex::Type FingerIndex, FVector2D Locations);
@@ -1106,6 +1106,9 @@ protected:
 	///////////////For swipe gesture//////////////////////////////
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Damage")
 	bool DoOnce = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swipe")
+	bool EnableTouch = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SwipeAction")
 	float SwipeStartTime;

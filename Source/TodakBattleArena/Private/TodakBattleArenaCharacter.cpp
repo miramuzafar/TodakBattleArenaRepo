@@ -3051,46 +3051,46 @@ void ATodakBattleArenaCharacter::TotalVitalityFromFitness(float StaminaPercent, 
 	FatiguePercentage = UGestureMathLibrary::CalculatePercentageFromValue(PlayerFatigue, MaxFatigue, 100.0f) / 100.0f;
 }
 
-void ATodakBattleArenaCharacter::DetectInputTouch(float CurrEnergyValue, ETouchIndex::Type FingerIndex, FVector2D Location, ETouchType::Type Type)
+void ATodakBattleArenaCharacter::DetectInputTouch(ETouchIndex::Type FingerIndex, FVector Location, ETouchInputType Branches, ETouchIndex::Type IsTouchIndex)
 {
-	if (Type == ETouchType::Began)
+	float newTimer = 0.0f;
+	FVector2D newLoc;
+	if (Branches == ETouchInputType::Pressed)
 	{
-		if (CurrEnergyValue > 0.0f)
+		EnableTouch = true;
+		if (CanSwipeAction == true && playerEnergy > 0.0f)
 		{
-			if (FingerIndex == ETouchIndex::Touch1)
+			if (FingerIndex == IsTouchIndex)
 			{
-				float TempTime;
-				EBodyPart GetPart;
-				StartDetectSwipe(FingerIndex, Location, TempTime, GetPart);
-			}
-			if (FingerIndex == ETouchIndex::Touch2)
-			{
-				float TempTime;
-				EBodyPart GetPart;
-				StartDetectSwipe(FingerIndex, Location, TempTime, GetPart);
+				newLoc = FVector2D(Location.X, Location.Y);
+				StartDetectSwipe(FingerIndex, newLoc, newTimer);
+				//RBranches = Branches;
 			}
 		}
 	}
-	if (Type == ETouchType::Moved)
+	else if (Branches == ETouchInputType::Released)
 	{
-		if (FingerIndex == ETouchIndex::Touch1)
+		EnableTouch = false;
+		if (CanSwipeAction == true && playerEnergy > 0.0f)
 		{
-			DetectTouchMovement(FingerIndex, Location);
-		}
-		if (FingerIndex == ETouchIndex::Touch2)
-		{
-			DetectTouchMovement(FingerIndex, Location);
+			if (FingerIndex == IsTouchIndex)
+			{
+				newLoc = FVector2D(Location.X, Location.Y);
+				StopDetectTouch(FingerIndex, newTimer, newLoc);
+				//RBranches = Branches;
+			}
 		}
 	}
-	if (Type == ETouchType::Ended)
+	else if (Branches == ETouchInputType::Moved)
 	{
-		if (FingerIndex == ETouchIndex::Touch1)
+		if (CanSwipeAction == true && playerEnergy > 0.0f)
 		{
-			DetectTouchMovement(FingerIndex, Location);
-		}
-		if (FingerIndex == ETouchIndex::Touch2)
-		{
-			DetectTouchMovement(FingerIndex, Location);
+			if (FingerIndex == IsTouchIndex)
+			{
+				newLoc = FVector2D(Location.X, Location.Y);
+				DetectTouchMovement(FingerIndex, newLoc);
+				//RBranches = Branches;
+			}
 		}
 	}
 }
@@ -3319,7 +3319,7 @@ void ATodakBattleArenaCharacter::EnergyStatusDelay()
 	//}
 }
 
-void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex, FVector2D Locations, float& StartPressTime, EBodyPart& SwipeParts)
+void ATodakBattleArenaCharacter::StartDetectSwipe(ETouchIndex::Type FingerIndex, FVector2D Locations, float& StartPressTime)
 {
 	if (!isAI)
 	{
