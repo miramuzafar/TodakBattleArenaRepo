@@ -2072,9 +2072,9 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 							{
 								//Forces player to enter ready stance
 								this->IsLocked = true;
-								EnemyElement->IsLocked = true;
-								EnemyElement->RepIsMoving = true;
-								RepWalkSpeed = 20.0f;
+								this->EnemyElement->IsLocked = true;
+								this->EnemyElement->RepIsMoving = true;
+								this->RepWalkSpeed = 20.0f;
 								this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 
 								if (CameraPerspective == 0)
@@ -2119,7 +2119,8 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 							if (TargetLocked == true)
 							{
 								//Forces player to enter ready stance
-								EnemyElement->IsLocked = true;
+								this->EnemyElement->IsLocked = true;
+								this->EnemyElement->RepIsMoving = true;
 							}
 						}
 					}
@@ -2211,12 +2212,13 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 					{
 						//Allows Idle Timer
 						this->EnemyElement->IsLocked = false;
+						//EnemyElement->RepIsMoving = false;
 					}
 					
 				}
 			}
 		}
-		EnemyElement = nullptr;
+		this->EnemyElement = nullptr;
 	}
 }
 
@@ -2729,6 +2731,19 @@ void ATodakBattleArenaCharacter::CallFallRagdoll(AActor* RagdolledActor, bool Is
 			else
 				this->ServerFallRagdoll(RagdolledActor, FallFrontAnimChar);
 		}
+	}
+}
+
+void ATodakBattleArenaCharacter::RagdollCamera()
+{
+	if (CameraPerspective == 0)
+	{
+		//Sets player to topview on ragdoll
+		this->FollowCamera->SetFieldOfView(120.0f);
+		FLatentActionInfo LatentInfo = FLatentActionInfo();
+		LatentInfo.CallbackTarget = this;
+		UKismetSystemLibrary::MoveComponentTo(this->FollowCamera, FVector(300.0f, 0.0f, 300.0f), FRotator(-90.0f, -55.0f, 0.0f), true, true, 3.0f, true, EMoveComponentAction::Type::Move, LatentInfo);
+
 	}
 }
 
