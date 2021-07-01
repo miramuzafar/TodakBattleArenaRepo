@@ -545,6 +545,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Ragdoll")
 	void CallFallRagdoll(AActor* RagdolledActor, bool IsLookingAtTarget);
 
+	UFUNCTION(BlueprintCallable, Category = "Ragdoll")
+	void RagdollCamera();
+
 	//Execute ragdoll
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
 	void ServerFallRagdoll(AActor* RagdolledActor, UAnimSequenceBase* FallAnims);
