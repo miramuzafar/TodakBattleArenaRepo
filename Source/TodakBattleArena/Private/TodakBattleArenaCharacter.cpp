@@ -3152,13 +3152,13 @@ void ATodakBattleArenaCharacter::UpdateStatusValueTimer(FTimerHandle newHandle, 
 void ATodakBattleArenaCharacter::OnRep_CurrentEnergy()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Energy Remains: %f"), this->playerEnergy);
-	if (this->IsLocallyControlled() || isAI == true)
+	if (this->IsLocallyControlled() && isAI == false)
 	{
 		this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar", "EnergyText", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
 	}
 	//UpdateProgressBarValue(this->playerEnergy, this->MaxEnergy);
 
-	if (!this->IsLocallyControlled() || isAI == true)
+	if (!this->IsLocallyControlled())
 	{
 		float EnergyPercentage1 = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar_1", "EnergyText_1", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
 
@@ -3167,17 +3167,25 @@ void ATodakBattleArenaCharacter::OnRep_CurrentEnergy()
 		//UBaseCharacterWidget::ChangeProgressBarValue(this->WidgetHUD, tempEnergy, this->MaxEnergy, EnergyPercentage1);
 		//UpdateProgressBarValue(this, tempEnergy, this->MaxEnergy);
 	}
+	else if (this->IsLocallyControlled() && isAI == true)
+	{
+		this->EnergyPercentage = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "EnergyBar_1", "EnergyText_1", "Energy", "Energy", this->playerEnergy, this->MaxEnergy);
+	}
 }
 
 void ATodakBattleArenaCharacter::OnRep_Health()
 {
-	if (this->IsLocallyControlled() || isAI == true)
+	if (this->IsLocallyControlled() && isAI == false)
 	{
 		this->playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBar", "Health", "HP", "Pain Meter", this->Health, this->MaxHealth);
 	}
-	if (!this->IsLocallyControlled() || isAI == true)
+	if (!this->IsLocallyControlled())
 	{
 		float playerHealth1 = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBarMain_1", "Health_1", "HP", "Pain Meter", this->Health, this->MaxHealth);
+	}
+	else if (this->IsLocallyControlled() && isAI == true)
+	{
+		this->playerHealth = UGestureInputsFunctions::UpdateProgressBarComponent(this->WidgetHUD, "HPBarMain_1", "Health_1", "HP", "Pain Meter", this->Health, this->MaxHealth);
 	}
 }
 
