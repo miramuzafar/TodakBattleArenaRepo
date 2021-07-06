@@ -643,6 +643,7 @@ void ATodakBattleArenaCharacter::BeginPlay()
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	CurveFTimeline.TickTimeline(DeltaTime);
 
 	/*if (EnableMovement == true)
 	{
@@ -3773,6 +3774,36 @@ void ATodakBattleArenaCharacter::FarToTPPFloatReturn(float val)
 void ATodakBattleArenaCharacter::CameraShake()
 {
 	UGameplayStatics::PlayWorldCameraShake(this->GetWorld()->GetFirstPlayerController(), DamageCameraShake, this->GetActorLocation(), 0.0f, 300.0f, 1.0f, false);
+}
+
+void ATodakBattleArenaCharacter::OffsetTimeline(float offVal)
+{
+	offVal = FMath::Lerp(0.0f, 60.0f, offVal);
+	CameraBoom->SocketOffset = FVector(CameraBoom->SocketOffset.X, CameraBoom->SocketOffset.Y, offVal);
+}
+
+void ATodakBattleArenaCharacter::ChangeCameraOffset(float newlength, bool Reverse)
+{
+	//construct timeline
+	FOnTimelineFloat OffsetTimeline;
+	OffsetTimeline.BindUFunction(this, FName("OffsetTimeline"));
+	CurveFTimeline.AddInterpFloat(OffCurveFloat, OffsetTimeline);
+
+	//check if timeline is in reverse mode
+	if (Reverse == true)
+	{
+		CurveFTimeline.ReverseFromEnd();
+	}
+	else
+	{
+		//set new timeline length
+		CurveFTimeline.SetTimelineLength(newlength);
+
+		//set new timeline new playrate
+		CurveFTimeline.SetPlayRate(1/newlength);
+
+		CurveFTimeline.PlayFromStart();
+	}
 }
 
 bool ATodakBattleArenaCharacter::ServerEffectiveBlockTimer_Validate()

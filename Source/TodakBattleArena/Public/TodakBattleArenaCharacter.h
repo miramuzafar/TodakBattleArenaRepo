@@ -16,6 +16,8 @@ struct FKAggregateGeom;
 class UPhysicsAsset;
 class UTodakBattleArenaSaveGame;
 class UCameraShake;
+class UCurveFloat;
+struct FTimeline;
 
 
 FORCEINLINE uint32 GetTypeHash(const FFingerIndex& Key)
@@ -159,6 +161,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void CameraShake();
+
+	UFUNCTION(BlueprintCallable, Category = "CameraOffset")
+	void OffsetTimeline(float offVal);
+
+	UFUNCTION(BlueprintCallable, Category = "CameraOffset")
+	void ChangeCameraOffset(float newlength, bool Reverse);
 
 	//UFUNCTION(BlueprintCallable, Category = "Collision")
 	//void CheckLineTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
@@ -714,6 +722,11 @@ protected:
 	bool TouchIsHold = false;
 
 	FFingerIndex* CurrFingerIndex;
+
+	FTimeline CurveFTimeline;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CameraOffset")
+	UCurveFloat* OffCurveFloat;
 
 	/**************************************START STATS******************************************/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLock")
