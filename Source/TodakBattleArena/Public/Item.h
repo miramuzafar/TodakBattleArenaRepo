@@ -32,7 +32,7 @@ public:
 
 	//The mesh to display for this items pickup
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
-	class USKeletalMesh* PickupMesh;
+	class USkeletalMesh* PickupMesh;
 
 	//The thumbnail for this item
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")

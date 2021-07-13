@@ -98,8 +98,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FramePerSeconds")
 		TMap<int32, FText> FPSCommands;*/
 
-protected:
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Status")
 		float MaxAgility;
 
@@ -117,7 +115,6 @@ protected:
 
 	//Saved mesh outfit from character inventory
 	//Female
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
 		class UItem* SkinFemItem;
 
@@ -142,5 +139,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player Customization")
 		class UItem* MalHairItem;
-	
 };
