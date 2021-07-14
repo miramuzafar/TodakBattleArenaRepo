@@ -6,6 +6,9 @@
 #include "Item.h"
 #include "ClothItem.generated.h"
 
+class ATBACameraActor;
+
+//class ACameraActor;
 /**
  * 
  */
@@ -18,6 +21,12 @@ public:
 	//Check if item is for female character
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
 	bool IsFem = true;
+
+	////Check if item is for female character
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
+	ATBACameraActor* CamActor;
+
+	void EquipCharacter(AActor* Character);
 
 protected:
 

@@ -16,6 +16,8 @@ struct FKAggregateGeom;
 class UPhysicsAsset;
 class UTodakBattleArenaSaveGame;
 class UCameraShake;
+class UCurveFloat;
+struct FTimeline;
 
 
 FORCEINLINE uint32 GetTypeHash(const FFingerIndex& Key)
@@ -159,6 +161,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void CameraShake();
+
+	UFUNCTION(BlueprintCallable, Category = "CameraOffset")
+	void OffsetTimeline(float offVal);
+
+	UFUNCTION(BlueprintCallable, Category = "CameraOffset")
+	void ChangeCameraOffset(float newlength, bool Reverse);
 
 	//UFUNCTION(BlueprintCallable, Category = "Collision")
 	//void CheckLineTrace(AActor*& HitActor, FName& BoneNames, FVector& Location, bool& bBlockingHits);
@@ -539,7 +547,33 @@ protected:
 	//Reset movement after skill is executed
 	void ResetMovementMode();
 
-	void SimulatePhysicRagdoll(AActor* RagdolledActor);
+	//For pose snapshot frame delay
+	FTimerHandle handle1;
+	FTimerDelegate TimerDelegate1;
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
+	void ServerGetUp(AActor* currPlayer);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation, Category = "Ragdoll")
+	void ClientGetUp(AActor* currPlayer, UAnimMontage* GetUpMontage);
+
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
+	void ServerPrepareGetUp(AActor* currPlayer, bool isLookingUp);
+
+	UFUNCTION(Reliable, Client, WithValidation, Category = "Ragdoll")
+	void PrepareGetUp(AActor* currPlayer, bool isLookingUp);
+
+	//Cache Pose before getting up
+	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable, Category = "Ragdoll")
+	void ServerCachePose(ATodakBattleArenaCharacter* currPlayer, bool isLookingUp);
+
+	UFUNCTION(Reliable, NetMulticast, WithValidation, Category = "Ragdoll")
+	void CachePose(ATodakBattleArenaCharacter* currPlayer, bool isLookingUp);
+
+	//Check player's health before deciding either to get up or game over
+	void CheckPlayerStatus(ATodakBattleArenaCharacter* currPlayer);
+
+	/*void SimulatePhysicRagdoll(AActor* RagdolledActor);*/
 
 	//Preparing for ragdoll
 	UFUNCTION(BlueprintCallable, Category = "Ragdoll")
@@ -715,9 +749,17 @@ protected:
 
 	FFingerIndex* CurrFingerIndex;
 
+	FTimeline CurveFTimeline;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CameraOffset")
+	UCurveFloat* OffCurveFloat;
+
 	/**************************************START STATS******************************************/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetLock")
 	bool isAI = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Ragdoll")
+	float Time = 0.0f;
 
 	//Major regen time rate
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Status")

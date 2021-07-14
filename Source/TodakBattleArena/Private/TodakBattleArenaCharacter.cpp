@@ -361,6 +361,44 @@ void ATodakBattleArenaCharacter::LockOn_Implementation()
 	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, FString::Printf(TEXT("Interface Is Called")));
 }
 
+void ATodakBattleArenaCharacter::CheckPlayerStatus(ATodakBattleArenaCharacter* currPlayer)
+{
+	if (currPlayer == this)
+	{
+		float currHp = UGestureMathLibrary::CalculatePercentageFromValue(this->Health, this->MaxHealth, 100.0f);
+
+		if (currHp > 0.0f)
+		{
+			if (this->IsLocallyControlled())
+			{
+				this->ServerPrepareGetUp(this, CalculatingFacingLocation(this->GetMesh()));
+			}
+			/*if (currHp >= 20.0f)
+			{
+				if (this->IsLocallyControlled())
+				{
+					this->ServerPrepareGetUp(this, CalculatingFacingLocation(this->GetMesh()));
+				}
+			}
+			else
+			{
+				if (this->IsLocallyControlled())
+				{
+					this->CallEventTimerFunction();
+				}
+			}*/
+		}
+		else
+		{
+			//if hp is zero, game over
+			if (this->IsLocallyControlled())
+			{
+				this->CallEventLoseFunction();
+			}
+		}
+	}
+}
+
 void ATodakBattleArenaCharacter::TriggerToggleLockOn()
 {
 	//if the controller is valid, set its rotation to the rotator above
@@ -643,6 +681,7 @@ void ATodakBattleArenaCharacter::BeginPlay()
 void ATodakBattleArenaCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	CurveFTimeline.TickTimeline(DeltaTime);
 
 	/*if (EnableMovement == true)
 	{
@@ -2666,58 +2705,197 @@ void ATodakBattleArenaCharacter::ResetMovementMode()
 	//}
 }
 
-void ATodakBattleArenaCharacter::SimulatePhysicRagdoll(AActor* RagdolledActor)
+bool ATodakBattleArenaCharacter::ServerGetUp_Validate(AActor* currPlayer)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Timer Starts"));
-	this->GetWorldTimerManager().ClearTimer(FallTimerHandle);
+	return true;
+}
 
-	//Disable hair physics
-	this->Hair->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Ignore);
-
-	//Start simulate body
-	this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
-	//this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
-
-	//Stop any movement
-	this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-
-	//Delay before simulate physics
-	this->GetWorldTimerManager().SetTimer(FallTimerHandle, 3.0f, false);
-
-	float currHp = UGestureMathLibrary::CalculatePercentageFromValue(this->Health, this->MaxHealth, 100.0f);
-
-	if (currHp < 100.0f)
+void ATodakBattleArenaCharacter::ServerGetUp_Implementation(AActor* currPlayer)
+{
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		if (currHp < 80.0f)
+		if (currPlayer == this)
 		{
-			if (this->IsLocallyControlled())
-			{
-				this->CallGetUpFunction(RagdolledActor, this->GetMesh());
-			}
+			ClientGetUp(currPlayer, RPCMulticastGetUp);
+		}
+	}
+}
+
+bool ATodakBattleArenaCharacter::ClientGetUp_Validate(AActor* currPlayer, UAnimMontage* GetUpMontage)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ClientGetUp_Implementation(AActor* currPlayer, UAnimMontage* GetUpMontage)
+{
+	if (this->GetLocalRole() == ROLE_Authority)
+	{
+		if (IsRunningDedicatedServer() == true)
+		{
+			return;
 		}
 		else
 		{
-			if (this->IsLocallyControlled())
-			{
-				this->CallEventTimerFunction();
-			}
+			goto Fall;
 		}
 	}
 	else
 	{
-		if (this->IsLocallyControlled())
+	Fall:
+		if (this == currPlayer)
 		{
-			this->CallEventLoseFunction();
+			//Enable hair physics
+			this->Hair->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Block);
+
+			//Stop simulate body
+			this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", false, false);
+
+			//Play getup montage
+			UTBAAnimInstance* currAnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
+			if (currAnimInst)
+			{
+				Time = currAnimInst->Montage_Play(GetUpMontage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, true);
+				currAnimInst->RagdollMode = false;
+				currAnimInst->IsStopped = false;
+				this->ChangeCameraOffset(0.0f, true);
+				this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+				FTimerHandle handle;
+				FTimerDelegate TimerDelegate;
+
+				TimerDelegate.BindLambda([this]()
+				{
+					UE_LOG(LogTemp, Warning, TEXT("DELAY BEFORE ENABLE WALKING"));
+					this->CanSwipeAction = true;
+					this->InRagdoll = false;
+				});
+				this->GetWorldTimerManager().SetTimer(handle, TimerDelegate, Time, false);
+			}
 		}
 	}
 }
+
+bool ATodakBattleArenaCharacter::ServerPrepareGetUp_Validate(AActor* currPlayer, bool isLookingUp)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerPrepareGetUp_Implementation(AActor* currPlayer, bool isLookingUp)
+{
+	if (currPlayer == this)
+	{
+		if (GetLocalRole() == ROLE_Authority)
+		{
+			PrepareGetUp(currPlayer, isLookingUp);
+		}
+	}
+}
+
+bool ATodakBattleArenaCharacter::PrepareGetUp_Validate(AActor* currPlayer, bool isLookingUp)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::PrepareGetUp_Implementation(AActor* currPlayer, bool isLookingUp)
+{
+	if (currPlayer == this)
+	{
+		if (this->IsLocallyControlled())
+		{
+			ServerCachePose(this, isLookingUp);
+
+			FTimerHandle handle;
+			FTimerDelegate TimerDelegate;
+
+			TimerDelegate.BindLambda([this]()
+			{
+				UE_LOG(LogTemp, Warning, TEXT("DELAY BEFORE CALLING SERVER GETUP"));
+				ServerGetUp(this);
+			});
+			this->GetWorldTimerManager().SetTimer(handle, TimerDelegate, 0.2f, false);
+		}
+	}
+}
+
+bool ATodakBattleArenaCharacter::ServerCachePose_Validate(ATodakBattleArenaCharacter* currPlayer, bool isLookingUp)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::ServerCachePose_Implementation(ATodakBattleArenaCharacter* currPlayer, bool isLookingUp)
+{
+	CachePose(currPlayer, isLookingUp);
+}
+
+bool ATodakBattleArenaCharacter::CachePose_Validate(ATodakBattleArenaCharacter* currPlayer, bool isLookingUp)
+{
+	return true;
+}
+
+void ATodakBattleArenaCharacter::CachePose_Implementation(ATodakBattleArenaCharacter* currPlayer, bool isLookingUp)
+{
+	if (currPlayer == this)
+	{
+		SetUpGetUpMontage(this->GetMesh(), isLookingUp);
+
+		UE_LOG(LogTemp, Warning, TEXT("Cache starts1"));
+
+		FTimerHandle handle;
+		FTimerDelegate TimerDelegate;
+
+		TimerDelegate.BindLambda([this]()
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Cache starts"));
+
+			TimerDelegate1.BindLambda([this]()
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Save pose snapshot"));
+
+				//Save pose snapshot
+				UTBAAnimInstance* currAnim = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
+				if (currAnim)
+				{
+					currAnim->SavePoseSnapshot("FinalPose");
+					currAnim->IsStopped = true;
+				}
+			});
+			this->GetWorldTimerManager().SetTimer(handle1, TimerDelegate1, 0.001f, false);
+		});
+		this->GetWorldTimerManager().SetTimer(handle, TimerDelegate, 0.001f, false);
+	}
+}
+
+//void ATodakBattleArenaCharacter::SimulatePhysicRagdoll(AActor* RagdolledActor)
+//{
+//	ATodakBattleArenaCharacter* currActor = Cast<ATodakBattleArenaCharacter>(RagdolledActor);
+//	if (currActor == this)
+//	{
+//		//UE_LOG(LogTemp, Warning, TEXT("Timer Starts"));
+//		this->GetWorldTimerManager().ClearTimer(this->FallTimerHandle);
+//
+//		//Disable hair physics
+//		this->Hair->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Ignore);
+//
+//		//Start simulate body
+//		this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
+//		//this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
+//
+//		//Stop any movement
+//		this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+//
+//		//Delay for 3 seconds
+//		FTimerDelegate FunctionsNames;
+//		FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::CheckPlayerStatus, currActor);
+//		this->GetWorldTimerManager().SetTimer(this->FallTimerHandle, FunctionsNames, 3.0f, false);
+//	}
+//}
 
 void ATodakBattleArenaCharacter::CallFallRagdoll(AActor* RagdolledActor, bool IsLookingAtTarget)
 {
 	if (RagdolledActor == this)
 	{
 		//Disable input
-		this->DisableInput(UGameplayStatics::GetPlayerController(this, 0));
+		//this->DisableInput(UGameplayStatics::GetPlayerController(this, 0));
 
 		//Stop movement
 		this->GetCharacterMovement()->StopMovementImmediately();
@@ -2781,17 +2959,42 @@ void ATodakBattleArenaCharacter::MulticastFallRagdoll_Implementation(AActor* Rag
 	}
 	else
 	{
-		Fall:
-		UTBAAnimInstance* currAnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
-		currAnimInst->FallAnim = FallAnims;
-		if (currAnimInst->FallAnim != nullptr)
+	Fall:
+		if (this == RagdolledActor)
 		{
+			UTBAAnimInstance* currAnimInst = Cast<UTBAAnimInstance>(this->GetMesh()->GetAnimInstance());
+			this->CanSwipeAction = false;
+			this->InRagdoll = false;
+			currAnimInst->FallAnim = FallAnims;
 			currAnimInst->RagdollMode = true;
-			if (currAnimInst->RagdollMode == true)
+			if (currAnimInst->FallAnim != nullptr)
 			{
-				FTimerDelegate RagdollDel = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::SimulatePhysicRagdoll, RagdolledActor);
-				this->GetWorld()->GetTimerManager().SetTimer(FallTimerHandle, RagdollDel, currAnimInst->FallAnim->SequenceLength, false);
-				UE_LOG(LogTemp, Warning, TEXT("Timer Starts"));
+				this->ChangeCameraOffset(currAnimInst->FallAnim->SequenceLength, false);
+				if (currAnimInst->RagdollMode == true)
+				{
+					FTimerHandle handle;
+					FTimerDelegate TimerDelegate;
+
+					TimerDelegate.BindLambda([this]()
+					{
+						UE_LOG(LogTemp, Warning, TEXT("DELAY BEFORE SETTING UP PHYSICS"));
+						//Disable hair physics
+						this->Hair->SetCollisionResponseToChannel(ECollisionChannel::ECC_PhysicsBody, ECollisionResponse::ECR_Ignore);
+
+						//Start simulate body
+						this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
+						//this->GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
+
+						//Stop any movement
+						this->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+
+						//Delay for 3 seconds
+						FTimerDelegate FunctionsNames;
+						FunctionsNames = FTimerDelegate::CreateUObject(this, &ATodakBattleArenaCharacter::CheckPlayerStatus, this);
+						this->GetWorldTimerManager().SetTimer(this->FallTimerHandle, FunctionsNames, 3.0f, false);
+					});
+					this->GetWorldTimerManager().SetTimer(handle, TimerDelegate, currAnimInst->FallAnim->SequenceLength, false);
+				}
 			}
 		}
 	}
@@ -3776,6 +3979,36 @@ void ATodakBattleArenaCharacter::CameraShake()
 	UGameplayStatics::PlayWorldCameraShake(this->GetWorld()->GetFirstPlayerController(), DamageCameraShake, this->GetActorLocation(), 0.0f, 300.0f, 1.0f, false);
 }
 
+void ATodakBattleArenaCharacter::OffsetTimeline(float offVal)
+{
+	offVal = FMath::Lerp(0.0f, 60.0f, offVal);
+	CameraBoom->SocketOffset = FVector(CameraBoom->SocketOffset.X, CameraBoom->SocketOffset.Y, offVal);
+}
+
+void ATodakBattleArenaCharacter::ChangeCameraOffset(float newlength, bool Reverse)
+{
+	//construct timeline
+	FOnTimelineFloat OffsetTimeline;
+	OffsetTimeline.BindUFunction(this, FName("OffsetTimeline"));
+	CurveFTimeline.AddInterpFloat(OffCurveFloat, OffsetTimeline);
+
+	//check if timeline is in reverse mode
+	if (Reverse == true)
+	{
+		CurveFTimeline.ReverseFromEnd();
+	}
+	else
+	{
+		//set new timeline length
+		CurveFTimeline.SetTimelineLength(newlength);
+
+		//set new timeline new playrate
+		CurveFTimeline.SetPlayRate(1/newlength);
+
+		CurveFTimeline.PlayFromStart();
+	}
+}
+
 bool ATodakBattleArenaCharacter::ServerEffectiveBlockTimer_Validate()
 {
 	return true;
@@ -3830,7 +4063,6 @@ void ATodakBattleArenaCharacter::MulticastToggleEffectiveBlock_Implementation()
 	// Hit Block Reaction during Effective Blocking
 	if (this->IsEffectiveBlock == true)
 	{
-
 		this->IsEffectiveBlock = false;
 	}
 }
