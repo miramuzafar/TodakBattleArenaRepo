@@ -26,6 +26,8 @@ public:
 
 	class ViewController* UIViewController;
 
+	class UTouchInterface* MFCTouchInterface;
+
 	//Exit the application
 	UFUNCTION(BlueprintCallable, Category = "Game")
 	static void MyQuitGame(bool bForce)
@@ -44,4 +46,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputManagement")
 	FString LevelName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InputManagement")
+	TArray<FString> LevelJoystick = { TEXT("ThirdPersonExampleMap"), TEXT("fight_level_1_v2") };
 };

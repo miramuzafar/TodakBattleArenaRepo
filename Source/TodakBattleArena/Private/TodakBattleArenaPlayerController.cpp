@@ -7,7 +7,13 @@
 
 ATodakBattleArenaPlayerController::ATodakBattleArenaPlayerController()
 {
+	static ConstructorHelpers::FObjectFinder<UTouchInterface> LocoJoystick(TEXT("TouchInterface'/Engine/MobileResources/HUD/LeftVirtualJoystickOnly.LeftVirtualJoystickOnly'"));
 
+	if (LocoJoystick.Object)
+	{
+		MFCTouchInterface = LocoJoystick.Object;
+	}
+	
 }
 
 void ATodakBattleArenaPlayerController::BeginPlay()
@@ -15,10 +21,26 @@ void ATodakBattleArenaPlayerController::BeginPlay()
 	//Call the base class
 	Super::BeginPlay();
 
+	this->ActivateTouchInterface(MFCTouchInterface);
+	
 	UMFCGameInstance* thisGI = Cast<UMFCGameInstance>(this->GetGameInstance());
 	if (thisGI)
 	{
-		thisGI->LoadJoystick(this, UGameplayStatics::GetCurrentLevelName(this, true) == LevelName);
+		//thisGI->LoadJoystick(this, LevelName == UGameplayStatics::GetCurrentLevelName(this, true));
+
+		for (int i = 0; i < 2; i++)
+		{
+			if (LevelJoystick[i] == UGameplayStatics::GetCurrentLevelName(this, true))
+			{
+				thisGI->LoadJoystick(this, true);
+				break;
+			}
+			else
+			{
+				thisGI->LoadJoystick(this, false);
+			}
+		}
+		
 	}
 }
 

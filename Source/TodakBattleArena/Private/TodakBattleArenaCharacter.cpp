@@ -1941,7 +1941,7 @@ void ATodakBattleArenaCharacter::ChangeCameraPerspective(int CamPers)
 
 	if (CamPers == 0)
 	{
-		if (IsLocked)
+		if (TargetLocked)
 		{
 			FLatentActionInfo LatentInfo = FLatentActionInfo();
 			LatentInfo.CallbackTarget = this;
@@ -1953,7 +1953,7 @@ void ATodakBattleArenaCharacter::ChangeCameraPerspective(int CamPers)
 			FarToTPPTimeline->AddInterpFloat(fCurve, Interp_FarToTPP, FName{ TEXT("TL_FarToTPP") });
 		}
 
-		else if (!IsLocked)
+		else if (!TargetLocked)
 		{
 			FLatentActionInfo LatentInfo = FLatentActionInfo();
 			LatentInfo.CallbackTarget = this;
@@ -2071,10 +2071,10 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 							if (TargetLocked == true)
 							{
 								//Forces player to enter ready stance
-								this->IsLocked = true;
-								this->EnemyElement->IsLocked = true;
-								this->EnemyElement->RepIsMoving = true;
-								this->RepWalkSpeed = 20.0f;
+								/*this->IsLocked = true;
+								this->EnemyElement->IsLocked = true;*/
+								RepIsMoving = true;
+								RepWalkSpeed = 20.0f;
 								this->GetCharacterMovement()->MaxWalkSpeed = RepWalkSpeed;
 
 								if (CameraPerspective == 0)
@@ -2119,8 +2119,8 @@ void ATodakBattleArenaCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedA
 							if (TargetLocked == true)
 							{
 								//Forces player to enter ready stance
-								this->EnemyElement->IsLocked = true;
-								this->EnemyElement->RepIsMoving = true;
+								/*this->EnemyElement->IsLocked = true;*/
+								RepIsMoving = true;
 							}
 						}
 					}
@@ -2150,12 +2150,12 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 						{
 							ClosestTargetDistance = 0.0f;
 							TargetLocked = false;
-							this->IsLocked = false;
+							//this->IsLocked = false;
 
-							if (this->EnemyElement != nullptr)
+							/*if (this->EnemyElement != nullptr)
 							{
 								this->EnemyElement->IsLocked = false;
-							}
+							}*/
 							
 							//EnemyElement->RepIsMoving = false;
 							RepWalkSpeed = 40.0f;
@@ -2208,12 +2208,13 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 				CanBeTargeted = false;
 				if (TargetLocked == true)
 				{
-					if (this->EnemyElement != nullptr)
-					{
-						//Allows Idle Timer
-						this->EnemyElement->IsLocked = false;
-						//EnemyElement->RepIsMoving = false;
-					}
+					TargetLocked = false;
+					//if (this->EnemyElement != nullptr)
+					//{
+					//	//Allows Idle Timer
+					//	this->EnemyElement->IsLocked = false;
+					//	//EnemyElement->RepIsMoving = false;
+					//}
 					
 				}
 			}
