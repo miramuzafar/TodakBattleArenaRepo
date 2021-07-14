@@ -6,7 +6,7 @@
 #include "Components/SkeletalMeshComponent.h"
 //#include "Kismet/KismetMathLibrary.h"
 
-void UClothItem::EquipCharacter(AActor * Character)
+void UClothItem::EquipCharacter(AActor* Character)
 {
 	CamActor = Cast<ATBACameraActor>(Character);
 	if (CamActor)

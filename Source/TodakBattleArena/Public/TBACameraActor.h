@@ -83,4 +83,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Equip")
 	void SaveCurrentOutfit(UItem* item, bool IsItFem, int ItemIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "SetupMesh")
+	void ChangeGenderAsset(ATodakGameStateBase* GS, bool IsItFem);
 };

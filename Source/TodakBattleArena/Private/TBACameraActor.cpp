@@ -154,3 +154,13 @@ void ATBACameraActor::SaveCurrentOutfit(UItem* item, bool IsItFem, int ItemIndex
 	else
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("NO ITEM SELECTED!!")));
 }
+
+void ATBACameraActor::ChangeGenderAsset(ATodakGameStateBase* GS, bool IsItFem)
+{
+	if (IsItFem == true)
+	{
+		CheckValidityMesh(nullptr, GS->SkinFemItem->PickupMesh, GS->FemTopItem->PickupMesh, GS->FemBotItem->PickupMesh, nullptr, GS->FemHairItem->PickupMesh, nullptr);
+	}
+	else
+		CheckValidityMesh(nullptr, GS->SkinMalItem->PickupMesh, GS->MalTopItem->PickupMesh, GS->MalBotItem->PickupMesh, nullptr, GS->MalHairItem->PickupMesh, nullptr);
+}
