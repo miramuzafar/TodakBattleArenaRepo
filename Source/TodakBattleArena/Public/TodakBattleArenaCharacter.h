@@ -436,7 +436,7 @@ protected:
 
 	//Execute the skill
 	UFUNCTION(BlueprintCallable)
-	bool ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, FBlockActions BlockMovesets, float DealDamage, float StaminaUsed, float StaminaDrain, bool& CDSkill);
+	bool ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float Dmg, float BlockDmg, float CriticalDmg, float StaminaUsed, float StaminaDrain, bool& CDSkill);
 
 	//Initialize everything during begin play
 	UFUNCTION(BlueprintCallable, Category = "BeginPlay")
@@ -458,11 +458,11 @@ protected:
 
 	//Skill replicate on server
 	UFUNCTION(Reliable, Server, WithValidation, BlueprintCallable)
-	void ServerSkillMoveset(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
+	void ServerSkillMoveset(UAnimMontage* ServerSkill, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
 
 	//Skill replicate on all client
 	UFUNCTION(Reliable, NetMulticast, WithValidation)
-	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
+	void MulticastSkillMoveset(UAnimMontage* MulticastSkill, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound);
 
 	//SkillPress replicate on server
 	UFUNCTION(Reliable, Server, BlueprintCallable, WithValidation)

@@ -287,6 +287,10 @@ struct FActionSkill : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float FatigueDamage = 0.0f;
 
+	//Damage received when opponent block hit
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
+	float BlockDamage = 0.0f;
+
 	//Damage received when attacker critical hit
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	float CriticalDamage = 0.0f;

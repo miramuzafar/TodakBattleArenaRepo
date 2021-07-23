@@ -925,9 +925,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 				{
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch index is %s"), (*GETENUMSTRING("ETouchIndex", FingerIndex->FingerIndex))));
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Emerald, FString::Printf(TEXT("Touch swipeactions is %s"), (*GETENUMSTRING("EInputType", FingerIndex->SwipeActions))));
-					//GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Orange, FString::Printf(TEXT("Equal : %s"), areEqual(row->SwipeActions, InputType, row->SwipeActions.Num(), InputType.Num()) && areEqual(row->BodyParts, InputPart, row->BodyParts.Num(), InputPart.Num()) ? TEXT("True") : TEXT("False")));
-					//row->SkillTrigger = true;
-					//SkillTriggered = row->SkillTrigger;
+					
 
 					//Execute skill if cooldown is finished
 					if (row->CDSkill == false)
@@ -942,9 +940,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						//AnimInstance->LocoPlayrate = SkillPlayrate;
 						//temp = SkillPlayrate;
 
-						
-
-						//checks if there is skill triggering and player has enough energy
+						//checks if there is no skill triggering and player has enough energy
 						if (SkillTriggered == false && (this->playerEnergy >= row->StaminaUsage))
 						{
 							SkillTriggered = true;
@@ -953,11 +949,12 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 							if (EnemyElement != nullptr)
 							{
 								// checks if enemy is blocking the hit
-								if (this->EnemyElement->BlockedHit == true)
+								if (this->BlockedHit == true)
 								{
-									if (this->EnemyElement->IsEffectiveBlock == true)
+									// counter attack on success block
+									if (this->IsEffectiveBlock == true)
 									{
-										row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+										row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->BlockDamage, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 										SkillPlayrate = row->SkillMoveSetRate;
 
 										if (this->IsLocallyControlled())
@@ -967,7 +964,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 									}
 									else
 									{
-										row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->BlockReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+										row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->BlockDamage, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 										SkillPlayrate = row->SkillMoveSetRate;
 
 										if (this->IsLocallyControlled())
@@ -980,7 +977,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 								// check if enemy is not blocking
 								else
 								{
-									row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+									row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->BlockDamage, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 									SkillPlayrate = row->SkillMoveSetRate;
 
 									if (this->IsLocallyControlled())
@@ -993,7 +990,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 							// checks if there is no player in target lock radius
 							else
 							{
-								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->BlockDamage, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 								SkillPlayrate = row->SkillMoveSetRate;
 							}
 						}
@@ -1017,7 +1014,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 							{
 								if (this->EnemyElement->IsEffectiveBlock == true)
 								{
-									row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+									row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->BlockDamage, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 									SkillPlayrate = row->SkillMoveSetRate;
 
 									if (this->IsLocallyControlled())
@@ -1027,7 +1024,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 								}
 								else
 								{
-									row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+									row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->BlockDamage, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 									SkillPlayrate = row->SkillMoveSetRate;
 
 									if (this->IsLocallyControlled())
@@ -1040,7 +1037,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 							// checks if enemy is not blocking
 							else
 							{
-								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->FatigueDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+								row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->BlockDamage, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 								SkillPlayrate = row->SkillMoveSetRate;
 
 								if (this->IsLocallyControlled())
@@ -1053,7 +1050,7 @@ void ATodakBattleArenaCharacter::GetSkillAction(FFingerIndex* FingerIndex)
 						//checks if there is no player in target lock radius
 						else
 						{
-							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+							row->CDSkill = ExecuteAction(SkillTriggered, row->SkillMoveSetRate, row->SkillMovesetTime, row->SkillMoveset, row->Damage, row->BlockDamage, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
 							SkillPlayrate = row->SkillMoveSetRate;
 						}
 							
@@ -1127,15 +1124,8 @@ void ATodakBattleArenaCharacter::GetButtonSkillAction(FName BodyPart, bool IsRel
 					row->SkillTrigger = true;
 					SkillTriggered = row->SkillTrigger;
 					row->SkillMoveSetRate = SkillPlayrate;
-					//RepLocoPlayrate = SkillPlayrate;
-					//AnimInstance->LocoPlayrate = SkillPlayrate;
-					//temp = SkillPlayrate;
-					row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->HitReactionMoveset, row->BlockActionMoveset, row->Damage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
-					/*if (row->StartSwipeMontageTime.Num() > 0)
-					{
-						row->CDSkill = ExecuteAction(row->SkillTrigger, 1.0f, row->SkillMoveSetRate, row->SkillMoveset, row->Damage, row->CDSkill);
-						//row->CDSkill = ExecuteAction(row->SkillTrigger, row->HitTraceLength, row->SkillMoveSetRate, row->StartSwipeMontageTime[RandSection], row->SkillMoveset, row->Damage, row->CDSkill);
-					}*/
+					row->CDSkill = ExecuteAction(row->SkillTrigger, row->SkillMoveSetRate, 0.0f, row->SkillMoveset, row->Damage, row->BlockDamage, row->CriticalDamage, row->StaminaUsage, row->StaminaDrain, row->CDSkill);
+				
 					CheckForAction(BodyPart);
 					if (SkillTriggered == false)
 					{
@@ -1154,7 +1144,7 @@ bool ATodakBattleArenaCharacter::HitEnemyPlayer_Validate(ATodakBattleArenaCharac
 
 void ATodakBattleArenaCharacter::HitEnemyPlayer_Implementation(ATodakBattleArenaCharacter* Player, ATodakBattleArenaCharacter* Enemy)
 {
-	if (Player == this && Player != nullptr)
+	/*if (Player == this && Player != nullptr)
 	{
 		if (Enemy != nullptr)
 		{
@@ -1167,9 +1157,7 @@ void ATodakBattleArenaCharacter::HitEnemyPlayer_Implementation(ATodakBattleArena
 				Enemy->HitReactionsMoveset = this->HitReactionsMoveset;
 			}
 		}
-	}
-
-	
+	}*/
 }
 
 bool ATodakBattleArenaCharacter::FireTrace_Validate(FVector StartPoint, FVector EndPoint)
@@ -1222,25 +1210,6 @@ void ATodakBattleArenaCharacter::FireTrace_Implementation(FVector StartPoint, FV
 					hitChar->BoneName = HitRes.BoneName;
 					hitChar->IsHit = true;
 
-
-					// check bone name / hit location == head / body then we apply damage & camera shake
-
-
-
-
-
-
-
-
-
-					/*hitChar->staminaDrained = this->staminaDrained;
-					hitChar->HitReactionsMoveset = this->HitReactionsMoveset;*/
-					//DoDamage(hitChar);
-
-					//HitRes.GetComponent();
-
-					//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Mage)
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *hitChar->BoneName.ToString()));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, FString::Printf(TEXT("Bone: %s"), *HitRes.GetComponent()->GetName()));
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Impact: %s"), *hitChar->HitLocation.ToString()));
 					GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("Blocking hit is %s"), (hitChar->IsHit) ? TEXT("True") : TEXT("False")));
@@ -1539,12 +1508,12 @@ void ATodakBattleArenaCharacter::ServerTimerHandler_Implementation(FTimerHandle 
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::ServerSkillMoveset_Validate(UAnimMontage* ServerSkill, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	return true;
 }
 
-void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage* ServerSkill, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
@@ -1555,17 +1524,17 @@ void ATodakBattleArenaCharacter::ServerSkillMoveset_Implementation(UAnimMontage*
 		
 		//damage = DamageApplied;
 
-		MulticastSkillMoveset(RPCServerSkill, HitReaction, BlockMovesets, DamageApplied, StaminaUsed, StaminaDrain, PlayRate, StartTime, SkillFound);
+		MulticastSkillMoveset(RPCServerSkill, DamageApplied, StaminaUsed, StaminaDrain, PlayRate, StartTime, SkillFound);
 	}
 }
 
-bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
+bool ATodakBattleArenaCharacter::MulticastSkillMoveset_Validate(UAnimMontage* MulticastSkill, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	return true;
 }
 
 //Play swipe action anim
-void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, UAnimMontage* HitReaction, FBlockActions BlockMovesets, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
+void ATodakBattleArenaCharacter::MulticastSkillMoveset_Implementation(UAnimMontage* MulticastSkill, float DamageApplied, float StaminaUsed, float StaminaDrain, float PlayRate, float StartTime, bool SkillFound)
 {
 	if (SkillFound == true)
 	{
@@ -2262,7 +2231,7 @@ void ATodakBattleArenaCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedAct
 	}
 }
 
-bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, UAnimMontage* HitMovesets, FBlockActions BlockMovesets, float DealDamage, float StaminaUsed, float StaminaDrain, bool& CDSkill)
+bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate, float AnimStartTime, UAnimMontage* SkillMovesets, float Dmg, float BlockDmg, float CriticalDmg, float StaminaUsed, float StaminaDrain, bool& CDSkill)
 {
 	if (SkillTrigger == true)
 	{
@@ -2299,18 +2268,49 @@ bool ATodakBattleArenaCharacter::ExecuteAction(bool SkillTrigger, float AnimRate
 		//	SectionUUID = 0;
 	
 		//}
+		/*if (this->BlockedHit == true)
+		{
+			
 
-		//Server
-		if (this->IsLocallyControlled())
-		{
-			ServerSkillMoveset(SkillMoveset, HitMovesets, BlockMovesets, DealDamage, StaminaUsed, StaminaDrain, AnimRate, AnimStartTime, SkillTrigger);
-		}
+		}*/
 		
 		
-		if (this->BlockedHit == true)
+
+		if (this->EnemyElement != nullptr)
 		{
-			this->BlockedHit = false;
+			if (this->IsEffectiveBlock == true)
+			{
+				if (this->IsLocallyControlled())
+				{
+					ServerSkillMoveset(SkillMoveset, CriticalDmg, StaminaUsed, StaminaDrain, AnimRate, AnimStartTime, SkillTrigger);
+				}
+			}
+
+			else if (this->EnemyElement->BlockedHit == true || this->EnemyElement->IsEffectiveBlock == true)
+			{
+				if (this->IsLocallyControlled())
+				{
+					ServerSkillMoveset(SkillMoveset, BlockDmg, StaminaUsed, StaminaDrain, AnimRate, AnimStartTime, SkillTrigger);
+				}
+			}
+
+			else
+			{
+				if (this->IsLocallyControlled())
+				{
+					ServerSkillMoveset(SkillMoveset, Dmg, StaminaUsed, StaminaDrain, AnimRate, AnimStartTime, SkillTrigger);
+				}
+			}
 		}
+
+		if (this->EnemyElement == nullptr)
+		{
+			if (this->IsLocallyControlled())
+			{
+				ServerSkillMoveset(SkillMoveset, Dmg, StaminaUsed, StaminaDrain, AnimRate, AnimStartTime, SkillTrigger);
+			}
+		}
+		
 
 		if (BodyParts.IsValidIndex(0) == true)
 		{
@@ -4117,7 +4117,7 @@ void ATodakBattleArenaCharacter::MulticastBlockReaction_Implementation(UAnimMont
 		RPCMultiCastBlockReaction = MulticastSkill;
 
 		//Disable input for the other so we can counter attack
-		if (EnemyElement != nullptr)
+		if (EnemyElement != nullptr && isAI == false)
 		{
 			this->EnemyElement->CanSwipeAction = false;
 			UE_LOG(LogTemp, Warning, TEXT("DISABLE ATTACKER INPUT"));
